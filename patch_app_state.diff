@@ -1,0 +1,17 @@
+--- src/App.tsx
++++ src/App.tsx
+@@ -205,6 +205,14 @@
+       return DEFAULT_UNLOCKED_ITEM_IDS;
+     }
+   });
++  const [unlockedEnemies, setUnlockedEnemies] = useState<string[]>(() => {
++    try {
++      const saved = localStorage.getItem('witch_nights_enemies');
++      return saved ? JSON.parse(saved) : [];
++    } catch {
++      return [];
++    }
++  });
+   const [unlockModalItem, setUnlockModalItem] = useState<string | null>(null);
+ 
+   // Save collections to localStorage

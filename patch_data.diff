@@ -1,0 +1,64 @@
+--- src/components/CollectionModal.tsx
++++ src/components/CollectionModal.tsx
+@@ -153,39 +153,23 @@
+ 
+ const ENEMIES_DATA: EnemyCollectionData[] = [
+   {
++    id: 'bat',
++    name: 'Dusk Bat',
++    color: '#a855f7',
++    damage: 10,
++    speed: '1.0x',
++    isBoss: false,
++    description: 'A nimble flying creature of the dusk. Moves at standard speed.'
++  },
++  {
+     id: 'wraith',
+     name: 'Shadow Wraith',
+     color: '#38bdf8',
+     damage: 10,
+-    speed: '1.00x',
++    speed: '0.9x',
+     isBoss: false,
+-    description: 'A swift spectre made of chilling frost and shadow. Moves at standard speed.'
+-  },
+-  {
+-    id: 'bat',
+-    name: 'Dusk Bat',
+-    color: '#a855f7',
+-    damage: 10,
+-    speed: '1.07x',
+-    isBoss: false,
+-    description: 'A nimble flying creature of the dusk. Slightly faster than standard enemies.'
+-  },
+-  {
+-    id: 'hellhound',
+-    name: 'Hellhound',
+-    color: '#f97316',
+-    damage: 10,
+-    speed: '1.28x',
+-    isBoss: false,
+-    description: 'A terrifying demonic canine that charges aggressively towards its prey.'
+-  },
+-  {
+-    id: 'necromancer',
+-    name: 'Arch-Necromancer',
+-    color: '#d946ef',
+-    damage: 10,
+-    speed: '0.73x',
+-    isBoss: false,
+-    description: 'A slow but incredibly durable dark magic wielder.'
++    description: 'A swift spectre made of chilling frost and shadow. Slightly slower than standard enemies.'
+   },
+   {
+     id: 'ghoul',
+     name: 'Crypt Ghoul',
+     color: '#ef4444',
+     damage: 25,
+-    speed: '0.84x',
++    speed: '0.8x',
+     isBoss: false,
+     isRed: true,
+     description: 'A resilient elite undead that drops high-value Red EXP Orbs.'
+   },
+   {

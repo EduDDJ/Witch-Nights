@@ -1,0 +1,1178 @@
+import React, { useState } from 'react';
+import { ALL_WEAPONS, ALL_STAT_ITEMS, WITCH_DEALS } from '../data/gameData';
+import { ShootingType } from '../types/game';
+import {
+  Sparkles,
+  Flame,
+  Skull,
+  BookOpen,
+  Crosshair,
+  Zap,
+  Radio,
+  Droplet,
+  Maximize2,
+  Shield,
+  Wind,
+  Footprints,
+  Compass,
+  Heart,
+  Sword,
+  HelpCircle,
+  Clover,
+  Lock,
+  Sprout,
+  X,
+  RotateCcw,
+  CheckCircle,
+  Eye,
+} from 'lucide-react';
+import { VampireFangsIcon } from './VampireFangsIcon';
+import { PentagramIcon } from './PentagramIcon';
+import { BroomIcon } from './BroomIcon';
+
+interface CollectionModalProps {
+  unlockedWeapons: string[];
+  unlockedItems: string[];
+  unlockedCurses: string[];
+  unlockedItemIds?: string[];
+  unlockedEnemies?: string[];
+  mobileMode?: boolean;
+  onClose: () => void;
+  onResetCollection: () => void;
+}
+
+const WEAPON_ICONS: Record<string, React.ElementType> = {
+  Sparkles,
+  Flame,
+  Skull,
+  BookOpen,
+  Crosshair,
+  Zap,
+  Radio,
+  Pentagram: PentagramIcon,
+  Sword,
+  Sprout,
+};
+
+const STAT_ICONS: Record<string, React.ElementType> = {
+  Fangs: VampireFangsIcon,
+  Droplet: VampireFangsIcon,
+  Broom: BroomIcon,
+  Maximize2,
+  Shield,
+  Wind,
+  Footprints,
+  Zap,
+  Compass,
+  Heart,
+  Clover,
+  Eye,
+};
+
+const CURSE_ICONS: Record<string, React.ElementType> = {
+  Sparkles,
+  Sword,
+  Skull,
+  Flame,
+  Wind,
+  RotateCcw,
+};
+
+const createNormalEnemyIcon = (color: string) => {
+  const Icon: React.FC<any> = (props) => (
+    <svg viewBox="0 0 24 24" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
+      <circle cx="12" cy="12" r="10" fill={color} />
+      <circle cx="8.5" cy="10" r="1.5" fill="#0f172a" />
+      <circle cx="15.5" cy="10" r="1.5" fill="#0f172a" />
+    </svg>
+  );
+  return Icon;
+};
+
+const CarnivorePlantIcon: React.FC<any> = (props) => {
+  const color = props.style?.color || '#22c55e';
+  return (
+    <svg viewBox="0 0 40 40" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
+      <ellipse cx="20" cy="7" rx="10" ry="5" fill="#047857" />
+      <ellipse cx="20" cy="33" rx="10" ry="5" fill="#047857" />
+      <ellipse cx="7" cy="20" rx="5" ry="10" fill="#047857" />
+      <ellipse cx="33" cy="20" rx="5" ry="10" fill="#047857" />
+      <ellipse cx="11" cy="11" rx="8" ry="4" transform="rotate(45 11 11)" fill="#047857" />
+      <ellipse cx="29" cy="29" rx="8" ry="4" transform="rotate(45 29 29)" fill="#047857" />
+      <ellipse cx="29" cy="11" rx="8" ry="4" transform="rotate(-45 29 11)" fill="#047857" />
+      <ellipse cx="11" cy="29" rx="8" ry="4" transform="rotate(-45 11 29)" fill="#047857" />
+      <circle cx="20" cy="20" r="11" fill={color} stroke="#86efac" strokeWidth="1.5" />
+      <ellipse cx="20" cy="18" rx="7.7" ry="4" fill="#450a0a" />
+      <path d="M 14 18 L 15 15 L 16 18 Z" fill="#fef08a" />
+      <path d="M 16 18 L 17 15 L 18 18 Z" fill="#fef08a" />
+      <path d="M 18 18 L 19 15 L 20 18 Z" fill="#fef08a" />
+      <path d="M 20 18 L 21 15 L 22 18 Z" fill="#fef08a" />
+      <path d="M 22 18 L 23 15 L 24 18 Z" fill="#fef08a" />
+      <path d="M 24 18 L 25 15 L 26 18 Z" fill="#fef08a" />
+      <path d="M 14 18 L 15 21 L 16 18 Z" fill="#fef08a" />
+      <path d="M 16 18 L 17 21 L 18 18 Z" fill="#fef08a" />
+      <path d="M 18 18 L 19 21 L 20 18 Z" fill="#fef08a" />
+      <path d="M 20 18 L 21 21 L 22 18 Z" fill="#fef08a" />
+      <path d="M 22 18 L 23 21 L 24 18 Z" fill="#fef08a" />
+      <path d="M 24 18 L 25 21 L 26 18 Z" fill="#fef08a" />
+      <circle cx="15" cy="14" r="3.5" fill="#facc15" />
+      <circle cx="25" cy="14" r="3.5" fill="#facc15" />
+      <circle cx="15" cy="14" r="1.5" fill="#7f1d1d" />
+      <circle cx="25" cy="14" r="1.5" fill="#7f1d1d" />
+    </svg>
+  );
+};
+
+const HauntedEyeIcon: React.FC<any> = (props) => {
+  const color = props.style?.color || '#dc2626';
+  return (
+    <svg viewBox="0 0 40 40" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
+      <ellipse cx="20" cy="20" rx="18" ry="9" fill="#2b0606" stroke="#991b1b" strokeWidth="2" />
+      <circle cx="20" cy="20" r="8.5" fill={color} />
+      <circle cx="20" cy="20" r="3.5" fill="#fef08a" />
+      <path d="M 20 15 L 20 25 M 15 20 L 25 20" stroke="#fef08a" strokeWidth="1" />
+      <circle cx="20" cy="20" r="1.5" fill="#000000" />
+    </svg>
+  );
+};
+
+interface EnemyCollectionData {
+  id: string;
+  name: string;
+  color: string;
+  damage: number;
+  maxHp: number;
+  speed: string;
+  isBoss: boolean;
+  isRed?: boolean;
+  description: string;
+  attacks?: {
+    name: string;
+    damage: string;
+    telegraph: string;
+    description: string;
+  }[];
+}
+
+export const ENEMIES_DATA: EnemyCollectionData[] = [
+  {
+    id: 'bat',
+    name: 'Pitchfork Peasant',
+    color: '#a855f7',
+    damage: 10,
+    maxHp: 20,
+    speed: '1.0x',
+    isBoss: false,
+    description: 'A local villager armed with a pitchfork, driven by shadow-madness. Moves at standard speed.'
+  },
+  {
+    id: 'wraith',
+    name: 'Torch Peasant',
+    color: '#38bdf8',
+    damage: 12,
+    maxHp: 24,
+    speed: '0.9x',
+    isBoss: false,
+    description: 'A peasant carrying a cursed torch. Slower but more resilient and dangerous than those with pitchforks.'
+  },
+  {
+    id: 'ghoul',
+    name: "Village's Knight",
+    color: '#ef4444',
+    damage: 25,
+    maxHp: 30,
+    speed: '0.75x',
+    isBoss: false,
+    isRed: true,
+    description: 'A resilient elite knight of the village that drops high-value Red EXP Orbs.'
+  },
+  {
+    id: 'carnivore_plant',
+    name: 'Carnivore Plant',
+    color: '#22c55e',
+    damage: 20,
+    maxHp: 1000,
+    speed: '0.0x',
+    isBoss: true,
+    description: 'A stationary botanical nightmare with vicious roots and an insatiable appetite.',
+    attacks: [
+      { name: 'Vine Attack', damage: '10', telegraph: '0.75s', description: 'Spawns roots near the player. Emits a smaller warning circle before striking.' },
+      { name: 'Chomp Attack', damage: '25', telegraph: '0.85s', description: 'Massive area-of-effect bite centered on the player. Dash is required to escape.' }
+    ]
+  },
+  {
+    id: 'haunted_eye',
+    name: 'Haunted Eye',
+    color: '#dc2626',
+    damage: 20,
+    maxHp: 750,
+    speed: '0.0x',
+    isBoss: true,
+    description: 'A colossal panoramic ocular terror that curses anyone who meets its gaze.',
+    attacks: [
+      { name: 'Occult Tear', damage: '10', telegraph: 'Instant', description: 'Weeps magical projectiles that drift toward the player.' },
+      { name: 'Gaze Curse', damage: '20 DPS', telegraph: '1.00s', description: 'When the eye opens, player must look away (cursor below the witch) or suffer rapid damage.' }
+    ]
+  }
+];
+
+interface HoveredItemData {
+  id: string;
+  name: string;
+  category: 'WEAPON' | 'PASSIVE' | 'CURSE' | 'ENEMY';
+  isDiscovered: boolean;
+  isUnlocked: boolean;
+  isLegendary?: boolean;
+  description: string;
+  unlockCondition?: string;
+  shootingType?: ShootingType;
+  bulletColor?: string;
+  icon: React.ElementType;
+  tiers?: { tier: number; damageBonus?: number; fireRateBonus?: number; sizeBonus?: number; countBonus?: number; statValue?: number }[];
+  enemyStats?: {
+    damage: number;
+    maxHp: number;
+    speed: string;
+    attacks?: {
+      name: string;
+      damage: string;
+      telegraph: string;
+      description: string;
+    }[];
+  };
+}
+
+export const CollectionModal: React.FC<CollectionModalProps> = ({
+  unlockedWeapons,
+  unlockedItems,
+  unlockedCurses,
+  unlockedItemIds = [],
+  unlockedEnemies = [],
+  mobileMode = false,
+  onClose,
+  onResetCollection,
+}) => {
+  const [activeTab, setActiveTab] = useState<'WEAPONS' | 'PASSIVES' | 'CURSES' | 'ENEMIES'>('WEAPONS');
+  const [selectedItem, setSelectedItem] = useState<HoveredItemData | null>(null);
+  const [showUpgradeInfo, setShowUpgradeInfo] = useState<boolean>(false);
+  const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
+
+  const discoveredEnemiesCount = ENEMIES_DATA.filter((e) => unlockedEnemies.includes(e.id)).length;
+  const totalCollected = unlockedWeapons.length + unlockedItems.length + unlockedCurses.length + discoveredEnemiesCount;
+  const totalAvailable = ALL_WEAPONS.length + ALL_STAT_ITEMS.length + WITCH_DEALS.length + ENEMIES_DATA.length;
+
+  const sortedWeapons = [...ALL_WEAPONS].sort((a, b) => {
+    const isALeg = Boolean(a.isLegendary);
+    const isBLeg = Boolean(b.isLegendary);
+    if (isALeg && !isBLeg) return 1;
+    if (!isALeg && isBLeg) return -1;
+    return 0;
+  });
+
+  const sortedStatItems = [...ALL_STAT_ITEMS].sort((a, b) => {
+    const isALeg = Boolean(a.isLegendary);
+    const isBLeg = Boolean(b.isLegendary);
+    if (isALeg && !isBLeg) return 1;
+    if (!isALeg && isBLeg) return -1;
+    return 0;
+  });
+
+  const sortedCurses = [...WITCH_DEALS].sort((a, b) => {
+    const isALeg = Boolean(a.isLegendary);
+    const isBLeg = Boolean(b.isLegendary);
+    if (isALeg && !isBLeg) return 1;
+    if (!isALeg && isBLeg) return -1;
+    return 0;
+  });
+
+  const getShootingTypeLabel = (type?: ShootingType) => {
+    switch (type) {
+      case 'NEAREST_ENEMY':
+        return { label: 'Nearest Enemy Homing', color: 'text-sky-300 bg-sky-950/80 border-sky-700/60' };
+      case 'MOUSE_DIRECTION':
+        return { label: 'Mouse Direction Aim', color: 'text-purple-300 bg-purple-950/80 border-purple-700/60' };
+      case 'AREA_OF_EFFECT':
+        return { label: 'Area of Effect (AoE)', color: 'text-emerald-300 bg-emerald-950/80 border-emerald-700/60' };
+      default:
+        return { label: 'Direct', color: 'text-slate-300 bg-slate-800 border-slate-700' };
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 animate-in fade-in duration-200">
+      <div className={`w-full max-w-4xl ${mobileMode ? 'max-h-[96vh]' : 'max-h-[92vh]'} bg-gradient-to-b from-slate-950 via-indigo-950/60 to-slate-950 border-2 border-purple-700/60 rounded-3xl shadow-2xl shadow-purple-950/70 flex flex-col overflow-hidden relative`}>
+        {/* Header */}
+        <div className={`border-b border-purple-900/50 flex items-center justify-between bg-slate-950/80 ${mobileMode ? 'p-3 sm:p-4' : 'p-4 sm:p-6'}`}>
+          <div>
+            <div className="flex items-center gap-2 sm:gap-3 mb-1">
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
+              <h2 className="text-lg sm:text-2xl font-serif font-black text-slate-100 tracking-wide">
+                Collection
+              </h2>
+              <span className="text-sm sm:text-xl font-mono font-black text-amber-300 bg-amber-950/70 border border-amber-500/50 px-2 sm:px-3 py-0.5 rounded-xl shadow-lg shadow-amber-950/40 tracking-wider">
+                {totalCollected}/{totalAvailable}
+              </span>
+            </div>
+            <p className="text-[10px] sm:text-xs text-slate-400">
+              Hover or tap any item image to reveal what each one does
+            </p>
+          </div>
+
+          {/* Right Header Buttons: X (exit) is ABOVE Reset in Mobile Mode so it's always accessible and player isn't locked */}
+          <div className={`flex ${mobileMode ? 'flex-col items-end gap-1.5' : 'flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-3'}`}>
+            <button
+              id="collection-close-btn"
+              onClick={onClose}
+              className={`w-8 h-8 rounded-full bg-slate-900 hover:bg-purple-900 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 transition-colors cursor-pointer shadow-md ${
+                mobileMode ? 'order-1' : 'order-1 sm:order-2'
+              }`}
+              aria-label="Close Collection"
+              title="Close Collection"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <button
+              id="collection-reset-btn"
+              onClick={() => setShowResetConfirm(true)}
+              className={`text-xs text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors px-2 py-0.5 sm:px-2.5 sm:py-1 rounded bg-slate-900 border border-slate-800 cursor-pointer ${
+                mobileMode ? 'order-2 text-[11px]' : 'order-2 sm:order-1'
+              }`}
+              title="Reset unlocked collection items"
+            >
+              <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Reset
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className={`flex gap-1.5 sm:gap-2 border-b border-purple-950/60 bg-slate-950/40 text-[11px] sm:text-xs overflow-x-auto ${mobileMode ? 'px-3 py-1.5' : 'px-6 pt-3 pb-2'}`}>
+          {(['WEAPONS', 'PASSIVES', 'CURSES', 'ENEMIES'] as const).map((tab) => (
+            <button
+              key={tab}
+              id={`collection-tab-${tab.toLowerCase()}`}
+              onClick={() => {
+                setActiveTab(tab);
+                setSelectedItem(null);
+              }}
+              className={`whitespace-nowrap px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${
+                activeTab === tab
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {tab === 'WEAPONS'
+                ? `Weapons ${unlockedWeapons.length}/${ALL_WEAPONS.length}`
+                : tab === 'PASSIVES'
+                ? `Artifacts ${unlockedItems.length}/${ALL_STAT_ITEMS.length}`
+                : tab === 'CURSES'
+                ? `Witch's Curses ${unlockedCurses.length}/${WITCH_DEALS.length}`
+                : `Enemies ${discoveredEnemiesCount}/${ENEMIES_DATA.length}`}
+            </button>
+          ))}
+        </div>
+
+        {/* Main Body:
+            SHOWS ONLY THE IMAGES OF THE ITEMS IN AN ORNATE GRID.
+            Description appears when hovered by cursor or tapped on mobile!
+        */}
+        <div className={`flex-1 overflow-y-auto flex flex-col justify-between ${mobileMode ? 'p-3 sm:p-5' : 'p-6 sm:p-8'}`}>
+          <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-2.5 sm:gap-4 justify-items-center">
+            {/* 1. Weapons */}
+            {activeTab === 'WEAPONS' &&
+              sortedWeapons.map((w) => {
+                const isDiscovered = unlockedWeapons.includes(w.id);
+                const isUnlocked = unlockedItemIds.includes(w.id);
+                const isLegendary = Boolean(w.isLegendary || w.unlockCondition);
+                const RealIcon = WEAPON_ICONS[w.icon] || Sparkles;
+
+                let DisplayIcon = RealIcon;
+                if (!isDiscovered) {
+                  DisplayIcon = isUnlocked ? HelpCircle : Lock;
+                }
+
+                const itemData: HoveredItemData = {
+                  id: w.id,
+                  name: w.name,
+                  category: 'WEAPON',
+                  isDiscovered,
+                  isUnlocked,
+                  isLegendary,
+                  description: w.description,
+                  unlockCondition: w.unlockCondition,
+                  shootingType: w.shootingType,
+                  bulletColor: w.bulletColor,
+                  icon: DisplayIcon,
+                  tiers: w.tiers,
+                };
+
+                const bgStyle = isLegendary
+                  ? isDiscovered
+                    ? `${w.bulletColor}22`
+                    : isUnlocked
+                    ? '#451a0333'
+                    : '#78350f25'
+                  : isDiscovered
+                  ? `${w.bulletColor}22`
+                  : isUnlocked
+                  ? '#13111c'
+                  : '#1e293b25';
+
+                const borderStyle = isLegendary
+                  ? '#fbbf24'
+                  : isDiscovered
+                  ? `${w.bulletColor}aa`
+                  : isUnlocked
+                  ? '#332a48'
+                  : '#475569';
+
+                return (
+                  <div
+                    key={w.id}
+                    id={`collection-item-${w.id}`}
+                    onClick={() => setSelectedItem(itemData)}
+                    className="relative group cursor-pointer flex flex-col items-center"
+                  >
+                    <div
+                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center transition-all duration-200 border-2 ${
+                        isLegendary
+                          ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/25 hover:scale-110 hover:shadow-amber-500/50 hover:ring-amber-300'
+                          : isDiscovered
+                          ? 'hover:scale-110 hover:shadow-2xl shadow-purple-950/80'
+                          : isUnlocked
+                          ? 'opacity-60 hover:opacity-100 hover:scale-105'
+                          : 'shadow-md shadow-slate-900 hover:scale-105'
+                      } ${selectedItem?.id === w.id ? 'ring-4 ring-purple-500 border-purple-400 scale-105' : ''}`}
+                      style={{
+                        backgroundColor: bgStyle,
+                        borderColor: selectedItem?.id === w.id ? '#a855f7' : borderStyle,
+                      }}
+                    >
+                      {isDiscovered ? (
+                        <RealIcon
+                          className="w-6 h-6 sm:w-8 sm:h-8 transition-transform group-hover:rotate-6"
+                          style={{ color: w.bulletColor }}
+                        />
+                      ) : isUnlocked ? (
+                        <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+                      ) : (
+                        <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+            {/* 2. Stat Passives / Artifacts */}
+            {activeTab === 'PASSIVES' &&
+              sortedStatItems.map((s) => {
+                const isDiscovered = unlockedItems.includes(s.id);
+                const isUnlocked = unlockedItemIds.includes(s.id);
+                const isLegendary = Boolean(s.isLegendary || s.unlockCondition);
+                const RealIcon = STAT_ICONS[s.icon] || Droplet;
+
+                let DisplayIcon = RealIcon;
+                if (!isDiscovered) {
+                  DisplayIcon = isUnlocked ? HelpCircle : Lock;
+                }
+
+                const itemData: HoveredItemData = {
+                  id: s.id,
+                  name: s.name,
+                  category: 'PASSIVE',
+                  isDiscovered,
+                  isUnlocked,
+                  isLegendary,
+                  description: s.description,
+                  unlockCondition: s.unlockCondition,
+                  bulletColor: s.color,
+                  icon: DisplayIcon,
+                  tiers: s.tiers,
+                };
+
+                const bgStyle = isLegendary
+                  ? isDiscovered
+                    ? `${s.color}22`
+                    : isUnlocked
+                    ? '#451a0333'
+                    : '#78350f25'
+                  : isDiscovered
+                  ? `${s.color}22`
+                  : isUnlocked
+                  ? '#13111c'
+                  : '#1e293b25';
+
+                const borderStyle = isLegendary
+                  ? '#fbbf24'
+                  : isDiscovered
+                  ? `${s.color}aa`
+                  : isUnlocked
+                  ? '#332a48'
+                  : '#475569';
+
+                const isSelected = selectedItem?.id === s.id;
+                return (
+                  <div
+                    key={s.id}
+                    id={`collection-item-${s.id}`}
+                    onClick={() => setSelectedItem(itemData)}
+                    className="relative group cursor-pointer flex flex-col items-center"
+                  >
+                    <div
+                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center transition-all duration-200 border-2 ${
+                        isLegendary
+                          ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/25 hover:scale-110 hover:shadow-amber-500/50 hover:ring-amber-300'
+                          : isDiscovered
+                          ? 'hover:scale-110 hover:shadow-2xl'
+                          : isUnlocked
+                          ? 'opacity-60 hover:opacity-100 hover:scale-105'
+                          : 'shadow-md shadow-slate-900 hover:scale-105'
+                      } ${isSelected ? 'ring-4 ring-purple-500 border-purple-400 scale-105' : ''}`}
+                      style={{
+                        backgroundColor: bgStyle,
+                        borderColor: isSelected ? '#a855f7' : borderStyle,
+                      }}
+                    >
+                      {isDiscovered ? (
+                        <RealIcon
+                          className="w-6 h-6 sm:w-8 sm:h-8 transition-transform group-hover:rotate-6"
+                          style={{ color: s.color }}
+                        />
+                      ) : isUnlocked ? (
+                        <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+                      ) : (
+                        <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+            {/* 3. Witch's Deals */}
+            {activeTab === 'CURSES' &&
+              sortedCurses.map((c) => {
+                const isDiscovered = unlockedCurses.includes(c.id);
+                const isUnlocked = unlockedItemIds.includes(c.id);
+                const isLegendary = Boolean(c.isLegendary || c.unlockCondition);
+                const RealIcon = CURSE_ICONS[c.icon] || Skull;
+
+                let DisplayIcon = RealIcon;
+                if (!isDiscovered) {
+                  DisplayIcon = isUnlocked ? HelpCircle : Lock;
+                }
+
+                const itemData: HoveredItemData = {
+                  id: c.id,
+                  name: c.title,
+                  category: 'CURSE',
+                  isDiscovered,
+                  isUnlocked,
+                  isLegendary,
+                  description: `${c.subtitle} — ${c.description}`,
+                  unlockCondition: c.unlockCondition,
+                  bulletColor: c.color,
+                  icon: DisplayIcon,
+                };
+
+                const bgStyle = isLegendary
+                  ? isDiscovered
+                    ? `${c.color}22`
+                    : isUnlocked
+                    ? '#451a0333'
+                    : '#78350f25'
+                  : isDiscovered
+                  ? `${c.color}22`
+                  : isUnlocked
+                  ? '#13111c'
+                  : '#1e293b25';
+
+                const borderStyle = isLegendary
+                  ? '#fbbf24'
+                  : isDiscovered
+                  ? `${c.color}aa`
+                  : isUnlocked
+                  ? '#332a48'
+                  : '#475569';
+
+                const isSelected = selectedItem?.id === c.id;
+                return (
+                  <div
+                    key={c.id}
+                    id={`collection-item-${c.id}`}
+                    onClick={() => setSelectedItem(itemData)}
+                    className="relative group cursor-pointer flex flex-col items-center"
+                  >
+                    <div
+                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center transition-all duration-200 border-2 ${
+                        isLegendary
+                          ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/25 hover:scale-110 hover:shadow-amber-500/50 hover:ring-amber-300'
+                          : isDiscovered
+                          ? 'hover:scale-110 hover:shadow-2xl shadow-rose-950/80'
+                          : isUnlocked
+                          ? 'opacity-60 hover:opacity-100 hover:scale-105'
+                          : 'shadow-md shadow-slate-900 hover:scale-105'
+                      } ${isSelected ? 'ring-4 ring-purple-500 border-purple-400 scale-105' : ''}`}
+                      style={{
+                        backgroundColor: bgStyle,
+                        borderColor: isSelected ? '#a855f7' : borderStyle,
+                      }}
+                    >
+                      {isDiscovered ? (
+                        <RealIcon
+                          className="w-6 h-6 sm:w-8 sm:h-8 transition-transform group-hover:rotate-6"
+                          style={{ color: c.color }}
+                        />
+                      ) : isUnlocked ? (
+                        <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+                      ) : (
+                        <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+            {/* 4. Enemies */}
+            {activeTab === 'ENEMIES' &&
+              ENEMIES_DATA.map((e) => {
+                const isSelected = selectedItem?.id === e.id;
+                const isDiscovered = unlockedEnemies?.includes(e.id) || false;
+                
+                let EnemyIcon = createNormalEnemyIcon(e.color);
+                if (e.id === 'carnivore_plant') EnemyIcon = CarnivorePlantIcon;
+                if (e.id === 'haunted_eye') EnemyIcon = HauntedEyeIcon;
+
+                const DisplayIcon = isDiscovered ? EnemyIcon : HelpCircle;
+
+                const bgStyle = '#00000040';
+                const borderStyle = e.isBoss ? '#fbbf24' : '#1e293b';
+
+                const itemData: HoveredItemData = {
+                  id: e.id,
+                  name: e.name,
+                  category: 'ENEMY',
+                  isDiscovered,
+                  isUnlocked: true,
+                  isLegendary: e.isBoss,
+                  description: e.description,
+                  unlockCondition: 'Defeat this enemy to reveal its stats.',
+                  icon: DisplayIcon,
+                  enemyStats: {
+                    damage: e.damage,
+                    maxHp: e.maxHp,
+                    speed: e.speed,
+                    attacks: e.attacks,
+                  },
+                };
+
+                return (
+                  <div
+                    key={e.id}
+                    onClick={() => setSelectedItem(itemData)}
+                    className="relative group cursor-pointer flex flex-col items-center"
+                  >
+                    <div
+                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center transition-all duration-200 border-2 ${
+                        e.isBoss
+                          ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/25 hover:scale-110 hover:shadow-amber-500/50 hover:ring-amber-300'
+                          : 'hover:scale-110 hover:shadow-2xl shadow-slate-900 shadow-md'
+                      } ${isSelected ? 'ring-4 ring-purple-500 border-purple-400 scale-105' : ''}`}
+                      style={{
+                        backgroundColor: bgStyle,
+                        borderColor: isSelected ? '#a855f7' : borderStyle,
+                      }}
+                    >
+                      {isDiscovered ? (
+                        <EnemyIcon className="w-6 h-6 sm:w-8 sm:h-8 transition-transform group-hover:scale-110" />
+                      ) : (
+                        <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+
+          {/* DYNAMIC DESCRIPTION PANEL */}
+          <div className={`${mobileMode ? 'mt-4 min-h-[90px] p-3' : 'mt-8 min-h-[120px] p-4'} rounded-2xl bg-slate-950/90 border border-purple-900/60 shadow-2xl flex items-center justify-center transition-all`}>
+            {selectedItem ? (
+              <div className="w-full flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 animate-in fade-in duration-150">
+                {/* Large Icon Box */}
+                <div
+                  className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center flex-shrink-0 border-2 ${
+                    selectedItem.isLegendary ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-md shadow-amber-500/25' : ''
+                  }`}
+                  style={{
+                    backgroundColor: selectedItem.isLegendary
+                      ? '#78350f25'
+                      : selectedItem.isDiscovered
+                      ? `${selectedItem.bulletColor || '#a855f7'}22`
+                      : selectedItem.isUnlocked
+                      ? '#1e1b4b33'
+                      : '#1e293b25',
+                    borderColor: selectedItem.isLegendary
+                      ? '#fbbf24'
+                      : selectedItem.isDiscovered
+                      ? `${selectedItem.bulletColor || '#a855f7'}aa`
+                      : selectedItem.isUnlocked
+                      ? '#3730a344'
+                      : '#475569',
+                  }}
+                >
+                  <selectedItem.icon
+                    className="w-6 h-6 sm:w-7 sm:h-7"
+                    style={{
+                      color: selectedItem.isDiscovered
+                        ? selectedItem.bulletColor || '#c084fc'
+                        : selectedItem.isLegendary
+                        ? '#fbbf24'
+                        : selectedItem.isUnlocked
+                        ? '#94a3b8'
+                        : '#fbbf24',
+                    }}
+                  />
+                </div>
+
+                {/* Description Text */}
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <h4 className="text-sm sm:text-lg font-bold text-slate-100 font-serif">
+                      {selectedItem.isDiscovered
+                        ? selectedItem.name
+                        : selectedItem.isUnlocked
+                        ? (selectedItem.category === 'WEAPON'
+                            ? 'Undiscovered Weapon'
+                            : selectedItem.category === 'PASSIVE'
+                            ? 'Undiscovered Artifact'
+                            : selectedItem.category === 'CURSE'
+                            ? 'Undiscovered Curse'
+                            : selectedItem.isLegendary
+                            ? 'Undiscovered Boss'
+                            : 'Undiscovered Enemy')
+                        : `Locked: ${selectedItem.name}`}
+                    </h4>
+
+                    {selectedItem.isLegendary && (
+                      <span className="text-[10px] sm:text-[11px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-sm shadow-amber-500/30">
+                        <Sparkles className="w-3 h-3 text-amber-400" /> {selectedItem.category === 'ENEMY' ? 'Boss Enemy' : 'Legendary Item'}
+                      </span>
+                    )}
+
+                    {selectedItem.isDiscovered ? (
+                      <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Discovered
+                      </span>
+                    ) : selectedItem.isUnlocked ? (
+                      <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 bg-stone-900 border border-stone-800 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                        <HelpCircle className="w-3 h-3" /> Undiscovered
+                      </span>
+                    ) : (
+                      <span className="text-[10px] sm:text-[11px] font-semibold text-amber-300 bg-amber-950/80 border border-amber-600/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> Locked
+                      </span>
+                    )}
+
+                    {selectedItem.isDiscovered && selectedItem.shootingType && (
+                      <span
+                        className={`text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
+                          getShootingTypeLabel(selectedItem.shootingType).color
+                        }`}
+                      >
+                        {getShootingTypeLabel(selectedItem.shootingType).label}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="text-xs sm:text-sm text-stone-300 leading-relaxed bg-black/40 p-2 sm:p-2.5 rounded-xl border border-stone-800 text-left">
+                    <p>
+                      {selectedItem.isDiscovered
+                        ? selectedItem.description
+                        : selectedItem.isUnlocked
+                        ? (selectedItem.category === 'ENEMY'
+                            ? 'Defeat this enemy in a run to unlock its details in the Collection!'
+                            : 'Collect this item in a run when leveling up to unlock it in the Collection!')
+                        : selectedItem.unlockCondition || 'Defeat the Carnivore Plant Boss to unlock.'}
+                    </p>
+                    {selectedItem.isDiscovered && selectedItem.category === 'ENEMY' && selectedItem.enemyStats && (
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-stone-400">
+                        <span>Damage: <span className="text-rose-400">{selectedItem.enemyStats.damage}</span></span>
+                        <span>Speed: <span className="text-sky-400">{selectedItem.enemyStats.speed}</span></span>
+                        <span>Base Max HP: <span className="text-emerald-400">{selectedItem.enemyStats.maxHp}</span></span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Info Button ("i") */}
+                {((selectedItem.category !== 'ENEMY' && selectedItem.category !== 'CURSE') || selectedItem.isLegendary) && (() => {
+                  const isBossLocked = selectedItem.category === 'ENEMY' && selectedItem.isLegendary && !selectedItem.isDiscovered;
+                  return (
+                    <button
+                      disabled={isBossLocked}
+                      onClick={() => setShowUpgradeInfo(true)}
+                      className={`flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl border flex items-center justify-center transition-all shadow-md self-center ${
+                        isBossLocked
+                          ? 'bg-slate-950/40 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
+                          : 'bg-purple-900/40 hover:bg-purple-800/60 border-purple-500/50 hover:border-purple-400 font-serif text-base sm:text-lg font-black text-amber-400 hover:text-amber-300 cursor-pointer'
+                      }`}
+                      title={
+                        isBossLocked
+                          ? "Defeat this Boss to unlock its information"
+                          : selectedItem.category === 'ENEMY'
+                          ? "View Boss Attacks"
+                          : "View Upgrade Details & Stats"
+                      }
+                    >
+                      {isBossLocked ? (
+                        <Lock className="w-4 h-4 text-slate-500" />
+                      ) : (
+                        'i'
+                      )}
+                    </button>
+                  );
+                })()}
+              </div>
+            ) : (
+              <div className="text-center text-stone-500 text-xs sm:text-sm italic flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-500/50" />
+                Click any item image above to select it and view its description
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* UPGRADE DETAILS SUB-MODAL */}
+        {showUpgradeInfo && selectedItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4 animate-in fade-in duration-200">
+            <div className={`w-full max-w-2xl bg-gradient-to-b from-stone-950 via-slate-950 to-stone-950 border-2 ${
+              selectedItem.isLegendary ? 'border-amber-500/80' : 'border-purple-500/60'
+            } rounded-2xl shadow-2xl p-6 relative text-slate-100 flex flex-col max-h-[85vh] ${
+              mobileMode ? 'p-4 max-h-[90vh]' : ''
+            }`}>
+              
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-stone-800 pb-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center border-2"
+                    style={{
+                      backgroundColor: selectedItem.isLegendary ? '#78350f22' : `${selectedItem.bulletColor || '#a855f7'}15`,
+                      borderColor: selectedItem.isLegendary ? '#fbbf24' : `${selectedItem.bulletColor || '#a855f7'}88`,
+                    }}
+                  >
+                    <selectedItem.icon
+                      className="w-5 h-5"
+                      style={{ color: selectedItem.isDiscovered ? selectedItem.bulletColor || '#c084fc' : '#94a3b8' }}
+                    />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-100 flex items-center gap-2 flex-wrap">
+                      {selectedItem.isDiscovered 
+                        ? selectedItem.name 
+                        : selectedItem.category === 'ENEMY'
+                        ? selectedItem.isLegendary
+                          ? '??? (Undiscovered Boss)'
+                          : '??? (Undiscovered Enemy)'
+                        : `??? (Locked Item)`}
+                      {selectedItem.isLegendary && (
+                        <span className="text-[10px] font-bold text-amber-300 bg-amber-950/80 border border-amber-500/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5 text-amber-400" /> Legendary
+                        </span>
+                      )}
+                    </h3>
+                    <p className="text-xs text-stone-400">
+                      Category: {selectedItem.category === 'WEAPON' ? 'Weapon' : selectedItem.category === 'PASSIVE' ? 'Artifact / Passive' : selectedItem.category === 'CURSE' ? 'Witch Curse' : 'Boss Enemy'}
+                    </p>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => setShowUpgradeInfo(false)}
+                  className="p-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-400 hover:text-stone-200 transition-colors border border-stone-800 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4 text-left">
+                 {/* Base Description */}
+                <div className="bg-stone-900/70 p-3 rounded-xl border border-stone-800 text-left">
+                  <h4 className="text-xs uppercase font-bold text-purple-400 mb-1 text-left">Base Description</h4>
+                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed text-left">
+                    {selectedItem.isDiscovered 
+                      ? selectedItem.description
+                      : selectedItem.isUnlocked
+                      ? (selectedItem.category === 'ENEMY'
+                          ? 'Defeat this enemy in a run to unlock its details in the Collection!'
+                          : 'Collect this item in a run when leveling up to unlock it in the Collection!')
+                      : selectedItem.unlockCondition || 'Complete a hidden achievement to unlock.'}
+                  </p>
+                </div>
+
+                {/* Stat Calculations Explanation Note */}
+                {selectedItem.category !== 'ENEMY' && (
+                  <div className="bg-purple-950/20 border border-purple-800/40 rounded-xl p-3 text-xs text-stone-300">
+                    <p className="font-semibold text-amber-300 mb-1">📊 Upgrade Stat Reference Info:</p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong>Rank 1 (Base):</strong> Displayed in absolute, starting numbers.</li>
+                      <li><strong>Subsequent Ranks:</strong> Displays only what that specific Rank adds (relative to the previous Rank).</li>
+                    </ul>
+                  </div>
+                )}
+
+                {/* Upgrades Tiers */}
+                {selectedItem.category !== 'ENEMY' && (
+                <div className="text-left">
+                  <h4 className="text-xs uppercase font-bold text-amber-400 mb-2 flex items-center gap-1 text-left">
+                    <Sparkles className="w-3.5 h-3.5" /> Upgrade Ranks & Stats
+                  </h4>
+                  {selectedItem.tiers && selectedItem.tiers.length > 0 ? (
+                    <div className="flex flex-col gap-2.5 text-left">
+                      {selectedItem.tiers.map((t: any, index: number) => {
+                        const statsList: string[] = [];
+                        const prevT = index > 0 ? selectedItem.tiers![index - 1] : null;
+
+                        if (selectedItem.category === 'WEAPON') {
+                          const baseWeapon = ALL_WEAPONS.find((w) => w.id === selectedItem.id);
+                          if (baseWeapon) {
+                            if (t.tier === 1) {
+                              // Base Rank (1) of each weapon - display stats as numbers
+                              statsList.push(`Damage: ${baseWeapon.baseDamage}`);
+                              statsList.push(`Cooldown: ${baseWeapon.baseInterval.toFixed(2)}s`);
+                              statsList.push(`Projectiles: ${baseWeapon.baseCount}`);
+                              statsList.push(`Size: ${baseWeapon.baseSize}px`);
+                              if (baseWeapon.basePierce !== undefined && baseWeapon.basePierce > 0) {
+                                statsList.push(`Pierce: ${baseWeapon.basePierce >= 999 ? '∞' : baseWeapon.basePierce}`);
+                              }
+                              if (baseWeapon.baseSpeed !== undefined && baseWeapon.baseSpeed > 0) {
+                                if (baseWeapon.id === 'grimoire_orbit') {
+                                  statsList.push(`Orbit Speed: ${baseWeapon.baseSpeed.toFixed(1)} rad/s`);
+                                } else {
+                                  statsList.push(`Velocity: ${baseWeapon.baseSpeed}px/s`);
+                                }
+                              }
+                            } else {
+                              // Rank > 1: Stats displayed as percentage of the previous rank (with projectile & pierce as exceptions)
+                              const currentD = baseWeapon.baseDamage + (t.damageBonus || 0);
+                              const prevD = baseWeapon.baseDamage + (prevT ? ((prevT as any).damageBonus || 0) : 0);
+                              const diffD = currentD - prevD;
+                              if (diffD > 0) {
+                                const pctD = Math.round((diffD / prevD) * 100);
+                                statsList.push(`Damage: +${pctD}%`);
+                              }
+
+                              const currentFRFactor = t.fireRateBonus || 1.0;
+                              const prevFRFactor = prevT ? ((prevT as any).fireRateBonus || 1.0) : 1.0;
+                              if (currentFRFactor !== prevFRFactor) {
+                                const pctFR = Math.round(((prevFRFactor / currentFRFactor) - 1) * 100);
+                                if (pctFR > 0) {
+                                  statsList.push(`Fire Rate: +${pctFR}%`);
+                                }
+                              }
+
+                              const currentSize = baseWeapon.baseSize + (t.sizeBonus || 0);
+                              const prevSize = baseWeapon.baseSize + (prevT ? ((prevT as any).sizeBonus || 0) : 0);
+                              const diffSize = currentSize - prevSize;
+                              if (diffSize > 0) {
+                                const pctSize = Math.round((diffSize / prevSize) * 100);
+                                statsList.push(`Size: +${pctSize}%`);
+                              }
+
+                              // Exceptions: absolute additions for projectiles and pierce
+                              const currentCount = t.countBonus || 0;
+                              const prevCount = prevT ? ((prevT as any).countBonus || 0) : 0;
+                              const diffCount = currentCount - prevCount;
+                              if (diffCount > 0) {
+                                statsList.push(`Projectiles: +${diffCount}`);
+                              }
+
+                              const currentPierce = t.pierceBonus || 0;
+                              const prevPierce = prevT ? ((prevT as any).pierceBonus || 0) : 0;
+                              const diffPierce = currentPierce - prevPierce;
+                              if (diffPierce > 0) {
+                                statsList.push(`Pierce: +${diffPierce}`);
+                              }
+                            }
+                          }
+                        } else if (selectedItem.category === 'PASSIVE') {
+                          if (t.tier === 1) {
+                            if (selectedItem.id === 'vampiric_chalice') {
+                              statsList.push(`Vampirism: ${Math.round(t.statValue * 100)}%`);
+                            } else if (selectedItem.id === 'medusas_eye') {
+                              // Handled entirely in text description
+                            } else if (selectedItem.id === 'broom_of_haste') {
+                              statsList.push(`Dash Cooldown: ${t.statValue}s`);
+                            } else if (selectedItem.id === 'blood_ruby') {
+                              statsList.push(`Max HP: +${t.statValue}`);
+                              statsList.push(`Regen: +0.5 HP/s`);
+                            } else if (selectedItem.id === 'rabbits_foot') {
+                              statsList.push(`Level Choices: +1`);
+                            } else if (selectedItem.id === 'destiny_control') {
+                              statsList.push(`Fate Selection: Enabled`);
+                            } else {
+                              const pct = Math.round((t.statValue - 1) * 100);
+                              const label = selectedItem.id === 'black_candle' ? 'All Damage' :
+                                            selectedItem.id === 'astral_lens' ? 'Spell Size' :
+                                            selectedItem.id === 'repulsion_talisman' ? 'Knockback' :
+                                            selectedItem.id === 'silver_slippers' ? 'Move Speed' :
+                                            selectedItem.id === 'magnet_orb' ? 'Pickup Radius' : 'Bonus';
+                              statsList.push(`${label}: +${pct}%`);
+                            }
+                          } else {
+                            // Rank > 1
+                            const prevVal = prevT ? (prevT as any).statValue : 1.0;
+                            const currVal = t.statValue;
+
+                            if (selectedItem.id === 'vampiric_chalice') {
+                              const diff = currVal - prevVal;
+                              if (diff > 0) {
+                                const pct = Math.round((diff / prevVal) * 100);
+                                statsList.push(`Vampirism: +${pct}%`);
+                              }
+                            } else if (selectedItem.id === 'medusas_eye') {
+                              // Handled entirely in text description
+                            } else if (selectedItem.id === 'broom_of_haste') {
+                              // Cooldown exception - absolute number
+                              const diff = prevVal - currVal;
+                              if (diff > 0) {
+                                statsList.push(`Cooldown: -${Math.round(diff * 10) / 10}s`);
+                              }
+                            } else if (selectedItem.id === 'blood_ruby') {
+                              // Max HP exception - absolute number
+                              const diff = currVal - prevVal;
+                              if (diff > 0) {
+                                statsList.push(`Max HP: +${diff}`);
+                              }
+                              // Regen changes based on current tier description
+                              if (t.tier === 4) statsList.push('Regen: +0.2 HP/s');
+                              else if (t.tier === 5) statsList.push('Regen: +0.1 HP/s');
+                              else if (t.tier === 6) statsList.push('Regen: +0.7 HP/s');
+                            } else if (selectedItem.id === 'rabbits_foot') {
+                              // Choices exception - absolute number
+                              const diff = currVal - prevVal;
+                              if (diff > 0) {
+                                statsList.push(`Deal Choices: +${diff}`);
+                              }
+                            } else if (selectedItem.id === 'destiny_control') {
+                              const diff = currVal - prevVal;
+                              if (diff > 0) {
+                                statsList.push(`Selection Options: +${diff}`);
+                              }
+                            } else {
+                              // Standard multipliers
+                              const pct = ((currVal / prevVal) - 1) * 100;
+                              if (pct > 0) {
+                                const label = selectedItem.id === 'black_candle' ? 'Damage' :
+                                              selectedItem.id === 'astral_lens' ? 'Spell Size' :
+                                              selectedItem.id === 'repulsion_talisman' ? 'Knockback' :
+                                              selectedItem.id === 'silver_slippers' ? 'Move Speed' :
+                                              selectedItem.id === 'magnet_orb' ? 'Pickup Radius' : 'Bonus';
+                                statsList.push(`${label}: +${Math.round(pct)}%`);
+                              }
+                            }
+                          }
+                        }
+
+                        return (
+                          <div
+                            key={t.tier}
+                            className="bg-stone-950/80 p-3 rounded-xl border border-stone-900 hover:border-purple-900/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-left"
+                          >
+                            <div className="min-w-0 text-left">
+                              <div className="flex items-center gap-2 text-left">
+                                <span className="text-xs font-mono font-bold text-purple-400 bg-purple-950/80 px-1.5 py-0.5 rounded border border-purple-800/40">
+                                  Rank {t.tier}
+                                </span>
+                              </div>
+                              <p className="text-xs text-stone-300 mt-1 text-left">{t.description}</p>
+                            </div>
+                            
+                            {statsList.length > 0 && (
+                              <div className="flex flex-wrap gap-1 sm:flex-col sm:items-end justify-start">
+                                {statsList.map((stat, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="text-[10px] font-mono font-bold text-amber-300 bg-amber-950/40 border border-amber-800/40 px-1.5 py-0.5 rounded"
+                                  >
+                                    {stat}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="bg-stone-950/80 p-4 rounded-xl border border-stone-900 text-center text-xs text-stone-500 italic">
+                      This selection does not possess upgrade tiers.
+                    </div>
+                  )}
+                </div>
+                )}
+
+                {selectedItem.category === 'ENEMY' && selectedItem.enemyStats?.attacks && (
+                  <div className="text-left mt-2">
+                    <h4 className="text-xs uppercase font-bold text-rose-400 mb-2 flex items-center gap-1 text-left">
+                      <Flame className="w-3.5 h-3.5" /> Boss Attacks
+                    </h4>
+                    <div className="flex flex-col gap-3">
+                      {selectedItem.enemyStats.attacks.map((atk, i) => (
+                        <div key={i} className="bg-stone-950/80 p-3 rounded-xl border border-rose-900/40">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-bold text-slate-200 text-sm">{atk.name}</span>
+                            <span className="text-xs font-mono font-bold text-amber-300 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-800/40">
+                              {atk.damage} DMG
+                            </span>
+                          </div>
+                          <p className="text-xs text-stone-400 leading-relaxed mb-2">{atk.description}</p>
+                          <div className="text-[10px] text-sky-300 font-mono flex items-center gap-1">
+                            <Wind className="w-3 h-3" /> Telegraph: {atk.telegraph}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reset Confirmation Dialog */}
+        {showResetConfirm && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+            <div className="w-full max-w-sm bg-slate-900 border-2 border-rose-500/80 rounded-2xl p-5 shadow-2xl shadow-rose-950/60 text-center flex flex-col gap-4">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-rose-950/80 border border-rose-500 flex items-center justify-center text-rose-400">
+                  <RotateCcw className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-serif font-bold text-slate-100">Reset Collection?</h3>
+                <p className="text-xs text-slate-300">
+                  Are you sure you want to reset all unlocked items in your collection? This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-2.5 justify-center mt-1">
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="flex-1 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors cursor-pointer border border-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    onResetCollection();
+                    setShowResetConfirm(false);
+                  }}
+                  className="flex-1 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors cursor-pointer shadow-lg shadow-rose-950/60"
+                >
+                  Yes, Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

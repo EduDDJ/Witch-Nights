@@ -1,0 +1,74 @@
+--- src/components/CollectionModal.tsx
++++ src/components/CollectionModal.tsx
+@@ -83,18 +83,101 @@
+   RotateCcw,
+ };
+ 
+-const createEnemyIcon = (color: string) => {
++const createNormalEnemyIcon = (color: string) => {
+   const Icon: React.FC<any> = (props) => (
+     <svg viewBox="0 0 24 24" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
+-      <circle cx="12" cy="12" r="10" fill={color} stroke="#1e293b" strokeWidth="2" />
++      <circle cx="12" cy="12" r="10" fill={color} />
++      <circle cx="8.5" cy="10" r="1.5" fill="#0f172a" />
++      <circle cx="15.5" cy="10" r="1.5" fill="#0f172a" />
+     </svg>
+   );
+   return Icon;
+ };
+ 
++const CarnivorePlantIcon: React.FC<any> = (props) => {
++  const color = props.style?.color || '#22c55e';
++  return (
++    <svg viewBox="0 0 40 40" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
++      {/* Petals */}
++      <ellipse cx="20" cy="7" rx="10" ry="5" fill="#047857" />
++      <ellipse cx="20" cy="33" rx="10" ry="5" fill="#047857" />
++      <ellipse cx="7" cy="20" rx="5" ry="10" fill="#047857" />
++      <ellipse cx="33" cy="20" rx="5" ry="10" fill="#047857" />
++      <ellipse cx="11" cy="11" rx="8" ry="4" transform="rotate(45 11 11)" fill="#047857" />
++      <ellipse cx="29" cy="29" rx="8" ry="4" transform="rotate(45 29 29)" fill="#047857" />
++      <ellipse cx="29" cy="11" rx="8" ry="4" transform="rotate(-45 29 11)" fill="#047857" />
++      <ellipse cx="11" cy="29" rx="8" ry="4" transform="rotate(-45 11 29)" fill="#047857" />
++      {/* Body */}
++      <circle cx="20" cy="20" r="11" fill={color} stroke="#86efac" strokeWidth="1.5" />
++      {/* Mouth */}
++      <ellipse cx="20" cy="18" rx="7.7" ry="4" fill="#450a0a" />
++      {/* Teeth */}
++      <path d="M 14 18 L 15 15 L 16 18 Z" fill="#fef08a" />
++      <path d="M 16 18 L 17 15 L 18 18 Z" fill="#fef08a" />
++      <path d="M 18 18 L 19 15 L 20 18 Z" fill="#fef08a" />
++      <path d="M 20 18 L 21 15 L 22 18 Z" fill="#fef08a" />
++      <path d="M 22 18 L 23 15 L 24 18 Z" fill="#fef08a" />
++      <path d="M 24 18 L 25 15 L 26 18 Z" fill="#fef08a" />
++      {/* Lower teeth */}
++      <path d="M 14 18 L 15 21 L 16 18 Z" fill="#fef08a" />
++      <path d="M 16 18 L 17 21 L 18 18 Z" fill="#fef08a" />
++      <path d="M 18 18 L 19 21 L 20 18 Z" fill="#fef08a" />
++      <path d="M 20 18 L 21 21 L 22 18 Z" fill="#fef08a" />
++      <path d="M 22 18 L 23 21 L 24 18 Z" fill="#fef08a" />
++      <path d="M 24 18 L 25 21 L 26 18 Z" fill="#fef08a" />
++      {/* Eyes */}
++      <circle cx="15" cy="14" r="3.5" fill="#facc15" />
++      <circle cx="25" cy="14" r="3.5" fill="#facc15" />
++      <circle cx="15" cy="14" r="1.5" fill="#7f1d1d" />
++      <circle cx="25" cy="14" r="1.5" fill="#7f1d1d" />
++    </svg>
++  );
++};
++
++const HauntedEyeIcon: React.FC<any> = (props) => {
++  const color = props.style?.color || '#dc2626';
++  return (
++    <svg viewBox="0 0 40 40" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
++      <ellipse cx="20" cy="20" rx="18" ry="9" fill="#2b0606" stroke="#991b1b" strokeWidth="2" />
++      <circle cx="20" cy="20" r="8.5" fill={color} />
++      <circle cx="20" cy="20" r="3.5" fill="#fef08a" />
++      <path d="M 20 15 L 20 25 M 15 20 L 25 20" stroke="#fef08a" strokeWidth="1" />
++      <circle cx="20" cy="20" r="1.5" fill="#000000" />
++    </svg>
++  );
++};
++
+ interface EnemyCollectionData {
+   id: string;

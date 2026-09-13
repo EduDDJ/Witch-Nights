@@ -1,0 +1,11 @@
+--- src/types/game.ts
++++ src/types/game.ts
+@@ -139,7 +139,7 @@
+   exp: number;
+   color: string;
+   name: string;
+-  type: 'BAT' | 'GHOUL' | 'WRAITH' | 'HELLHOUND' | 'NECROMANCER';
++  type: 'BAT' | 'GHOUL' | 'WRAITH';
+   vx: number;
+   vy: number;
+   hitFlashTimer: number;

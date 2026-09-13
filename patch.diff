@@ -1,0 +1,48 @@
+--- src/components/CollectionModal.tsx
++++ src/components/CollectionModal.tsx
+@@ -723,20 +723,29 @@
+                       </span>
+                     )}
+                   </div>
+-                  <p className="text-xs sm:text-sm text-stone-300 leading-relaxed bg-black/40 p-2 sm:p-2.5 rounded-xl border border-stone-800 text-left">
+-                    {selectedItem.isDiscovered
+-                      ? selectedItem.description
+-                      : selectedItem.isUnlocked
+-                      ? 'Collect this item in a run when leveling up to unlock it in the Collection!'
+-                      : selectedItem.unlockCondition || 'Defeat the Carnivore Plant Boss to unlock.'}
+-                  </p>
++                  <div className="text-xs sm:text-sm text-stone-300 leading-relaxed bg-black/40 p-2 sm:p-2.5 rounded-xl border border-stone-800 text-left">
++                    <p>
++                      {selectedItem.isDiscovered
++                        ? selectedItem.description
++                        : selectedItem.isUnlocked
++                        ? 'Collect this item in a run when leveling up to unlock it in the Collection!'
++                        : selectedItem.unlockCondition || 'Defeat the Carnivore Plant Boss to unlock.'}
++                    </p>
++                    {selectedItem.isDiscovered && selectedItem.category === 'ENEMY' && selectedItem.enemyStats && (
++                      <div className="mt-2 flex gap-4 text-xs font-semibold text-stone-400">
++                        <span>Damage: <span className="text-rose-400">{selectedItem.enemyStats.damage}</span></span>
++                        <span>Speed: <span className="text-sky-400">{selectedItem.enemyStats.speed}</span></span>
++                      </div>
++                    )}
++                  </div>
+                 </div>
+ 
+                 {/* Info Button ("i") */}
+-                <button
+-                  onClick={() => setShowUpgradeInfo(true)}
+-                  className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/50 hover:border-purple-400 flex items-center justify-center font-serif text-base sm:text-lg font-black text-amber-400 hover:text-amber-300 transition-all shadow-md cursor-pointer self-center"
+-                  title="View Upgrade Details & Stats"
+-                >
+-                  i
+-                </button>
++                {(selectedItem.category !== 'ENEMY' || selectedItem.isLegendary) && (
++                  <button
++                    onClick={() => setShowUpgradeInfo(true)}
++                    className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/50 hover:border-purple-400 flex items-center justify-center font-serif text-base sm:text-lg font-black text-amber-400 hover:text-amber-300 transition-all shadow-md cursor-pointer self-center"
++                    title={selectedItem.category === 'ENEMY' ? "View Boss Attacks" : "View Upgrade Details & Stats"}
++                  >
++                    i
++                  </button>
++                )}
+               </div>

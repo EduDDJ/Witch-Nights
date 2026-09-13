@@ -1,0 +1,44 @@
+--- src/components/CollectionModal.tsx
++++ src/components/CollectionModal.tsx
+@@ -822,6 +822,8 @@
+                   </p>
+                 </div>
+ 
++                {selectedItem.category !== 'ENEMY' && (
++                  <>
+                 {/* Stat Calculations Explanation Note */}
+                 <div className="bg-purple-950/20 border border-purple-800/40 rounded-xl p-3 text-xs text-stone-300">
+                   <p className="font-semibold text-amber-300 mb-1">📊 Upgrade Stat Reference Info:</p>
+@@ -1023,6 +1025,32 @@
+                     </div>
+                   )}
+                 </div>
++                  </>
++                )}
++
++                {selectedItem.category === 'ENEMY' && selectedItem.enemyStats?.attacks && (
++                  <div className="text-left mt-2">
++                    <h4 className="text-xs uppercase font-bold text-rose-400 mb-2 flex items-center gap-1 text-left">
++                      <Sword className="w-3.5 h-3.5" /> Boss Attacks
++                    </h4>
++                    <div className="flex flex-col gap-3">
++                      {selectedItem.enemyStats.attacks.map((atk, i) => (
++                        <div key={i} className="bg-stone-950/80 p-3 rounded-xl border border-rose-900/40">
++                          <div className="flex items-center justify-between mb-1">
++                            <span className="font-bold text-slate-200 text-sm">{atk.name}</span>
++                            <span className="text-xs font-mono font-bold text-amber-300 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-800/40">
++                              {atk.damage} DMG
++                            </span>
++                          </div>
++                          <p className="text-xs text-stone-400 leading-relaxed mb-2">{atk.description}</p>
++                          <div className="text-[10px] text-sky-300 font-mono flex items-center gap-1">
++                            <RotateCcw className="w-3 h-3" /> Telegraph: {atk.telegraph}
++                          </div>
++                        </div>
++                      ))}
++                    </div>
++                  </div>
++                )}
+               </div>
+             </div>
+           </div>

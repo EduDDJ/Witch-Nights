@@ -1,0 +1,6 @@
+{
+  "name": "Witch Nights",
+  "description": "A gothic top-down survival roguelike where you fight endless hordes of monsters, level up arcane weapons, collect occult artifacts, and accept the Witch's Deal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

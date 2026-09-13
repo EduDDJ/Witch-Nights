@@ -1,0 +1,27 @@
+--- src/components/GameCanvas.tsx
++++ src/components/GameCanvas.tsx
+@@ -791,24 +791,6 @@
+           speed = baseSpeed * 0.98;
+           damage = 10;
+           isRed = false;
+-        } else if (minutes >= 5.0 && roll > 0.88) {
+-          type = 'HELLHOUND';
+-          color = '#f97316';
+-          radius = 20;
+-          hp = baseHp * 2.8;
+-          name = 'Hellhound';
+-          speed = baseSpeed * 1.25;
+-          damage = 10;
+-          isRed = false;
+-        } else if (minutes >= 8.0 && roll > 0.94) {
+-          type = 'NECROMANCER';
+-          color = '#d946ef';
+-          radius = 26;
+-          hp = baseHp * 4.8;
+-          name = 'Arch-Necromancer';
+-          speed = baseSpeed * 0.72;
+-          damage = 10;
+-          isRed = false;
+         }
+ 
+         enemiesRef.current.push({
