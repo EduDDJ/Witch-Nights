@@ -79,8 +79,15 @@ const CURSE_ICONS: Record<string, React.ElementType> = {
 
 const PitchforkPeasantIcon: React.FC<any> = (props) => (
   <img
-    src={`${import.meta.env.BASE_URL}assets/aistudio/peasant_pitchfork.png`}
+    src="https://i.imgur.com/kKhEjFq.png"
     alt="Pitchfork Peasant"
+    crossOrigin="anonymous"
+    onError={(e) => {
+      const target = e.currentTarget;
+      if (!target.src.includes('peasant_pitchfork.png')) {
+        target.src = `${import.meta.env.BASE_URL}assets/aistudio/peasant_pitchfork.png`;
+      }
+    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
@@ -88,8 +95,15 @@ const PitchforkPeasantIcon: React.FC<any> = (props) => (
 
 const TorchPeasantIcon: React.FC<any> = (props) => (
   <img
-    src={`${import.meta.env.BASE_URL}assets/aistudio/peasant_torch.png`}
+    src="https://i.imgur.com/VMPhtDP.png"
     alt="Torch Peasant"
+    crossOrigin="anonymous"
+    onError={(e) => {
+      const target = e.currentTarget;
+      if (!target.src.includes('peasant_torch.png')) {
+        target.src = `${import.meta.env.BASE_URL}assets/aistudio/peasant_torch.png`;
+      }
+    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
@@ -97,8 +111,15 @@ const TorchPeasantIcon: React.FC<any> = (props) => (
 
 const VillageKnightIcon: React.FC<any> = (props) => (
   <img
-    src={`${import.meta.env.BASE_URL}assets/aistudio/village_knight.png`}
+    src="https://i.imgur.com/iHevmHN.png"
     alt="Village Knight"
+    crossOrigin="anonymous"
+    onError={(e) => {
+      const target = e.currentTarget;
+      if (!target.src.includes('village_knight.png')) {
+        target.src = `${import.meta.env.BASE_URL}assets/aistudio/village_knight.png`;
+      }
+    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />

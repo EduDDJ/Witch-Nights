@@ -214,27 +214,59 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     };
 
     const peasantImg = new Image();
-    peasantImg.src = `${import.meta.env.BASE_URL}assets/aistudio/peasant_pitchfork.png`;
+    peasantImg.crossOrigin = 'anonymous';
+    peasantImg.src = 'https://i.imgur.com/kKhEjFq.png';
     peasantImg.onload = () => {
       peasantImageRef.current = peasantImg;
     };
+    peasantImg.onerror = () => {
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/peasant_pitchfork.png`;
+      fallback.onload = () => {
+        peasantImageRef.current = fallback;
+      };
+    };
 
     const torchImg = new Image();
-    torchImg.src = `${import.meta.env.BASE_URL}assets/aistudio/peasant_torch.png`;
+    torchImg.crossOrigin = 'anonymous';
+    torchImg.src = 'https://i.imgur.com/VMPhtDP.png';
     torchImg.onload = () => {
       peasantTorchImageRef.current = torchImg;
     };
+    torchImg.onerror = () => {
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/peasant_torch.png`;
+      fallback.onload = () => {
+        peasantTorchImageRef.current = fallback;
+      };
+    };
 
     const knightImg = new Image();
-    knightImg.src = `${import.meta.env.BASE_URL}assets/aistudio/village_knight.png`;
+    knightImg.crossOrigin = 'anonymous';
+    knightImg.src = 'https://i.imgur.com/iHevmHN.png';
     knightImg.onload = () => {
       villageKnightImageRef.current = knightImg;
     };
+    knightImg.onerror = () => {
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/village_knight.png`;
+      fallback.onload = () => {
+        villageKnightImageRef.current = fallback;
+      };
+    };
 
     const groundImg = new Image();
-    groundImg.src = `${import.meta.env.BASE_URL}assets/aistudio/ground_tile.png`;
+    groundImg.crossOrigin = 'anonymous';
+    groundImg.src = 'https://i.imgur.com/qe0cqr1.png';
     groundImg.onload = () => {
       groundTileImageRef.current = groundImg;
+    };
+    groundImg.onerror = () => {
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/ground_tile.png`;
+      fallback.onload = () => {
+        groundTileImageRef.current = fallback;
+      };
     };
   }, []);
 
