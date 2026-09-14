@@ -1,7 +1,60 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Wind, Crosshair, Sparkles, X, Sliders, Smartphone, RotateCcw, Check, BookOpen } from 'lucide-react';
+import { Volume2, VolumeX, Wind, Crosshair, Sparkles, X, Sliders, Smartphone, RotateCcw, Check, BookOpen, Download, Loader2, Image as ImageIcon } from 'lucide-react';
+import JSZip from 'jszip';
 import { GameOptions, DashMode } from '../types/game';
 import { soundEngine } from '../utils/audio';
+
+export interface DownloadableAsset {
+  id: string;
+  name: string;
+  filename: string;
+  imgurUrl: string;
+  directUrl: string;
+  localPath: string;
+}
+
+export const ASSET_DOWNLOAD_FILES: DownloadableAsset[] = [
+  {
+    id: 'VEXYkzW',
+    name: 'Pitchfork Peasant',
+    filename: 'peasant_pitchfork.png',
+    imgurUrl: 'https://imgur.com/a/VEXYkzW',
+    directUrl: 'https://i.imgur.com/uvH316Y.png',
+    localPath: '/assets/downloads/peasant_pitchfork.png',
+  },
+  {
+    id: '2OlDOSQ',
+    name: 'Torch Peasant',
+    filename: 'peasant_torch.png',
+    imgurUrl: 'https://imgur.com/a/2OlDOSQ',
+    directUrl: 'https://i.imgur.com/kKhEjFq.png',
+    localPath: '/assets/downloads/peasant_torch.png',
+  },
+  {
+    id: 'A4uLXgD',
+    name: 'Village Knight',
+    filename: 'village_knight.png',
+    imgurUrl: 'https://imgur.com/a/A4uLXgD',
+    directUrl: 'https://i.imgur.com/VMPhtDP.png',
+    localPath: '/assets/downloads/village_knight.png',
+  },
+  {
+    id: 'XmJBDFi',
+    name: 'Carnivore Plant',
+    filename: 'carnivore_plant.png',
+    imgurUrl: 'https://imgur.com/a/XmJBDFi',
+    directUrl: 'https://i.imgur.com/qe0cqr1.png',
+    localPath: '/assets/downloads/carnivore_plant.png',
+  },
+  {
+    id: '7msjxyi',
+    name: 'NightBear',
+    filename: 'night_bear.png',
+    imgurUrl: 'https://imgur.com/a/7msjxyi',
+    directUrl: 'https://i.imgur.com/iHevmHN.png',
+    localPath: '/assets/downloads/night_bear.png',
+  },
+];
 
 interface OptionsModalProps {
   options: GameOptions;
@@ -21,6 +74,9 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
   const isMobile = options.mobileMode;
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [resetSuccess, setResetSuccess] = useState<boolean>(false);
+  const [isDownloadingZip, setIsDownloadingZip] = useState<boolean>(false);
+  const [downloadZipSuccess, setDownloadZipSuccess] = useState<boolean>(false);
+  const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
   const triggerReset = onResetProgress || onResetCollection;
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,6 +97,87 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
 
   const handleSelectDashMode = (mode: DashMode) => {
     onChangeOptions({ dashMode: mode });
+  };
+
+  const handleDownloadSingleFile = async (item: DownloadableAsset) => {
+    setDownloadingFileId(item.id);
+    try {
+      let blob: Blob | null = null;
+      try {
+        const res = await fetch(item.localPath);
+        if (res.ok) blob = await res.blob();
+      } catch (err) {
+        console.warn('Local path fetch error', err);
+      }
+      if (!blob) {
+        try {
+          const res = await fetch(item.directUrl);
+          if (res.ok) blob = await res.blob();
+        } catch (err) {
+          console.warn('Direct URL fetch error', err);
+        }
+      }
+      if (blob) {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = item.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      } else {
+        // Fallback: open URL
+        window.open(item.directUrl, '_blank');
+      }
+    } catch (err) {
+      console.error('Download single file error', err);
+      window.open(item.directUrl, '_blank');
+    } finally {
+      setTimeout(() => setDownloadingFileId(null), 1000);
+    }
+  };
+
+  const handleDownloadAllZip = async () => {
+    setIsDownloadingZip(true);
+    try {
+      const zip = new JSZip();
+      for (const item of ASSET_DOWNLOAD_FILES) {
+        let blob: Blob | null = null;
+        try {
+          const res = await fetch(item.localPath);
+          if (res.ok) blob = await res.blob();
+        } catch (err) {
+          console.warn('Local fetch error', err);
+        }
+        if (!blob) {
+          try {
+            const res = await fetch(item.directUrl);
+            if (res.ok) blob = await res.blob();
+          } catch (err) {
+            console.warn('Direct fetch error', err);
+          }
+        }
+        if (blob) {
+          zip.file(item.filename, blob);
+        }
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const blobUrl = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = 'witch_nights_sprites.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+      setDownloadZipSuccess(true);
+      setTimeout(() => setDownloadZipSuccess(false), 3500);
+    } catch (err) {
+      console.error('Error creating sprites zip:', err);
+    } finally {
+      setIsDownloadingZip(false);
+    }
   };
 
   return (
@@ -272,6 +409,82 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 <span>50% (Dark)</span>
                 <span>100% (Default)</span>
                 <span>150% (Bright)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* GAME ASSETS & SPRITES DOWNLOAD SECTION */}
+          <div className={`rounded-xl bg-purple-950/40 border border-purple-800/40 flex flex-col ${isMobile ? 'p-2.5 gap-2' : 'p-3.5 gap-2.5'}`}>
+            <div className="flex items-center justify-between">
+              <div className="font-semibold text-purple-200 flex items-center gap-2 text-xs sm:text-sm">
+                <Download className="w-4 h-4 text-amber-400" />
+                Game Sprites & Assets
+              </div>
+              {downloadZipSuccess && (
+                <span className="text-[10px] sm:text-xs text-emerald-400 font-mono flex items-center gap-1 animate-in fade-in">
+                  <Check className="w-3.5 h-3.5" /> Downloaded ZIP!
+                </span>
+              )}
+            </div>
+
+            <p className="text-[10px] sm:text-[11px] text-slate-400">
+              Download the 5 game character & enemy PNG sprite files (Pitchfork Peasant, Torch Peasant, Village Knight, Carnivore Plant, NightBear).
+            </p>
+
+            {/* Main ZIP Download Button */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+              <button
+                id="download-all-assets-btn"
+                type="button"
+                onClick={handleDownloadAllZip}
+                disabled={isDownloadingZip}
+                className="flex-1 py-2 px-3.5 rounded-xl bg-gradient-to-r from-amber-900/80 via-purple-900/80 to-indigo-900/80 hover:from-amber-800 hover:via-purple-800 hover:to-indigo-800 text-amber-200 hover:text-white font-bold text-xs sm:text-sm border border-amber-500/50 hover:border-amber-300 shadow-md shadow-purple-950/60 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
+              >
+                {isDownloadingZip ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
+                    <span>Packaging Sprites ZIP...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 text-amber-300" />
+                    <span>Download All 5 Files (.ZIP)</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Individual File Download Pills */}
+            <div className="pt-2 border-t border-purple-900/30 flex flex-col gap-1.5">
+              <div className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                <ImageIcon className="w-3 h-3 text-purple-400" />
+                <span>Or download individual PNGs:</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {ASSET_DOWNLOAD_FILES.map((item) => {
+                  const isDownloadingThis = downloadingFileId === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      id={`download-asset-${item.id}`}
+                      type="button"
+                      onClick={() => handleDownloadSingleFile(item)}
+                      disabled={isDownloadingThis}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-900/60 hover:bg-purple-950/80 border border-purple-900/40 hover:border-purple-600/70 text-slate-300 hover:text-white text-[11px] transition-all cursor-pointer group text-left"
+                      title={`Download ${item.filename}`}
+                    >
+                      <span className="truncate pr-1 font-medium">{item.name}</span>
+                      <span className="flex items-center gap-1 text-[9px] text-amber-400/90 group-hover:text-amber-300 shrink-0 font-mono bg-purple-950/80 px-1.5 py-0.5 rounded border border-purple-800/40">
+                        {isDownloadingThis ? (
+                          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                        ) : (
+                          <Download className="w-2.5 h-2.5" />
+                        )}
+                        PNG
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
