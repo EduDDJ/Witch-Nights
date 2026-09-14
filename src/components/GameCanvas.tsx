@@ -199,7 +199,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const peasantImageRef = useRef<HTMLImageElement | null>(null);
   const peasantTorchImageRef = useRef<HTMLImageElement | null>(null);
   const villageKnightImageRef = useRef<HTMLImageElement | null>(null);
-  const groundTileImageRef = useRef<HTMLImageElement | null>(null);
+  const groundTileImageRef = useRef<HTMLImageElement | HTMLCanvasElement | null>(null);
+  const miniEyeImageRef = useRef<HTMLImageElement | null>(null);
+  const nightBearImageRef = useRef<HTMLImageElement | null>(null);
+  const nightBearDizzyImageRef = useRef<HTMLImageElement | null>(null);
+  const rockThrowerImageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     const img = new Image();
@@ -211,7 +215,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     img.onerror = () => {
       // Fallback to local asset
       const fallback = new Image();
-      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/1789315841509.png`;
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/witch.png`;
       fallback.onload = () => {
         witchImageRef.current = fallback;
       };
@@ -259,6 +263,26 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       };
     };
 
+    // Procedural stone tile texture for instant seamless display with no network delay or CORS seams
+    const createProceduralGround = (): HTMLCanvasElement => {
+      const c = document.createElement('canvas');
+      c.width = 80;
+      c.height = 80;
+      const cctx = c.getContext('2d');
+      if (cctx) {
+        cctx.fillStyle = '#140c24';
+        cctx.fillRect(0, 0, 80, 80);
+        cctx.fillStyle = '#170f2b';
+        cctx.fillRect(4, 4, 72, 72);
+        cctx.fillStyle = '#1b1232';
+        cctx.fillRect(8, 8, 64, 64);
+        cctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
+        cctx.fillRect(12, 12, 56, 56);
+      }
+      return c;
+    };
+    groundTileImageRef.current = createProceduralGround();
+
     const groundImg = new Image();
     groundImg.crossOrigin = 'anonymous';
     groundImg.src = 'https://i.imgur.com/qe0cqr1.png';
@@ -270,6 +294,62 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/ground_tile.png`;
       fallback.onload = () => {
         groundTileImageRef.current = fallback;
+      };
+    };
+
+    const miniEyeImg = new Image();
+    miniEyeImg.crossOrigin = 'anonymous';
+    miniEyeImg.src = 'https://i.imgur.com/p2eqvL6.png';
+    miniEyeImg.onload = () => {
+      miniEyeImageRef.current = miniEyeImg;
+    };
+    miniEyeImg.onerror = () => {
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/mini_eye.png`;
+      fallback.onload = () => {
+        miniEyeImageRef.current = fallback;
+      };
+    };
+
+    const nightBearImg = new Image();
+    nightBearImg.crossOrigin = 'anonymous';
+    nightBearImg.src = 'https://i.imgur.com/Pjkp2on.png';
+    nightBearImg.onload = () => {
+      nightBearImageRef.current = nightBearImg;
+    };
+    nightBearImg.onerror = () => {
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/night_bear.png`;
+      fallback.onload = () => {
+        nightBearImageRef.current = fallback;
+      };
+    };
+
+    const nightBearDizzyImg = new Image();
+    nightBearDizzyImg.crossOrigin = 'anonymous';
+    nightBearDizzyImg.src = 'https://i.imgur.com/urcHgH1.png';
+    nightBearDizzyImg.onload = () => {
+      nightBearDizzyImageRef.current = nightBearDizzyImg;
+    };
+    nightBearDizzyImg.onerror = () => {
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/night_bear_dizzy.png`;
+      fallback.onload = () => {
+        nightBearDizzyImageRef.current = fallback;
+      };
+    };
+
+    const rockThrowerImg = new Image();
+    rockThrowerImg.crossOrigin = 'anonymous';
+    rockThrowerImg.src = 'https://i.imgur.com/Bxl3FnO.png';
+    rockThrowerImg.onload = () => {
+      rockThrowerImageRef.current = rockThrowerImg;
+    };
+    rockThrowerImg.onerror = () => {
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/rock_thrower.png`;
+      fallback.onload = () => {
+        rockThrowerImageRef.current = fallback;
       };
     };
   }, []);
@@ -295,6 +375,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   // Entities
   const enemiesRef = useRef<Enemy[]>([]);
   const projectilesRef = useRef<Projectile[]>([]);
+  const rockProjectilesRef = useRef<{ id: number; x: number; y: number; vx: number; vy: number; damage: number; radius: number; life: number; maxLife: number }[]>([]);
   const aoeZonesRef = useRef<AreaZone[]>([]);
   const novaPulsesRef = useRef<NovaPulse[]>([]);
   const expGemsRef = useRef<ExpGem[]>([]);
@@ -456,6 +537,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     if (survivalTime === 0) {
       enemiesRef.current = [];
       projectilesRef.current = [];
+      rockProjectilesRef.current = [];
       aoeZonesRef.current = [];
       novaPulsesRef.current = [];
       expGemsRef.current = [];
@@ -892,15 +974,36 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           speed = baseSpeed * 0.75;
           damage = 25; // 25 damage for Red enemy
           isRed = true;
-        } else if (Math.random() > 0.5) {
-          type = 'BAT';
-          color = '#a855f7';
-          radius = 13;
-          hp = Math.round(baseHp * 1.2); // 24 HP if base is 20
-          name = 'Pitchfork Peasant';
-          speed = baseSpeed * 1.15; // 1.15x speed
-          damage = 12;
-          isRed = false;
+        } else {
+          const subRoll = Math.random();
+          if (subRoll < 0.0625) {
+            type = 'ROCK_THROWER';
+            color = '#d97706';
+            radius = 14;
+            hp = Math.round(baseHp * 1.25); // 25 HP when base is 20
+            name = 'Rock Thrower';
+            speed = baseSpeed * 0.85; // 0.85x speed
+            damage = 20; // 20 damage
+            isRed = false;
+          } else if (subRoll < 0.53125) {
+            type = 'BAT';
+            color = '#a855f7';
+            radius = 13;
+            hp = baseHp; // 20 HP when base is 20
+            name = 'Pitchfork Peasant';
+            speed = baseSpeed * 1.15; // 1.15x speed
+            damage = 12;
+            isRed = false;
+          } else {
+            type = 'WRAITH';
+            color = '#38bdf8';
+            radius = 13;
+            hp = baseHp; // Base 20 HP
+            name = 'Torch Peasant';
+            speed = baseSpeed * 1.0;
+            damage = 10;
+            isRed = false;
+          }
         }
 
         enemiesRef.current.push({
@@ -923,6 +1026,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           attackCooldown: 0,
           isRed,
           facingDir: (p.x - ex) < 0 ? -1 : 1,
+          rockThrowTimer: 3.5 + Math.random() * 2.0,
+          targetDistance: 220 + Math.random() * 40,
         });
       }
     }
@@ -2237,14 +2342,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const mult = grimoireWeapon.statsMultiplier || 1.0;
         const levelBonusMult = 1 + (grimoireWeapon.level - 1) * 0.10;
         const damage = (def.baseDamage + tier.damageBonus) * p.damageMult * mult * levelBonusMult;
-        const orbitRadius = (90 + (tier.sizeBonus || 0) * 1.5) * p.projectileSizeMult;
+        const orbitRadius = (42 + (tier.sizeBonus || 0) * 1.2) * p.projectileSizeMult;
         const bookCount = Math.min(3, def.baseCount + tier.countBonus);
 
         for (let i = 0; i < bookCount; i++) {
           const bAngle = orbitAngleRef.current + (i / bookCount) * Math.PI * 2;
           const bx = p.x + Math.cos(bAngle) * orbitRadius;
           const by = p.y + Math.sin(bAngle) * orbitRadius;
-          const bookRadius = (16 + (tier.sizeBonus || 0) * 0.6) * p.projectileSizeMult;
+          const bookRadius = (11 + (tier.sizeBonus || 0) * 0.4) * p.projectileSizeMult;
 
           // Check collision with enemies
           enemiesRef.current.forEach((enemy) => {
@@ -2666,6 +2771,60 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
       }
 
+      // Update Rock Thrower Projectiles
+      for (let i = rockProjectilesRef.current.length - 1; i >= 0; i--) {
+        const rock = rockProjectilesRef.current[i];
+        rock.x += rock.vx * dt;
+        rock.y += rock.vy * dt;
+        rock.life += dt;
+
+        // Player hit check
+        const distToP = Math.hypot(p.x - rock.x, p.y - rock.y);
+        if (distToP <= p.radius + rock.radius) {
+          if (!p.isDashing) {
+            p.hp = Math.max(0, p.hp - rock.damage);
+            lastReportedHpRef.current = p.hp;
+            onUpdatePlayer({ hp: p.hp });
+            soundEngine.playPlayerHurt();
+
+            if (screenShakeEnabledRef.current) {
+              screenShakeRef.current = 6;
+            }
+
+            floatingTextsRef.current.push({
+              id: nextEntityId.current++,
+              x: p.x + (Math.random() - 0.5) * 16,
+              y: p.y - 18,
+              text: `-${Math.round(rock.damage)}`,
+              color: '#d97706',
+              life: 0,
+              maxLife: 0.75,
+              vy: -40,
+            });
+
+            if (p.hp <= 0) {
+              p.hp = 0;
+              lastReportedHpRef.current = 0;
+              onUpdatePlayer({ hp: 0 });
+              onGameOver({
+                time: survivalTimeRef.current,
+                level: p.level,
+                kills: killsCountRef.current,
+                bossesKilled: bossesKilledRef.current,
+                killerName: 'Rock Thrower',
+              });
+              return;
+            }
+          }
+          rockProjectilesRef.current.splice(i, 1);
+          continue;
+        }
+
+        if (rock.life >= rock.maxLife) {
+          rockProjectilesRef.current.splice(i, 1);
+        }
+      }
+
       // Update Enemies & Check Player Hurt
       const medusaItem = statItemsRef.current.find((s) => s.id === 'medusas_eye');
       const medusaRadius = medusaItem ? 20 + medusaItem.level * 20 : 0;
@@ -2688,6 +2847,38 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         // Vine root duration timer
         if (enemy.vineRootedDuration && enemy.vineRootedDuration > 0) {
           enemy.vineRootedDuration -= dt;
+        }
+
+        // Rock Thrower AI & Attack logic
+        if (enemy.type === 'ROCK_THROWER' && (!enemy.vineRootedDuration || enemy.vineRootedDuration <= 0)) {
+          if (enemy.rockTelegraphTimer && enemy.rockTelegraphTimer > 0) {
+            enemy.rockTelegraphTimer -= dt;
+            enemy.targetAngle = Math.atan2(p.y - enemy.y, p.x - enemy.x);
+            if (enemy.rockTelegraphTimer <= 0) {
+              const throwAngle = enemy.targetAngle;
+              const rockSpeed = 380;
+              rockProjectilesRef.current.push({
+                id: nextEntityId.current++,
+                x: enemy.x,
+                y: enemy.y,
+                vx: Math.cos(throwAngle) * rockSpeed,
+                vy: Math.sin(throwAngle) * rockSpeed,
+                damage: enemy.damage || 20,
+                radius: 6,
+                life: 0,
+                maxLife: 4.0,
+              });
+              soundEngine.playShoot('wisp');
+              enemy.rockThrowTimer = 4.5 + Math.random() * 1.5;
+              enemy.rockTelegraphTimer = undefined;
+            }
+          } else {
+            enemy.rockThrowTimer = (enemy.rockThrowTimer !== undefined ? enemy.rockThrowTimer : 4.0) - dt;
+            if (enemy.rockThrowTimer <= 0) {
+              enemy.rockTelegraphTimer = 1.0;
+              enemy.targetAngle = Math.atan2(p.y - enemy.y, p.x - enemy.x);
+            }
+          }
         }
 
         // Apply knockback velocity recoil
@@ -2717,8 +2908,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
         // Advance towards player if not in initial heavy knockback stun and not vine rooted
         if (edist > 0 && (!enemy.attackCooldown || enemy.attackCooldown < 0.6) && (!enemy.vineRootedDuration || enemy.vineRootedDuration <= 0)) {
-          enemy.x += (edx / edist) * currentEnemySpeed * dt;
-          enemy.y += (edy / edist) * currentEnemySpeed * dt;
+          if (enemy.type === 'ROCK_THROWER') {
+            const isTelegraphing = enemy.rockTelegraphTimer && enemy.rockTelegraphTimer > 0;
+            if (!isTelegraphing) {
+              const targetDist = enemy.targetDistance || 230;
+              if (edist > targetDist + 15) {
+                enemy.x += (edx / edist) * currentEnemySpeed * dt;
+                enemy.y += (edy / edist) * currentEnemySpeed * dt;
+              } else if (edist < targetDist - 15) {
+                enemy.x -= (edx / edist) * currentEnemySpeed * 0.75 * dt;
+                enemy.y -= (edy / edist) * currentEnemySpeed * 0.75 * dt;
+              }
+            }
+          } else {
+            enemy.x += (edx / edist) * currentEnemySpeed * dt;
+            enemy.y += (edy / edist) * currentEnemySpeed * dt;
+          }
         }
       }
 
@@ -2884,14 +3089,19 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               vy: -40,
             });
 
-            // Knockback the enemy away from the player
-            const angle = edist > 0.001 ? Math.atan2(enemy.y - p.y, enemy.x - p.x) : Math.random() * Math.PI * 2;
-            const pushDist = 70;
-            enemy.x = p.x + Math.cos(angle) * (p.radius + enemy.radius + pushDist);
-            enemy.y = p.y + Math.sin(angle) * (p.radius + enemy.radius + pushDist);
-            enemy.vx = Math.cos(angle) * 450;
-            enemy.vy = Math.sin(angle) * 450;
-            enemy.attackCooldown = 0.85; // Recovers and cannot damage again until cooldown resets
+            // Mini Eye self-destructs / dies immediately upon touching and damaging the player
+            if (enemy.type === 'MINI_EYE') {
+              enemy.hp = 0;
+            } else {
+              // Knockback the enemy away from the player
+              const angle = edist > 0.001 ? Math.atan2(enemy.y - p.y, enemy.x - p.x) : Math.random() * Math.PI * 2;
+              const pushDist = 70;
+              enemy.x = p.x + Math.cos(angle) * (p.radius + enemy.radius + pushDist);
+              enemy.y = p.y + Math.sin(angle) * (p.radius + enemy.radius + pushDist);
+              enemy.vx = Math.cos(angle) * 450;
+              enemy.vy = Math.sin(angle) * 450;
+              enemy.attackCooldown = 0.85; // Recovers and cannot damage again until cooldown resets
+            }
 
             if (p.hp <= 0) {
               p.hp = 0;
@@ -2923,7 +3133,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             onEnemyDefeated(
               enemy.type === 'BAT' ? 'bat' :
               enemy.type === 'GHOUL' ? 'ghoul' : 
-              enemy.type === 'MINI_EYE' ? 'mini_eye' : 'wraith'
+              enemy.type === 'MINI_EYE' ? 'mini_eye' :
+              enemy.type === 'ROCK_THROWER' ? 'rock_thrower' : 'wraith'
             );
           }
 
@@ -3251,36 +3462,62 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // 1. Endless Open-World Ground Pattern
-      const tileSize = 80;
-      const startCol = Math.floor(cameraX / tileSize) - 1;
-      const endCol = startCol + Math.ceil(canvas.width / tileSize) + 2;
-      const startRow = Math.floor(cameraY / tileSize) - 1;
-      const endRow = startRow + Math.ceil(canvas.height / tileSize) + 2;
-
       ctx.save();
+      // Base background fill so there are no transparent gaps
+      ctx.fillStyle = '#140c24';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const tileSize = 80;
       const groundImg = groundTileImageRef.current;
+
+      let patternDrawn = false;
       if (groundImg) {
-        ctx.imageSmoothingEnabled = false;
-        for (let col = startCol; col <= endCol; col++) {
-          for (let row = startRow; row <= endRow; row++) {
-            const screenX = col * tileSize - cameraX;
-            const screenY = row * tileSize - cameraY;
-            ctx.drawImage(groundImg, screenX, screenY, tileSize, tileSize);
+        try {
+          const pattern = ctx.createPattern(groundImg, 'repeat');
+          if (pattern && typeof (pattern as any).setTransform === 'function') {
+            const matrix = new DOMMatrix();
+            matrix.translateSelf(-cameraX, -cameraY);
+            (pattern as any).setTransform(matrix);
+            ctx.fillStyle = pattern;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            patternDrawn = true;
+          }
+        } catch {
+          patternDrawn = false;
+        }
+
+        if (!patternDrawn) {
+          const startCol = Math.floor(cameraX / tileSize) - 1;
+          const endCol = startCol + Math.ceil(canvas.width / tileSize) + 2;
+          const startRow = Math.floor(cameraY / tileSize) - 1;
+          const endRow = startRow + Math.ceil(canvas.height / tileSize) + 2;
+
+          for (let col = startCol; col <= endCol; col++) {
+            for (let row = startRow; row <= endRow; row++) {
+              const screenX = Math.floor(col * tileSize - cameraX);
+              const screenY = Math.floor(row * tileSize - cameraY);
+              // +1 pixel overlap prevents subpixel hairline seams on mobile high-DPI screens
+              ctx.drawImage(groundImg, screenX, screenY, tileSize + 1, tileSize + 1);
+            }
           }
         }
+
         // Darken the ground texture a bit for improved contrast and atmosphere
         ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       } else {
+        const startCol = Math.floor(cameraX / tileSize) - 1;
+        const endCol = startCol + Math.ceil(canvas.width / tileSize) + 2;
+        const startRow = Math.floor(cameraY / tileSize) - 1;
+        const endRow = startRow + Math.ceil(canvas.height / tileSize) + 2;
+
         for (let col = startCol; col <= endCol; col++) {
           for (let row = startRow; row <= endRow; row++) {
-            const screenX = col * tileSize - cameraX;
-            const screenY = row * tileSize - cameraY;
-            ctx.fillStyle = '#0c0816';
-            ctx.fillRect(screenX, screenY, tileSize, tileSize);
-            ctx.strokeStyle = '#1d152c';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(screenX, screenY, tileSize, tileSize);
+            const screenX = Math.floor(col * tileSize - cameraX);
+            const screenY = Math.floor(row * tileSize - cameraY);
+            const isAlt = (Math.abs(col) + Math.abs(row)) % 2 === 0;
+            ctx.fillStyle = isAlt ? '#140c24' : '#11091f';
+            ctx.fillRect(screenX, screenY, tileSize + 1, tileSize + 1);
           }
         }
       }
@@ -3912,16 +4149,49 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.restore();
       });
 
+      // Render Rock Thrower Projectiles
+      rockProjectilesRef.current.forEach((rock) => {
+        const sx = rock.x - cameraX;
+        const sy = rock.y - cameraY;
+
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(rock.life * 9);
+
+        // Shadow beneath rock
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(0, 6, rock.radius, rock.radius * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Jagged boulder body
+        ctx.fillStyle = '#78716c';
+        ctx.strokeStyle = '#292524';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, rock.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Highlight
+        ctx.fillStyle = '#d6d3d1';
+        ctx.beginPath();
+        ctx.arc(-2, -2, rock.radius * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      });
+
       // 5. Render Orbiting Grimoires (if equipped)
       if (grimoireWeapon) {
         const def = ALL_WEAPONS.find((w) => w.id === 'grimoire_orbit')!;
         const tier = def.tiers.find((t) => t.tier === grimoireWeapon.level) || def.tiers[0];
         const bookCount = Math.min(3, def.baseCount + tier.countBonus);
-        const orbitRadius = (90 + (tier.sizeBonus || 0) * 1.5) * p.projectileSizeMult;
+        const orbitRadius = (42 + (tier.sizeBonus || 0) * 1.2) * p.projectileSizeMult;
         const playerScreenX = p.x - cameraX;
         const playerScreenY = p.y - cameraY;
-        const bw = (10 + (tier.sizeBonus || 0) * 0.4) * p.projectileSizeMult;
-        const bh = (14 + (tier.sizeBonus || 0) * 0.6) * p.projectileSizeMult;
+        const bw = (6.5 + (tier.sizeBonus || 0) * 0.3) * p.projectileSizeMult;
+        const bh = (9.5 + (tier.sizeBonus || 0) * 0.4) * p.projectileSizeMult;
 
         for (let i = 0; i < bookCount; i++) {
           const bAngle = orbitAngleRef.current + (i / bookCount) * Math.PI * 2;
@@ -4013,30 +4283,154 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.drawImage(img, -width / 2, -height / 2, width, height);
           ctx.restore();
         } else if (isMiniEye) {
-          // Draw Mini Eye
+          // Draw Mini Eye with new model
           ctx.save();
-          if (enemy.hitFlashTimer > 0) {
-            ctx.fillStyle = '#ffffff';
+          const miniEyeImg = miniEyeImageRef.current;
+          const eyeSize = enemy.radius * 2.5;
+          if (miniEyeImg && miniEyeImg.complete && miniEyeImg.naturalWidth > 0) {
+            ctx.translate(sx, sy);
+            ctx.imageSmoothingEnabled = false;
+            if (enemy.hitFlashTimer > 0) {
+              ctx.filter = 'brightness(300%)';
+            }
+            ctx.drawImage(miniEyeImg, -eyeSize / 2, -eyeSize / 2, eyeSize, eyeSize);
           } else {
-            ctx.fillStyle = '#2b0606';
+            if (enemy.hitFlashTimer > 0) {
+              ctx.fillStyle = '#ffffff';
+            } else {
+              ctx.fillStyle = '#2b0606';
+            }
+            ctx.strokeStyle = '#991b1b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(sx, sy, enemy.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Pupil
+            ctx.fillStyle = enemy.color;
+            ctx.beginPath();
+            ctx.arc(sx, sy, enemy.radius * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(sx, sy, enemy.radius * 0.2, 0, Math.PI * 2);
+            ctx.fill();
           }
-          ctx.strokeStyle = '#991b1b';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(sx, sy, enemy.radius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
+          ctx.restore();
+        } else if (enemy.type === 'ROCK_THROWER') {
+          // Draw Rock Thrower
+          ctx.save();
 
-          // Pupil
-          ctx.fillStyle = enemy.color;
-          ctx.beginPath();
-          ctx.arc(sx, sy, enemy.radius * 0.5, 0, Math.PI * 2);
-          ctx.fill();
+          // If telegraphing, render dashed line & warning target towards player
+          const isTelegraphing = enemy.rockTelegraphTimer !== undefined && enemy.rockTelegraphTimer > 0;
+          if (isTelegraphing) {
+            const progress = 1 - (enemy.rockTelegraphTimer! / 1.0);
+            const targetAng = enemy.targetAngle !== undefined ? enemy.targetAngle : Math.atan2(p.y - enemy.y, p.x - enemy.x);
+            const lineLen = 240;
+            const endX = sx + Math.cos(targetAng) * lineLen;
+            const endY = sy + Math.sin(targetAng) * lineLen;
 
-          ctx.fillStyle = '#000000';
-          ctx.beginPath();
-          ctx.arc(sx, sy, enemy.radius * 0.2, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.save();
+            ctx.strokeStyle = `rgba(239, 68, 68, ${0.35 + progress * 0.5})`;
+            ctx.lineWidth = 2 + progress * 2.5;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            // Telegraph circle at target
+            ctx.fillStyle = `rgba(239, 68, 68, ${0.15 + progress * 0.35})`;
+            ctx.beginPath();
+            ctx.arc(endX, endY, 14 * progress + 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          const rockImg = rockThrowerImageRef.current;
+          if (rockImg && rockImg.complete && rockImg.naturalWidth > 0) {
+            const width = enemy.radius * 2 * 1.5;
+            const height = width * (rockImg.naturalHeight / rockImg.naturalWidth || 1.0);
+
+            ctx.save();
+            ctx.translate(sx, sy);
+
+            const facing = enemy.facingDir !== undefined ? enemy.facingDir : (p.x - enemy.x < 0 ? -1 : 1);
+            if (facing < 0) {
+              ctx.scale(-1, 1);
+            }
+
+            ctx.imageSmoothingEnabled = false;
+            if (enemy.hitFlashTimer > 0) {
+              ctx.filter = 'brightness(300%)';
+            }
+            ctx.drawImage(rockImg, -width / 2, -height / 2, width, height);
+            ctx.restore();
+
+            // If telegraphing, render charged rock glowing in hand
+            if (isTelegraphing) {
+              const rockOffsetAngle = enemy.targetAngle !== undefined ? enemy.targetAngle : (p.x - enemy.x < 0 ? Math.PI : 0);
+              const rx = sx + Math.cos(rockOffsetAngle) * (enemy.radius + 6);
+              const ry = sy + Math.sin(rockOffsetAngle) * (enemy.radius + 6);
+
+              ctx.fillStyle = '#f59e0b';
+              ctx.shadowColor = '#ef4444';
+              ctx.shadowBlur = 10;
+              ctx.beginPath();
+              ctx.arc(rx, ry, 6.5, 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.strokeStyle = '#ef4444';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.arc(rx, ry, 9 + Math.sin(performance.now() * 0.02) * 2, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          } else {
+            if (enemy.hitFlashTimer > 0) {
+              ctx.fillStyle = '#ffffff';
+            } else {
+              ctx.fillStyle = '#d97706';
+            }
+
+            ctx.shadowColor = '#d97706';
+            ctx.shadowBlur = 6;
+
+            ctx.beginPath();
+            ctx.arc(sx, sy, enemy.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Face / Eyes
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(sx - enemy.radius * 0.35, sy - 2, 2.5, 0, Math.PI * 2);
+            ctx.arc(sx + enemy.radius * 0.35, sy - 2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rock held in hand
+            const rockOffsetAngle = isTelegraphing ? (enemy.targetAngle || 0) : (p.x - enemy.x < 0 ? Math.PI : 0);
+            const rx = sx + Math.cos(rockOffsetAngle) * (enemy.radius + 4);
+            const ry = sy + Math.sin(rockOffsetAngle) * (enemy.radius + 4);
+
+            ctx.fillStyle = isTelegraphing ? '#f59e0b' : '#78716c';
+            ctx.strokeStyle = '#44403c';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(rx, ry, isTelegraphing ? 6.5 : 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            if (isTelegraphing) {
+              ctx.strokeStyle = '#ef4444';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.arc(rx, ry, 9 + Math.sin(performance.now() * 0.02) * 2, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          }
+
           ctx.restore();
         } else {
           // Hit flash white
@@ -4202,8 +4596,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           const isTelegraph = nightBearStateRef.current === 'TELEGRAPH';
           
           // Aura
-          ctx.shadowColor = isFlashing ? '#ffffff' : (isCharging ? '#ef4444' : '#3b2f2f');
-          ctx.shadowBlur = isCharging ? 30 : 15;
+          ctx.shadowColor = isFlashing ? '#ffffff' : (isCharging ? '#ef4444' : isDizzy ? '#38bdf8' : '#3b2f2f');
+          ctx.shadowBlur = isCharging ? 30 : isDizzy ? 20 : 15;
 
           // Shake if charging or telegraphing
           let offsetX = 0;
@@ -4213,65 +4607,110 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             offsetY = (Math.random() - 0.5) * 6;
           }
 
-          // Main body (Hulking Beast)
-          ctx.fillStyle = isFlashing ? '#ffffff' : '#1c1917';
-          ctx.beginPath();
-          ctx.arc(bx + offsetX, by + offsetY, r * 1.2, 0, Math.PI * 2);
-          ctx.fill();
+          const bearImg = isDizzy ? nightBearDizzyImageRef.current : nightBearImageRef.current;
+          const bearSize = r * 2.5;
 
-          // Ears
-          ctx.fillStyle = isFlashing ? '#ffffff' : '#1c1917';
-          ctx.beginPath();
-          ctx.arc(bx + offsetX - r * 0.7, by + offsetY - r * 0.8, r * 0.4, 0, Math.PI * 2);
-          ctx.arc(bx + offsetX + r * 0.7, by + offsetY - r * 0.8, r * 0.4, 0, Math.PI * 2);
-          ctx.fill();
+          if (bearImg && bearImg.complete && bearImg.naturalWidth > 0) {
+            ctx.save();
+            ctx.translate(bx + offsetX, by + offsetY);
+            ctx.imageSmoothingEnabled = false;
 
-          // Eyes
-          if (isDizzy) {
-            // X Eyes
-            ctx.strokeStyle = '#f87171';
-            ctx.lineWidth = 3;
-            // Left X
-            ctx.beginPath();
-            ctx.moveTo(bx + offsetX - r * 0.5, by + offsetY - r * 0.2);
-            ctx.lineTo(bx + offsetX - r * 0.2, by + offsetY + r * 0.1);
-            ctx.moveTo(bx + offsetX - r * 0.2, by + offsetY - r * 0.2);
-            ctx.lineTo(bx + offsetX - r * 0.5, by + offsetY + r * 0.1);
-            ctx.stroke();
-            // Right X
-            ctx.beginPath();
-            ctx.moveTo(bx + offsetX + r * 0.2, by + offsetY - r * 0.2);
-            ctx.lineTo(bx + offsetX + r * 0.5, by + offsetY + r * 0.1);
-            ctx.moveTo(bx + offsetX + r * 0.5, by + offsetY - r * 0.2);
-            ctx.lineTo(bx + offsetX + r * 0.2, by + offsetY + r * 0.1);
-            ctx.stroke();
+            // Flip horizontally based on movement/player direction
+            const facingLeft = (isCharging || isTelegraph)
+              ? Math.cos(nightBearChargeAngleRef.current) < 0
+              : p.x < boss.x;
+            if (facingLeft) {
+              ctx.scale(-1, 1);
+            }
+
+            if (isFlashing) {
+              ctx.filter = 'brightness(300%)';
+            } else if (isCharging) {
+              ctx.filter = 'drop-shadow(0 0 8px #ef4444)';
+            }
+
+            ctx.drawImage(bearImg, -bearSize / 2, -bearSize / 2, bearSize, bearSize);
+            ctx.restore();
+
+            // Dizzy orbiting stars above head when stunned
+            if (isDizzy) {
+              const dizzyTime = performance.now() * 0.005;
+              const starCount = 3;
+              for (let s = 0; s < starCount; s++) {
+                const sAngle = dizzyTime + (s * (Math.PI * 2 / starCount));
+                const starX = bx + offsetX + Math.cos(sAngle) * (r * 0.75);
+                const starY = by + offsetY - (r * 0.85) + Math.sin(sAngle) * (r * 0.25);
+                ctx.save();
+                ctx.fillStyle = '#fde047';
+                ctx.shadowColor = '#eab308';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(starX, starY, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+              }
+            }
           } else {
-            // Glowing red eyes
-            ctx.fillStyle = isTelegraph ? '#ff0000' : '#ef4444';
+            // Main body (Hulking Beast fallback)
+            ctx.fillStyle = isFlashing ? '#ffffff' : '#1c1917';
             ctx.beginPath();
-            ctx.arc(bx + offsetX - r * 0.4, by + offsetY - r * 0.1, 6, 0, Math.PI * 2);
-            ctx.arc(bx + offsetX + r * 0.4, by + offsetY - r * 0.1, 6, 0, Math.PI * 2);
+            ctx.arc(bx + offsetX, by + offsetY, r * 1.2, 0, Math.PI * 2);
             ctx.fill();
-            
-            // Pupils
+
+            // Ears
+            ctx.fillStyle = isFlashing ? '#ffffff' : '#1c1917';
+            ctx.beginPath();
+            ctx.arc(bx + offsetX - r * 0.7, by + offsetY - r * 0.8, r * 0.4, 0, Math.PI * 2);
+            ctx.arc(bx + offsetX + r * 0.7, by + offsetY - r * 0.8, r * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eyes
+            if (isDizzy) {
+              // X Eyes
+              ctx.strokeStyle = '#f87171';
+              ctx.lineWidth = 3;
+              // Left X
+              ctx.beginPath();
+              ctx.moveTo(bx + offsetX - r * 0.5, by + offsetY - r * 0.2);
+              ctx.lineTo(bx + offsetX - r * 0.2, by + offsetY + r * 0.1);
+              ctx.moveTo(bx + offsetX - r * 0.2, by + offsetY - r * 0.2);
+              ctx.lineTo(bx + offsetX - r * 0.5, by + offsetY + r * 0.1);
+              ctx.stroke();
+              // Right X
+              ctx.beginPath();
+              ctx.moveTo(bx + offsetX + r * 0.2, by + offsetY - r * 0.2);
+              ctx.lineTo(bx + offsetX + r * 0.5, by + offsetY + r * 0.1);
+              ctx.moveTo(bx + offsetX + r * 0.5, by + offsetY - r * 0.2);
+              ctx.lineTo(bx + offsetX + r * 0.2, by + offsetY + r * 0.1);
+              ctx.stroke();
+            } else {
+              // Glowing red eyes
+              ctx.fillStyle = isTelegraph ? '#ff0000' : '#ef4444';
+              ctx.beginPath();
+              ctx.arc(bx + offsetX - r * 0.4, by + offsetY - r * 0.1, 6, 0, Math.PI * 2);
+              ctx.arc(bx + offsetX + r * 0.4, by + offsetY - r * 0.1, 6, 0, Math.PI * 2);
+              ctx.fill();
+              
+              // Pupils
+              ctx.fillStyle = '#000000';
+              ctx.beginPath();
+              ctx.arc(bx + offsetX - r * 0.4, by + offsetY - r * 0.1, 2, 0, Math.PI * 2);
+              ctx.arc(bx + offsetX + r * 0.4, by + offsetY - r * 0.1, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+
+            // Snout
+            ctx.fillStyle = isFlashing ? '#ffffff' : '#292524';
+            ctx.beginPath();
+            ctx.ellipse(bx + offsetX, by + offsetY + r * 0.3, r * 0.5, r * 0.35, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Nose
             ctx.fillStyle = '#000000';
             ctx.beginPath();
-            ctx.arc(bx + offsetX - r * 0.4, by + offsetY - r * 0.1, 2, 0, Math.PI * 2);
-            ctx.arc(bx + offsetX + r * 0.4, by + offsetY - r * 0.1, 2, 0, Math.PI * 2);
+            ctx.arc(bx + offsetX, by + offsetY + r * 0.25, 6, 0, Math.PI * 2);
             ctx.fill();
           }
-
-          // Snout
-          ctx.fillStyle = isFlashing ? '#ffffff' : '#292524';
-          ctx.beginPath();
-          ctx.ellipse(bx + offsetX, by + offsetY + r * 0.3, r * 0.5, r * 0.35, 0, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Nose
-          ctx.fillStyle = '#000000';
-          ctx.beginPath();
-          ctx.arc(bx + offsetX, by + offsetY + r * 0.25, 6, 0, Math.PI * 2);
-          ctx.fill();
         } else if (boss.id === 'haunted_eye') {
           // Haunted Eye Boss Rendering (Wide Panoramic Occult Entity)
           const eyePhase = eyePhaseRef.current;
@@ -4383,29 +4822,30 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             const mouseScreenX = mouseScreenRef.current.x;
             const mouseScreenY = mouseScreenRef.current.y;
 
-            // Outer Iris
-            ctx.fillStyle = '#991b1b';
-            ctx.beginPath();
-            ctx.ellipse(irisX, irisY, 26, 22, 0, 0, Math.PI * 2);
-            ctx.fill();
+            // Pupil (Rendered using pixel sprite model without red background)
+            const miniEyeImg = miniEyeImageRef.current;
+            if (miniEyeImg && miniEyeImg.complete && miniEyeImg.naturalWidth > 0) {
+              const pupilSize = 38;
+              ctx.save();
+              ctx.translate(irisX, irisY);
+              ctx.imageSmoothingEnabled = false;
+              if (isFlashing) {
+                ctx.filter = 'brightness(300%)';
+              }
+              ctx.drawImage(miniEyeImg, -pupilSize / 2, -pupilSize / 2, pupilSize, pupilSize);
+              ctx.restore();
+            } else {
+              ctx.fillStyle = '#09090b';
+              ctx.beginPath();
+              ctx.ellipse(irisX, irisY, 12, 11, 0, 0, Math.PI * 2);
+              ctx.fill();
 
-            // Middle Iris
-            ctx.fillStyle = '#dc2626';
-            ctx.beginPath();
-            ctx.ellipse(irisX, irisY, 19, 16, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Pupil
-            ctx.fillStyle = '#09090b';
-            ctx.beginPath();
-            ctx.ellipse(irisX, irisY, 11, 10, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Inner glowing dot
-            ctx.fillStyle = '#fef08a';
-            ctx.beginPath();
-            ctx.arc(irisX - 3, irisY - 2, 3, 0, Math.PI * 2);
-            ctx.fill();
+              // Inner glowing dot
+              ctx.fillStyle = '#fef08a';
+              ctx.beginPath();
+              ctx.arc(irisX - 3, irisY - 2, 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
 
             // --- CURSOR RESTRICTION (LOOK AWAY: Y > WITCH) MECHANIC VISUALS ---
             const activeCamY = lockedCameraRef.current.y;

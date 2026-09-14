@@ -407,7 +407,7 @@ export const WITCH_DEALS: CurseChoice[] = [
     id: 'curse_triple_one_gun',
     title: 'Pact of the Sole Relic',
     subtitle: 'Sacrifice Weapon Capacity for Cataclysmic Ruin',
-    description: 'Destroys all weapons except 1 chosen at random, permanently tripling (300%) all of its stats! Reduces your maximum weapon capacity from 6 to 3.',
+    description: 'Destroys all weapons except 1 chosen at random, permanently tripling (300%) all of its stats! Reduces your maximum weapon capacity from 5 to 3.',
     icon: 'Sword',
     color: '#ef4444',
     effect: 'TRIPLE_ONE_GUN'

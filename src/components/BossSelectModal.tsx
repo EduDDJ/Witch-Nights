@@ -167,23 +167,18 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                       )}
 
                       {isBear && (
-                        <svg
-                          viewBox="0 0 100 100"
-                          className="w-20 h-20 drop-shadow-md group-hover:scale-110 transition-transform"
-                          aria-label="NightBear Visual"
-                        >
-                          {/* Dark Hulking Body */}
-                          <circle cx="50" cy="55" r="40" fill="#1c1917" />
-                          {/* Bear Ears */}
-                          <circle cx="25" cy="30" r="12" fill="#1c1917" />
-                          <circle cx="75" cy="30" r="12" fill="#1c1917" />
-                          {/* Glowing Eyes */}
-                          <circle cx="35" cy="48" r="5" fill="#ef4444" />
-                          <circle cx="65" cy="48" r="5" fill="#ef4444" />
-                          {/* Snout */}
-                          <ellipse cx="50" cy="65" rx="18" ry="12" fill="#292524" />
-                          <circle cx="50" cy="62" r="5" fill="#000000" />
-                        </svg>
+                        <img
+                          src="https://i.imgur.com/Pjkp2on.png"
+                          alt="NightBear Visual"
+                          crossOrigin="anonymous"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (!target.src.includes('night_bear.png')) {
+                              target.src = `${import.meta.env.BASE_URL}assets/aistudio/night_bear.png`;
+                            }
+                          }}
+                          className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
+                        />
                       )}
                     </div>
                   </div>

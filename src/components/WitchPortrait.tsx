@@ -20,8 +20,8 @@ export const WitchPortrait: React.FC<WitchPortraitProps> = ({ isHurt = false, si
         onError={(e) => {
           // Fallback to local asset if external image fails to load
           const target = e.currentTarget;
-          if (!target.src.includes('1789315841509.png')) {
-            target.src = `${import.meta.env.BASE_URL}assets/aistudio/1789315841509.png`;
+          if (!target.src.includes('witch.png')) {
+            target.src = `${import.meta.env.BASE_URL}assets/aistudio/witch.png`;
           }
         }}
         className="w-full h-full object-contain [image-rendering:pixelated]"

@@ -673,7 +673,7 @@ export default function App() {
 
       case 'DEJA_VU':
         // Déjà-Vu: Reset player and enemies to level 1, remove all weapons and artifacts except Arcana Blast at Level 1, triple all earned EXP
-        setMaxWeapons(6);
+        setMaxWeapons(5);
         setWeapons([
           { id: 'arcane_wand', level: 1, lastFired: 0, statsMultiplier: 1.0 },
         ]);
@@ -926,6 +926,11 @@ export default function App() {
           {isPauseMenuOpen && !isOptionsOpen && !isDevToolsOpen && !isCollectionFromPause && (
             <PauseMenuModal
               survivalTime={survivalTime}
+              weapons={weapons}
+              statItems={statItems}
+              maxWeapons={maxWeapons}
+              isBossRush={isBossRush}
+              mobileMode={options.mobileMode}
               onResume={() => setIsPauseMenuOpen(false)}
               onRestartRun={handleRestartRun}
               onOpenDevTools={() => setIsDevToolsOpen(true)}

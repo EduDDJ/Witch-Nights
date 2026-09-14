@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Wind, Crosshair, Sparkles, X, Sliders, Smartphone, RotateCcw, Check, BookOpen, Download, Loader2, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { Volume2, VolumeX, Wind, Crosshair, Sparkles, X, Sliders, Smartphone, RotateCcw, Check, BookOpen } from 'lucide-react';
 import { GameOptions, DashMode } from '../types/game';
 import { soundEngine } from '../utils/audio';
-import { SPRITE_ASSETS, SpriteAsset, downloadSpriteFile, downloadAllSpritesDirectly } from '../data/spriteAssets';
-
-export { SPRITE_ASSETS };
 
 interface OptionsModalProps {
   options: GameOptions;
@@ -24,10 +21,6 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
   const isMobile = options.mobileMode;
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [resetSuccess, setResetSuccess] = useState<boolean>(false);
-  const [isDownloadingAll, setIsDownloadingAll] = useState<boolean>(false);
-  const [downloadProgressText, setDownloadProgressText] = useState<string>('');
-  const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
-  const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
   const triggerReset = onResetProgress || onResetCollection;
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,33 +41,6 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
 
   const handleSelectDashMode = (mode: DashMode) => {
     onChangeOptions({ dashMode: mode });
-  };
-
-  const handleDownloadSingleSprite = (sprite: SpriteAsset) => {
-    setDownloadingFileId(sprite.id);
-    downloadSpriteFile(sprite);
-    setTimeout(() => {
-      setDownloadingFileId(null);
-    }, 1200);
-  };
-
-  const handleDownloadAllSprites = async () => {
-    setIsDownloadingAll(true);
-    setDownloadSuccess(false);
-    try {
-      await downloadAllSpritesDirectly((curr, total) => {
-        setDownloadProgressText(`Downloading ${curr}/${total} PNG files...`);
-      });
-      setDownloadSuccess(true);
-      setTimeout(() => {
-        setDownloadSuccess(false);
-        setDownloadProgressText('');
-      }, 4000);
-    } catch (err) {
-      console.error('Error downloading sprites:', err);
-    } finally {
-      setIsDownloadingAll(false);
-    }
   };
 
   return (
@@ -306,112 +272,6 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 <span>50% (Dark)</span>
                 <span>100% (Default)</span>
                 <span>150% (Bright)</span>
-              </div>
-            </div>
-          </div>
-
-          {/* GAME ASSETS & SPRITES DOWNLOAD SECTION */}
-          <div className={`rounded-xl bg-purple-950/40 border border-purple-800/40 flex flex-col ${isMobile ? 'p-2.5 gap-2' : 'p-3.5 gap-2.5'}`}>
-            <div className="flex items-center justify-between">
-              <div className="font-semibold text-purple-200 flex items-center gap-2 text-xs sm:text-sm">
-                <Download className="w-4 h-4 text-amber-400" />
-                Game Sprites & Assets
-              </div>
-              {downloadSuccess && (
-                <span className="text-[10px] sm:text-xs text-emerald-400 font-mono flex items-center gap-1 animate-in fade-in">
-                  <Check className="w-3.5 h-3.5" /> Downloaded 5 PNG Sprites!
-                </span>
-              )}
-            </div>
-
-            <p className="text-[10px] sm:text-[11px] text-slate-400">
-              Download the 5 PNG sprite files directly (Pitchfork Peasant, Torch Peasant, Village Knight, Carnivore Plant, NightBear).
-            </p>
-
-            {/* Main Direct PNGs Download Button */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
-              <button
-                id="download-all-assets-btn"
-                type="button"
-                onClick={handleDownloadAllSprites}
-                disabled={isDownloadingAll}
-                className="flex-1 py-2 px-3.5 rounded-xl bg-gradient-to-r from-amber-900/80 via-purple-900/80 to-indigo-900/80 hover:from-amber-800 hover:via-purple-800 hover:to-indigo-800 text-amber-200 hover:text-white font-bold text-xs sm:text-sm border border-amber-500/50 hover:border-amber-300 shadow-md shadow-purple-950/60 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
-              >
-                {isDownloadingAll ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
-                    <span>{downloadProgressText || 'Downloading 5 PNG Files...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4 text-amber-300" />
-                    <span>Download All 5 Sprite PNGs</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Individual Sprite Files List */}
-            <div className="pt-2 border-t border-purple-900/30 flex flex-col gap-1.5">
-              <div className="text-[10px] font-semibold text-slate-400 flex items-center justify-between">
-                <span className="flex items-center gap-1">
-                  <ImageIcon className="w-3 h-3 text-purple-400" />
-                  <span>Download Individual PNG Sprite Files:</span>
-                </span>
-                <span className="text-[9px] text-slate-500 font-mono">5 PNG files</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {SPRITE_ASSETS.map((sprite) => {
-                  const isDownloadingThis = downloadingFileId === sprite.id;
-                  return (
-                    <div
-                      key={sprite.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-slate-900/70 border border-purple-900/40 hover:border-purple-600/70 transition-all gap-2"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-7 h-7 rounded bg-purple-950/80 border border-purple-800/60 flex items-center justify-center shrink-0 overflow-hidden">
-                          <img
-                            src={sprite.dataUrl}
-                            alt={sprite.name}
-                            className="w-6 h-6 object-contain"
-                            style={{ imageRendering: 'pixelated' }}
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-semibold text-slate-200 truncate">{sprite.name}</div>
-                          <div className="text-[9px] font-mono text-purple-400 truncate">{sprite.filename}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0">
-                        <a
-                          href={sprite.imgurUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          title="View on Imgur"
-                          className="p-1 rounded bg-purple-950/60 hover:bg-purple-900 border border-purple-800/40 text-purple-300 hover:text-white transition-colors"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                        <button
-                          id={`download-sprite-${sprite.id}`}
-                          type="button"
-                          onClick={() => handleDownloadSingleSprite(sprite)}
-                          disabled={isDownloadingThis}
-                          className="px-2 py-1 rounded bg-amber-950/80 hover:bg-amber-900 border border-amber-500/50 hover:border-amber-400 text-amber-200 hover:text-white text-[10px] font-bold font-mono flex items-center gap-1 transition-all cursor-pointer"
-                          title={`Download ${sprite.filename}`}
-                        >
-                          {isDownloadingThis ? (
-                            <Loader2 className="w-3 h-3 animate-spin text-amber-300" />
-                          ) : (
-                            <Download className="w-3 h-3 text-amber-300" />
-                          )}
-                          <span>PNG</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           </div>

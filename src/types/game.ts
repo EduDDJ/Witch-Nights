@@ -143,7 +143,7 @@ export interface Enemy {
   exp: number;
   color: string;
   name: string;
-  type: 'BAT' | 'GHOUL' | 'WRAITH' | 'MINI_EYE';
+  type: 'BAT' | 'GHOUL' | 'WRAITH' | 'MINI_EYE' | 'ROCK_THROWER';
   vx: number;
   vy: number;
   hitFlashTimer: number;
@@ -152,6 +152,10 @@ export interface Enemy {
   vineRootedDuration?: number;
   lastHitBy?: string;
   facingDir?: number; // 1 for facing right, -1 for facing left
+  rockThrowTimer?: number;
+  rockTelegraphTimer?: number;
+  targetAngle?: number;
+  targetDistance?: number;
 }
 
 export interface Projectile {

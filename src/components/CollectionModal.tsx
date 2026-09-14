@@ -171,50 +171,68 @@ const CarnivorePlantIcon: React.FC<any> = (props) => {
 };
 
 const HauntedEyeIcon: React.FC<any> = (props) => {
-  const color = props.style?.color || '#dc2626';
   return (
     <svg viewBox="0 0 40 40" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
       <ellipse cx="20" cy="20" rx="18" ry="9" fill="#2b0606" stroke="#991b1b" strokeWidth="2" />
-      <circle cx="20" cy="20" r="8.5" fill={color} />
-      <circle cx="20" cy="20" r="3.5" fill="#fef08a" />
-      <path d="M 20 15 L 20 25 M 15 20 L 25 20" stroke="#fef08a" strokeWidth="1" />
-      <circle cx="20" cy="20" r="1.5" fill="#000000" />
+      <image
+        href="https://i.imgur.com/p2eqvL6.png"
+        x="13"
+        y="13"
+        width="14"
+        height="14"
+        preserveAspectRatio="xMidYMid meet"
+      />
     </svg>
   );
 };
 
-const MiniEyeIcon: React.FC<any> = (props) => {
-  const color = props.style?.color || '#dc2626';
-  return (
-    <svg viewBox="0 0 24 24" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
-      <circle cx="12" cy="12" r="10" fill="#2b0606" stroke="#991b1b" strokeWidth="1.5" />
-      <circle cx="12" cy="12" r="5" fill={color} />
-      <circle cx="12" cy="12" r="2" fill="#000000" />
-    </svg>
-  );
-};
+const MiniEyeIcon: React.FC<any> = (props) => (
+  <img
+    src="https://i.imgur.com/p2eqvL6.png"
+    alt="Mini Eye"
+    crossOrigin="anonymous"
+    onError={(e) => {
+      const target = e.currentTarget;
+      if (!target.src.includes('mini_eye.png')) {
+        target.src = `${import.meta.env.BASE_URL}assets/aistudio/mini_eye.png`;
+      }
+    }}
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
 
-const NightBearIcon: React.FC<any> = (props) => {
-  const color = props.style?.color || '#3b2f2f';
-  return (
-    <svg viewBox="0 0 40 40" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
-      {/* Hulking Body */}
-      <circle cx="20" cy="22" r="16" fill={color} />
-      {/* Ears */}
-      <circle cx="10" cy="12" r="5" fill={color} />
-      <circle cx="30" cy="12" r="5" fill={color} />
-      {/* Inner Ears */}
-      <circle cx="10" cy="12" r="2.5" fill="#1c1917" />
-      <circle cx="30" cy="12" r="2.5" fill="#1c1917" />
-      {/* Glowing Eyes */}
-      <circle cx="14" cy="20" r="2.5" fill="#ef4444" />
-      <circle cx="26" cy="20" r="2.5" fill="#ef4444" />
-      {/* Snout */}
-      <ellipse cx="20" cy="27" rx="7" ry="5" fill="#292524" />
-      <circle cx="20" cy="26" r="2" fill="#000000" />
-    </svg>
-  );
-};
+const NightBearIcon: React.FC<any> = (props) => (
+  <img
+    src="https://i.imgur.com/Pjkp2on.png"
+    alt="NightBear"
+    crossOrigin="anonymous"
+    onError={(e) => {
+      const target = e.currentTarget;
+      if (!target.src.includes('night_bear.png')) {
+        target.src = `${import.meta.env.BASE_URL}assets/aistudio/night_bear.png`;
+      }
+    }}
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
+
+const RockThrowerIcon: React.FC<any> = (props) => (
+  <img
+    src="https://i.imgur.com/Bxl3FnO.png"
+    alt="Rock Thrower"
+    crossOrigin="anonymous"
+    onError={(e) => {
+      const target = e.currentTarget;
+      if (!target.src.includes('rock_thrower.png')) {
+        target.src = `${import.meta.env.BASE_URL}assets/aistudio/rock_thrower.png`;
+      }
+    }}
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
 
 interface EnemyCollectionData {
   id: string;
@@ -250,10 +268,20 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
     name: 'Pitchfork Peasant',
     color: '#a855f7',
     damage: 12,
-    maxHp: 24,
+    maxHp: 20,
     speed: '1.15x',
     isBoss: false,
     description: 'A maddened villager wielding an iron pitchfork. Hardier, swifter, and more aggressive than torch-bearing peasants.'
+  },
+  {
+    id: 'rock_thrower',
+    name: 'Rock Thrower',
+    color: '#d97706',
+    damage: 20,
+    maxHp: 25,
+    speed: '0.85x',
+    isBoss: false,
+    description: 'A cunning villager who maintains a safe distance from the Witch, telegraphing and hurling heavy rocks every few seconds.'
   },
   {
     id: 'ghoul',
@@ -288,7 +316,7 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
     maxHp: 1,
     speed: '2.0x',
     isBoss: false,
-    description: 'A tiny, swift ocular minion spawned when the Haunted Eye reveals its true gaze. They relentlessly pursue the witch.'
+    description: 'A tiny, swift ocular minion spawned when the Haunted Eye reveals its true gaze. They relentlessly pursue the witch and self-destruct upon contact.'
   },
   {
     id: 'haunted_eye',
@@ -729,6 +757,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                 let EnemyIcon = createNormalEnemyIcon(e.color);
                 if (e.id === 'wraith') EnemyIcon = TorchPeasantIcon;
                 if (e.id === 'bat') EnemyIcon = PitchforkPeasantIcon;
+                if (e.id === 'rock_thrower') EnemyIcon = RockThrowerIcon;
                 if (e.id === 'ghoul') EnemyIcon = VillageKnightIcon;
                 if (e.id === 'carnivore_plant') EnemyIcon = CarnivorePlantIcon;
                 if (e.id === 'haunted_eye') EnemyIcon = HauntedEyeIcon;
@@ -737,8 +766,8 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
 
                 const DisplayIcon = isDiscovered ? EnemyIcon : HelpCircle;
 
-                const bgStyle = '#00000040';
-                const borderStyle = e.isBoss ? '#fbbf24' : '#1e293b';
+                const bgStyle = isDiscovered ? '#ef444422' : '#450a0a22';
+                const borderStyle = e.isBoss ? '#fbbf24' : isDiscovered ? '#ef4444aa' : '#7f1d1d66';
 
                 const itemData: HoveredItemData = {
                   id: e.id,
@@ -797,7 +826,9 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                     selectedItem.isLegendary ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-md shadow-amber-500/25' : ''
                   }`}
                   style={{
-                    backgroundColor: selectedItem.isLegendary
+                    backgroundColor: selectedItem.category === 'ENEMY'
+                      ? (selectedItem.isDiscovered ? '#ef444422' : '#450a0a22')
+                      : selectedItem.isLegendary
                       ? '#78350f25'
                       : selectedItem.isDiscovered
                       ? `${selectedItem.bulletColor || '#a855f7'}22`
@@ -806,6 +837,8 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                       : '#1e293b25',
                     borderColor: selectedItem.isLegendary
                       ? '#fbbf24'
+                      : selectedItem.category === 'ENEMY'
+                      ? (selectedItem.isDiscovered ? '#ef4444aa' : '#7f1d1d66')
                       : selectedItem.isDiscovered
                       ? `${selectedItem.bulletColor || '#a855f7'}aa`
                       : selectedItem.isUnlocked
@@ -950,8 +983,8 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center border-2"
                     style={{
-                      backgroundColor: selectedItem.isLegendary ? '#78350f22' : `${selectedItem.bulletColor || '#a855f7'}15`,
-                      borderColor: selectedItem.isLegendary ? '#fbbf24' : `${selectedItem.bulletColor || '#a855f7'}88`,
+                      backgroundColor: selectedItem.category === 'ENEMY' ? '#ef444422' : selectedItem.isLegendary ? '#78350f22' : `${selectedItem.bulletColor || '#a855f7'}15`,
+                      borderColor: selectedItem.isLegendary ? '#fbbf24' : selectedItem.category === 'ENEMY' ? '#ef444488' : `${selectedItem.bulletColor || '#a855f7'}88`,
                     }}
                   >
                     <selectedItem.icon
