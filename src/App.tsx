@@ -35,6 +35,7 @@ import { DevToolsModal } from './components/DevToolsModal';
 import { WeaponSelectorModal } from './components/WeaponSelectorModal';
 import { TutorialModal } from './components/TutorialModal';
 import { BossSelectModal } from './components/BossSelectModal';
+import { BossRushModal } from './components/BossRushModal';
 import { soundEngine } from './utils/audio';
 
 type GameScreen = 'MENU' | 'PLAYING' | 'COLLECTION';
@@ -92,7 +93,9 @@ export default function App() {
   const [pendingLevelUps, setPendingLevelUps] = useState<number>(0);
   const [witchDealCurses, setWitchDealCurses] = useState<CurseChoice[] | null>(null);
   const [bossSelectOptions, setBossSelectOptions] = useState<BossDefinition[] | null>(null);
-  const [gameOverStats, setGameOverStats] = useState<{ time: number; level: number; kills: number; bossesKilled: number; killerName?: string } | null>(null);
+  const [gameOverStats, setGameOverStats] = useState<{ time: number; level: number; kills: number; bossesKilled: number; totalDamage?: number; killerName?: string; isVictory?: boolean } | null>(null);
+  const [isBossRushModalOpen, setIsBossRushModalOpen] = useState<boolean>(false);
+  const [isBossRush, setIsBossRush] = useState<boolean>(false);
 
   // Boss fight state
   const [boss, setBoss] = useState<BossInstance | null>(null);
@@ -117,6 +120,7 @@ export default function App() {
   const [isWeaponSelectorOpen, setIsWeaponSelectorOpen] = useState<boolean>(false);
   const [isCollectionFromPause, setIsCollectionFromPause] = useState<boolean>(false);
   const [instaKill, setInstaKill] = useState<boolean>(false);
+  const [hasUsedRerollThisLevel, setHasUsedRerollThisLevel] = useState<boolean>(false);
 
   // Sync options changes with localStorage and SoundEngine
   useEffect(() => {
@@ -224,6 +228,36 @@ export default function App() {
     }
   });
 
+  const [bestBossRushTime, setBestBossRushTime] = useState<number | null>(() => {
+    try {
+      const saved = localStorage.getItem('witch_nights_boss_rush_best_time');
+      return saved ? Number(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isTrueWitchUnlocked, setIsTrueWitchUnlocked] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('witch_nights_true_witch_unlocked');
+      if (saved !== null) return saved === 'true';
+      // If player already completed regular Boss Rush previously
+      const bestTime = localStorage.getItem('witch_nights_boss_rush_best_time');
+      return bestTime !== null;
+    } catch {
+      return false;
+    }
+  });
+
+  const [isTrueWitchMode, setIsTrueWitchMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('witch_nights_true_witch_enabled');
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const [unlockModalItem, setUnlockModalItem] = useState<string | null>(null);
 
   // Save collections to localStorage
@@ -312,8 +346,9 @@ export default function App() {
     });
   }, []);
 
-  // Start a new run
+  // Start a new run (Normal Game)
   const handleStartGame = () => {
+    setIsBossRush(false);
     handleItemUnlocked('WEAPON', 'arcane_wand');
     setGameRunId((prev) => prev + 1);
     setPlayer({ ...INITIAL_PLAYER_STATS });
@@ -338,9 +373,40 @@ export default function App() {
     setScreen('PLAYING');
   };
 
+  const handleStartBossRush = () => {
+    setIsBossRush(true);
+    handleItemUnlocked('WEAPON', 'arcane_wand');
+    setGameRunId((prev) => prev + 1);
+    const initialHpRegen = isTrueWitchMode ? 0 : INITIAL_PLAYER_STATS.hpRegen;
+    setPlayer({ ...INITIAL_PLAYER_STATS, hpRegen: initialHpRegen, level: 1, exp: 0 });
+    setWeapons([{ id: 'arcane_wand', level: 1, lastFired: 0, statsMultiplier: 1.0 }]);
+    setStatItems([]);
+    setSurvivalTime(0);
+    setMaxWeapons(1);
+    setLevelUpOptions(null);
+    setPendingLevelUps(0);
+    setWitchDealCurses(null);
+    setGameOverStats(null);
+    setBoss(null);
+    setIsBossFight(true);
+    setBossTimer(90);
+    setBossHP(0);
+    setIsPauseMenuOpen(false);
+    setIsDevToolsOpen(false);
+    setIsLevelUpFromDevTools(false);
+    setIsOptionsOpen(false);
+    setIsCollectionFromPause(false);
+    setInstaKill(false);
+    setScreen('PLAYING');
+  };
+
   // Reset Run
   const handleRestartRun = () => {
-    handleStartGame();
+    if (isBossRush) {
+      handleStartBossRush();
+    } else {
+      handleStartGame();
+    }
   };
 
   // Sound toggle
@@ -383,8 +449,8 @@ export default function App() {
     setSurvivalTime(450);
     setLevelUpOptions(null);
     window.dispatchEvent(new CustomEvent('trigger-test-deal'));
-    const rfItem = statItems.find((s) => s.id === 'rabbits_foot');
-    const dealCount = rfItem && rfItem.level >= 2 ? 3 : 2;
+    const destinyItem = statItems.find((s) => s.id === 'destiny_control');
+    const dealCount = destinyItem && destinyItem.level >= 3 ? 3 : 2;
     const shuffled = [...WITCH_DEALS].sort(() => 0.5 - Math.random());
     soundEngine.playWitchDeal();
     setWitchDealCurses(shuffled.slice(0, dealCount));
@@ -400,6 +466,7 @@ export default function App() {
   };
 
   const handleTriggerWitchDeal = (curses: CurseChoice[]) => {
+    if (isBossRush) return;
     setLevelUpOptions(null);
     window.dispatchEvent(new CustomEvent('trigger-test-deal'));
     setWitchDealCurses(curses);
@@ -416,11 +483,14 @@ export default function App() {
     }
   }, []);
 
-  // Generate 3 Level Up Choices
-  const handleTriggerLevelUp = useCallback((extraLevels = 1, currentWeapons = weapons, currentStatItems = statItems) => {
+  // Generate Level Up Choices (3 options base, 4 options with Destiny Control Rank 1+)
+  const handleTriggerLevelUp = useCallback((extraLevels = 1, currentWeapons = weapons, currentStatItems = statItems, isReroll = false) => {
     if (witchDealCurses !== null) return;
-    if (extraLevels > 1) {
-      setPendingLevelUps((prev) => prev + extraLevels - 1);
+    if (!isReroll) {
+      if (extraLevels > 1) {
+        setPendingLevelUps((prev) => prev + extraLevels - 1);
+      }
+      setHasUsedRerollThisLevel(false);
     }
     const choices: LevelUpOption[] = [];
 
@@ -493,13 +563,19 @@ export default function App() {
       }
     }
 
-    // Shuffle and pick options (4 options if Rabbit's Foot Rank 1+, else 3)
-    const rfItem = currentStatItems.find((s) => s.id === 'rabbits_foot');
-    const choiceCount = rfItem && rfItem.level >= 1 ? 4 : 3;
+    // Shuffle and pick options (4 options if Destiny Control Rank 1+, else 3)
+    const destinyItem = currentStatItems.find((s) => s.id === 'destiny_control');
+    const choiceCount = destinyItem && destinyItem.level >= 1 ? 4 : 3;
     const shuffled = [...choices].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, choiceCount);
     setLevelUpOptions(selected);
   }, [weapons, statItems, maxWeapons, witchDealCurses, unlockedItemIds]);
+
+  const handleRerollLevelUpOptions = useCallback(() => {
+    setHasUsedRerollThisLevel(true);
+    soundEngine.playLevelUp();
+    handleTriggerLevelUp(1, weapons, statItems, true);
+  }, [handleTriggerLevelUp, weapons, statItems]);
 
   // Apply chosen Level Up boon
   const handleSelectLevelUpOption = (option: LevelUpOption) => {
@@ -682,26 +758,54 @@ export default function App() {
     });
   }, []);
 
-  // Unlock an item (moves state from Locked to Undiscovered)
+  const handleGameOver = useCallback((stats: any) => {
+    setGameOverStats(stats);
+    if (isBossRush && stats.isVictory) {
+      setIsTrueWitchUnlocked(true);
+      try {
+        localStorage.setItem('witch_nights_true_witch_unlocked', 'true');
+      } catch {
+        // safe ignore
+      }
+      setBestBossRushTime((prev) => {
+        const newBest = prev === null ? stats.time : Math.min(prev, stats.time);
+        try {
+          localStorage.setItem('witch_nights_boss_rush_best_time', String(newBest));
+        } catch {
+          // safe ignore
+        }
+        return newBest;
+      });
+    }
+  }, [isBossRush]);
   const handleUnlockItem = useCallback((itemId: string) => {
+    if (isBossRush) return;
     setUnlockedItemIds((prev) => {
       if (prev.includes(itemId)) return prev;
       setUnlockModalItem(itemId);
       return [...prev, itemId];
     });
-  }, []);
+  }, [isBossRush]);
 
-  // Reset discovered collection
-  const handleResetCollection = () => {
+  // Reset discovered collection & progress
+  const handleResetProgress = () => {
     setUnlockedWeapons([]);
     setUnlockedItems([]);
     setUnlockedCurses([]);
+    setUnlockedEnemies([]);
     setUnlockedItemIds(DEFAULT_UNLOCKED_ITEM_IDS);
+    setBestBossRushTime(null);
+    setIsTrueWitchUnlocked(false);
+    setIsTrueWitchMode(false);
     try {
       localStorage.setItem('witch_nights_weapons', JSON.stringify([]));
       localStorage.setItem('witch_nights_items', JSON.stringify([]));
       localStorage.setItem('witch_nights_curses', JSON.stringify([]));
+      localStorage.setItem('witch_nights_enemies', JSON.stringify([]));
       localStorage.setItem('witch_nights_unlocked_ids', JSON.stringify(DEFAULT_UNLOCKED_ITEM_IDS));
+      localStorage.removeItem('witch_nights_boss_rush_best_time');
+      localStorage.removeItem('witch_nights_true_witch_unlocked');
+      localStorage.removeItem('witch_nights_true_witch_enabled');
     } catch {
       // safe ignore
     }
@@ -716,6 +820,7 @@ export default function App() {
       {screen === 'MENU' && (
         <MainMenu
           onStartGame={handleStartGame}
+          onOpenBossRush={() => setIsBossRushModalOpen(true)}
           onOpenCollection={() => setScreen('COLLECTION')}
           onOpenOptions={() => setIsOptionsOpen(true)}
           onOpenTutorial={() => setIsTutorialOpen(true)}
@@ -747,6 +852,8 @@ export default function App() {
             statItems={statItems}
             survivalTime={survivalTime}
             gameSpeed={1}
+            isBossRush={isBossRush}
+            isTrueWitchMode={isBossRush && isTrueWitchMode}
             isPaused={
               levelUpOptions !== null ||
               witchDealCurses !== null ||
@@ -769,11 +876,13 @@ export default function App() {
             onTriggerLevelUp={handleTriggerLevelUp}
             onTriggerWitchDeal={handleTriggerWitchDeal}
             onTriggerBossSelection={(bosses) => setBossSelectOptions(bosses)}
-            onGameOver={(stats) => setGameOverStats(stats)}
+            onGameOver={handleGameOver}
             onItemUnlocked={handleItemUnlocked}
-          onEnemyDefeated={(enemyId) => {
-            setUnlockedEnemies((prev) => prev.includes(enemyId) ? prev : [...prev, enemyId]);
-          }}
+            onEnemyDefeated={(enemyId) => {
+              if (!isBossRush) {
+                setUnlockedEnemies((prev) => (prev.includes(enemyId) ? prev : [...prev, enemyId]));
+              }
+            }}
             onUnlockItem={handleUnlockItem}
             onBossUpdate={(b, isFight, timer, hp) => {
               setBoss(b);
@@ -799,6 +908,8 @@ export default function App() {
             bossTimer={bossTimer}
             mobileMode={options.mobileMode}
             instaKill={instaKill}
+            isBossRush={isBossRush}
+            isTrueWitchMode={isBossRush && isTrueWitchMode}
           />
 
           {/* Pause Menu (Esc key or pause button) */}
@@ -811,6 +922,7 @@ export default function App() {
               onOpenOptions={() => setIsOptionsOpen(true)}
               onOpenCollection={() => setIsCollectionFromPause(true)}
               onReturnToMainMenu={() => {
+                setIsBossRush(false);
                 setIsPauseMenuOpen(false);
                 setScreen('MENU');
               }}
@@ -887,7 +999,9 @@ export default function App() {
               options={levelUpOptions}
               mobileMode={options.mobileMode}
               isDevLevelUp={isLevelUpFromDevTools}
-              hasRabbitsFoot={statItems.some((s) => s.id === 'rabbits_foot')}
+              hasExtraChoices={statItems.some((s) => s.id === 'destiny_control' && s.level >= 1)}
+              canReroll={Boolean(statItems.some((s) => s.id === 'destiny_control' && s.level >= 5) && !hasUsedRerollThisLevel)}
+              onReroll={handleRerollLevelUpOptions}
               onSelectOption={handleSelectLevelUpOption}
             />
           )}
@@ -905,13 +1019,40 @@ export default function App() {
           {gameOverStats && (
             <GameOverModal
               stats={gameOverStats}
+              isVictory={gameOverStats.isVictory}
+              isBossRush={isBossRush}
               weapons={weapons}
               statItems={statItems}
               onRestart={handleRestartRun}
-              onReturnToMenu={() => setScreen('MENU')}
+              onReturnToMenu={() => {
+                setIsBossRush(false);
+                setScreen('MENU');
+              }}
             />
           )}
         </>
+      )}
+
+      {/* Boss Rush Info Modal */}
+      {isBossRushModalOpen && (
+        <BossRushModal
+          bestTime={bestBossRushTime}
+          isTrueWitchUnlocked={isTrueWitchUnlocked}
+          isTrueWitchMode={isTrueWitchMode}
+          onToggleTrueWitchMode={(enabled) => {
+            setIsTrueWitchMode(enabled);
+            try {
+              localStorage.setItem('witch_nights_true_witch_enabled', String(enabled));
+            } catch {
+              // safe ignore
+            }
+          }}
+          onStartBossRush={() => {
+            setIsBossRushModalOpen(false);
+            handleStartBossRush();
+          }}
+          onClose={() => setIsBossRushModalOpen(false)}
+        />
       )}
 
       {/* 5. OPTIONS MODAL (GLOBAL - CAN BE OPENED FROM MENU OR PAUSE) */}
@@ -920,7 +1061,7 @@ export default function App() {
           options={options}
           onChangeOptions={handleUpdateOptions}
           onClose={() => setIsOptionsOpen(false)}
-          onResetCollection={handleResetCollection}
+          onResetProgress={handleResetProgress}
         />
       )}
 

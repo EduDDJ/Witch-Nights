@@ -334,38 +334,44 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     ]
   },
   {
-    id: 'rabbits_foot',
-    name: "Rabbit's Foot",
-    statType: 'EXTRA_CHOICES',
-    icon: 'Clover',
-    description: "An elusive lucky charm that grants expanded choices when leveling up and striking witch's deals.",
-    color: '#ea580c',
-    tiers: [
-      { tier: 1, name: 'Lucky Paw', description: 'Opens a 4th option for every level up.', statValue: 1 },
-      { tier: 2, name: "Rabbit's Grace", description: "Enables a 3rd Witch's Deal option when striking bargains.", statValue: 2 },
-    ]
-  },
-  {
     id: 'destiny_control',
     name: 'Destiny Control',
     statType: 'DESTINY_CONTROL',
-    icon: 'Eye',
-    description: 'An ancient occult compass that bends fate, allowing you to choose which Boss to face at every 5-minute interval.',
+    icon: 'Clover',
+    description: 'An ancient occult compass and lucky charm that bends fate, expanding your options and controlling destiny.',
     color: '#ea580c',
     tiers: [
       {
         tier: 1,
-        name: 'Thread of Fate',
-        description: 'Choose from a pool of 2 random bosses at every 5-minute interval.',
-        statValue: 1
+        name: 'Lucky Paw',
+        description: 'Opens a 4th option for every level up.',
+        statValue: 1,
       },
       {
         tier: 2,
+        name: 'Thread of Fate',
+        description: 'Choose from a pool of 2 random bosses at every 5-minute interval.',
+        statValue: 2,
+      },
+      {
+        tier: 3,
+        name: "Rabbit's Grace",
+        description: "Enables a 3rd Witch's Deal option when striking bargains.",
+        statValue: 3,
+      },
+      {
+        tier: 4,
         name: 'Tapestry of Destiny',
         description: 'Adds a 3rd boss option to the selection pool at every 5-minute interval.',
-        statValue: 2
-      }
-    ]
+        statValue: 4,
+      },
+      {
+        tier: 5,
+        name: 'Fate Reroll',
+        description: 'Enables 1 Reroll per level up screen, refreshing all 4 options.',
+        statValue: 5,
+      },
+    ],
   },
   {
     id: 'nightbears_claws',
@@ -450,7 +456,6 @@ export const DEFAULT_UNLOCKED_ITEM_IDS: string[] = [
   'black_candle',
   'magnet_orb',
   'blood_ruby',
-  'rabbits_foot',
   'destiny_control',
   ...WITCH_DEALS.map((c) => c.id),
 ];

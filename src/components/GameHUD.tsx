@@ -50,6 +50,8 @@ interface GameHUDProps {
   bossTimer?: number;
   mobileMode?: boolean;
   instaKill?: boolean;
+  isBossRush?: boolean;
+  isTrueWitchMode?: boolean;
 }
 
 const WEAPON_ICONS: Record<string, React.ElementType> = {
@@ -99,6 +101,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   bossTimer,
   mobileMode = false,
   instaKill = false,
+  isBossRush = false,
+  isTrueWitchMode = false,
 }) => {
   // Format survival time MM:SS
   const minutes = Math.floor(survivalTime / 60);
@@ -157,11 +161,23 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               </div>
             )}
             {/* Witch's face */}
-            <div className="relative shrink-0">
-              <WitchPortrait isHurt={isHurt} size={46} />
-              <div className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 font-black text-[9px] rounded px-1 py-0.2 border border-slate-950 shadow">
-                {player.level}
+            <div className="relative shrink-0 flex flex-col items-center">
+              <div className="relative">
+                <WitchPortrait isHurt={isHurt} size={46} />
+                <div className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 font-black text-[9px] rounded px-1 py-0.2 border border-slate-950 shadow">
+                  {player.level}
+                </div>
               </div>
+              {isTrueWitchMode && (
+                <div
+                  id="true-witch-hud-badge"
+                  className="mt-1 bg-gradient-to-r from-rose-950 via-rose-900 to-purple-950 border border-rose-500/80 text-rose-200 font-black text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded shadow-md shadow-rose-950/80 tracking-wider uppercase whitespace-nowrap flex items-center gap-0.5 animate-pulse"
+                  title="True Witch Mode Active"
+                >
+                  <Flame className="w-2.5 h-2.5 text-rose-400 shrink-0" />
+                  <span>True Witch</span>
+                </div>
+              )}
             </div>
 
             {/* Red HP Bar and Blue EXP Bar ... */}
@@ -184,20 +200,22 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                 </div>
               </div>
 
-              {/* Blue EXP Bar underneath */}
-              <div className="flex flex-col gap-0.5">
-                <div className="flex justify-between items-center text-[9px] font-bold text-sky-300 px-0.5 tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-                  <span>EXP</span>
-                  <span className="font-mono">{Math.floor(player.exp)} / {player.expToNextLevel}</span>
+              {/* Blue EXP Bar underneath (Hidden in Boss Rush Mode) */}
+              {!isBossRush && (
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex justify-between items-center text-[9px] font-bold text-sky-300 px-0.5 tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                    <span>EXP</span>
+                    <span className="font-mono">{Math.floor(player.exp)} / {player.expToNextLevel}</span>
+                  </div>
+                  <div className="relative h-2 w-full bg-black/60 rounded-md overflow-hidden border border-sky-600/40 shadow-inner">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-600 via-sky-400 to-cyan-300 transition-all duration-150 rounded-sm"
+                      style={{ width: `${expPercent}%` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/25 to-transparent opacity-40 pointer-events-none" />
+                  </div>
                 </div>
-                <div className="relative h-2 w-full bg-black/60 rounded-md overflow-hidden border border-sky-600/40 shadow-inner">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-600 via-sky-400 to-cyan-300 transition-all duration-150 rounded-sm"
-                    style={{ width: `${expPercent}%` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/25 to-transparent opacity-40 pointer-events-none" />
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -224,18 +242,20 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Enemy Level */}
-              <div
-                className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-950/70 backdrop-blur-sm border border-rose-900/40 shadow"
-                title="Current Enemy Level (scales with survival time)"
-              >
-                <span className="text-[9px] font-bold tracking-wider text-rose-400">FOE LV</span>
-                <span className="font-mono text-sm font-bold text-rose-300 drop-shadow">
-                  {getEnemyLevel(survivalTime)}
-                </span>
+            {!isBossRush && (
+              <div className="flex items-center gap-2">
+                {/* Enemy Level */}
+                <div
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-950/70 backdrop-blur-sm border border-rose-900/40 shadow"
+                  title="Current Enemy Level (scales with survival time)"
+                >
+                  <span className="text-[9px] font-bold tracking-wider text-rose-400">FOE LV</span>
+                  <span className="font-mono text-sm font-bold text-rose-300 drop-shadow">
+                    {getEnemyLevel(survivalTime)}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -349,72 +369,74 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           {/* Acquired Weapons & Stat Items List (Disabled during Boss fights in Mobile Mode) */}
           {!(mobileMode && isBossFight) && (
             <>
-              {/* TOP ROW: Acquired Artifacts (Passives) - Displayed in a row ON TOP of weapons with 5 slots */}
-              <div className="flex items-center gap-1.5 p-1 px-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-amber-900/60 shadow-lg w-fit">
-                {Array.from({ length: 5 }).map((_, idx) => {
-                  const owned = statItems[idx];
-                  if (!owned) {
+              {/* TOP ROW: Acquired Artifacts (Passives) - Displayed in a row ON TOP of weapons (Hidden in Boss Rush where max is 0) */}
+              {!isBossRush && (
+                <div className="flex items-center gap-1.5 p-1 px-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-amber-900/60 shadow-lg w-fit">
+                  {Array.from({ length: 5 }).map((_, idx) => {
+                    const owned = statItems[idx];
+                    if (!owned) {
+                      return (
+                        <div
+                          key={`empty-artifact-${idx}`}
+                          className="w-9 h-9 rounded-lg border border-amber-950/80 bg-amber-950/20 flex items-center justify-center opacity-40"
+                          title={`Empty Artifact Slot ${idx + 1}`}
+                        />
+                      );
+                    }
+                    const def = ALL_STAT_ITEMS.find((s) => s.id === owned.id);
+                    if (!def) return null;
+                    const IconComp = STAT_ICONS[def.icon] || Droplet;
+
                     return (
                       <div
-                        key={`empty-artifact-${idx}`}
-                        className="w-9 h-9 rounded-lg border border-amber-950/80 bg-amber-950/20 flex items-center justify-center opacity-40"
-                        title={`Empty Artifact Slot ${idx + 1}`}
-                      />
-                    );
-                  }
-                  const def = ALL_STAT_ITEMS.find((s) => s.id === owned.id);
-                  if (!def) return null;
-                  const IconComp = STAT_ICONS[def.icon] || Droplet;
-
-                  return (
-                    <div
-                      key={owned.id}
-                      id={`hud-passive-icon-${owned.id}`}
-                      onMouseEnter={() =>
-                        setHoveredItem({
-                          id: owned.id,
-                          name: def.name,
-                          type: 'STAT',
-                          tier: owned.level,
-                          description: def.description,
-                          icon: IconComp,
-                          color: def.color,
-                        })
-                      }
-                      onMouseLeave={() => setHoveredItem(null)}
-                      className="relative group cursor-pointer"
-                    >
-                      {/* Artifact Image Tile - Yellow/Amber themed to match Collection */}
-                      <div
-                        className="w-9 h-9 rounded-lg flex items-center justify-center border-2 transition-all duration-150 hover:scale-110 hover:shadow-md shadow-orange-950/50"
-                        style={{
-                          backgroundColor: `${def.color}22`,
-                          borderColor: def.color,
-                        }}
+                        key={owned.id}
+                        id={`hud-passive-icon-${owned.id}`}
+                        onMouseEnter={() =>
+                          setHoveredItem({
+                            id: owned.id,
+                            name: def.name,
+                            type: 'STAT',
+                            tier: owned.level,
+                            description: def.description,
+                            icon: IconComp,
+                            color: def.color,
+                          })
+                        }
+                        onMouseLeave={() => setHoveredItem(null)}
+                        className="relative group cursor-pointer"
                       >
-                        <IconComp className="w-4 h-4 transition-transform group-hover:rotate-6" style={{ color: def.color }} />
+                        {/* Artifact Image Tile - Yellow/Amber themed to match Collection */}
+                        <div
+                          className="w-9 h-9 rounded-lg flex items-center justify-center border-2 transition-all duration-150 hover:scale-110 hover:shadow-md shadow-orange-950/50"
+                          style={{
+                            backgroundColor: `${def.color}22`,
+                            borderColor: def.color,
+                          }}
+                        >
+                          <IconComp className="w-4 h-4 transition-transform group-hover:rotate-6" style={{ color: def.color }} />
+                        </div>
+                        {/* Tier indicator pips */}
+                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5 pointer-events-none">
+                          {Array.from({ length: def.tiers.length }).map((_, i) => {
+                            const t = i + 1;
+                            return (
+                              <span
+                                key={t}
+                                className="w-0.5 h-0.5 rounded-full"
+                                style={{ backgroundColor: t <= owned.level ? def.color : '#334155' }}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
-                      {/* Tier indicator pips */}
-                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5 pointer-events-none">
-                        {Array.from({ length: def.tiers.length }).map((_, i) => {
-                          const t = i + 1;
-                          return (
-                            <span
-                              key={t}
-                              className="w-0.5 h-0.5 rounded-full"
-                              style={{ backgroundColor: t <= owned.level ? def.color : '#334155' }}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
 
-              {/* BOTTOM ROW: Acquired Weapons with empty slots up to maxWeapons (default 5) */}
+              {/* BOTTOM ROW: Acquired Weapons (1 slot in Boss Rush, or up to maxWeapons/5 in Standard mode) */}
               <div className="flex items-center gap-1.5 p-1 px-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-purple-900/60 shadow-xl w-fit">
-                {Array.from({ length: maxWeapons || 5 }).map((_, idx) => {
+                {Array.from({ length: isBossRush ? 1 : (maxWeapons || 5) }).map((_, idx) => {
                   const owned = weapons[idx];
                   if (!owned) {
                     return (

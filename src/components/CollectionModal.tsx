@@ -1102,10 +1102,8 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                               statsList.push(`Regen: +0.1 HP/s`);
                             } else if (selectedItem.id === 'nightbears_claws') {
                               statsList.push(`Dash Damage: ${t.statValue}`);
-                            } else if (selectedItem.id === 'rabbits_foot') {
-                              statsList.push(`Level Choices: +1`);
                             } else if (selectedItem.id === 'destiny_control') {
-                              statsList.push(`Fate Selection: Enabled`);
+                              statsList.push(`Level Choices: 4 Options`);
                             } else {
                               const pct = Math.round((t.statValue - 1) * 100);
                               const label = selectedItem.id === 'black_candle' ? 'All Damage' :
@@ -1146,17 +1144,11 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                                 statsList.push(`Max HP: +${diff}`);
                               }
                               statsList.push('Regen: +0.1 HP/s');
-                            } else if (selectedItem.id === 'rabbits_foot') {
-                              // Choices exception - absolute number
-                              const diff = currVal - prevVal;
-                              if (diff > 0) {
-                                statsList.push(`Deal Choices: +${diff}`);
-                              }
                             } else if (selectedItem.id === 'destiny_control') {
-                              const diff = currVal - prevVal;
-                              if (diff > 0) {
-                                statsList.push(`Selection Options: +${diff}`);
-                              }
+                              if (t.tier === 2) statsList.push('Boss Pool: 2 Choices');
+                              else if (t.tier === 3) statsList.push("Witch's Deals: 3 Choices");
+                              else if (t.tier === 4) statsList.push('Boss Pool: 3 Choices');
+                              else if (t.tier === 5) statsList.push('Level Rerolls: 1 Per Screen');
                             } else {
                               // Standard multipliers
                               const pct = ((currVal / prevVal) - 1) * 100;

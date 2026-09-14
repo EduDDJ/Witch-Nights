@@ -7,6 +7,7 @@ interface OptionsModalProps {
   options: GameOptions;
   onChangeOptions: (updated: Partial<GameOptions>) => void;
   onClose: () => void;
+  onResetProgress?: () => void;
   onResetCollection?: () => void;
 }
 
@@ -14,11 +15,13 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
   options,
   onChangeOptions,
   onClose,
+  onResetProgress,
   onResetCollection,
 }) => {
   const isMobile = options.mobileMode;
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [resetSuccess, setResetSuccess] = useState<boolean>(false);
+  const triggerReset = onResetProgress || onResetCollection;
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
@@ -274,7 +277,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
           </div>
 
           {/* COLLECTION PROGRESS & DATA SECTION */}
-          {onResetCollection && (
+          {triggerReset && (
             <div className={`rounded-xl bg-purple-950/40 border border-purple-800/40 flex flex-col ${isMobile ? 'p-2.5 gap-2' : 'p-3.5 gap-2.5'}`}>
               <div className="font-semibold text-purple-200 flex items-center justify-between text-xs sm:text-sm">
                 <span className="flex items-center gap-2">
@@ -283,18 +286,18 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 </span>
                 {resetSuccess && (
                   <span className="text-[10px] sm:text-xs text-emerald-400 font-mono flex items-center gap-1 animate-in fade-in">
-                    <Check className="w-3 h-3" /> Collection Reset
+                    <Check className="w-3 h-3" /> Progress Reset
                   </span>
                 )}
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-semibold text-slate-200">Reset Collection</div>
-                  <div className="text-[10px] text-slate-400">Clear unlocked codex entries for weapons, passives & curses</div>
+                  <div className="text-xs font-semibold text-slate-200">Reset Progress</div>
+                  <div className="text-[10px] text-slate-400">Clear unlocked codex entries & Boss Rush records</div>
                 </div>
                 <button
-                  id="options-reset-collection-btn"
+                  id="options-reset-progress-btn"
                   onClick={() => setShowResetConfirm(true)}
                   className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer bg-rose-950/60 hover:bg-rose-900/90 text-rose-300 hover:text-white border border-rose-700/60 flex items-center gap-1.5 shrink-0"
                 >
@@ -335,10 +338,10 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 <RotateCcw className="w-7 h-7" />
               </div>
               <h3 className="text-xl sm:text-2xl font-serif font-bold text-slate-100 tracking-wide">
-                Reset Collection?
+                Reset Progress?
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed px-2">
-                Are you sure you want to reset all unlocked items in your collection? This action is permanent and cannot be undone.
+                Are you sure you want to reset all unlocked items in your collection and your Boss Rush best time? This action is permanent and cannot be undone.
               </p>
             </div>
 
@@ -353,8 +356,8 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               <button
                 id="reset-confirm-yes-btn"
                 onClick={() => {
-                  if (onResetCollection) {
-                    onResetCollection();
+                  if (triggerReset) {
+                    triggerReset();
                     setResetSuccess(true);
                     setTimeout(() => setResetSuccess(false), 3000);
                   }

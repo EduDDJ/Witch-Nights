@@ -152,12 +152,14 @@ interface GameCanvasProps {
   isClickToMoveActive?: boolean;
   mobileMode?: boolean;
   instaKill?: boolean;
+  isBossRush?: boolean;
+  isTrueWitchMode?: boolean;
   onTogglePause?: () => void;
   onUpdatePlayer: (stats: Partial<PlayerStats>) => void;
   onUpdateSurvivalTime: (time: number) => void;
   onTriggerLevelUp: (extraLevels?: number) => void;
   onTriggerWitchDeal: (curses: CurseChoice[]) => void;
-  onGameOver: (finalStats: { time: number; level: number; kills: number; bossesKilled: number; killerName?: string }) => void;
+  onGameOver: (finalStats: { time: number; level: number; kills: number; bossesKilled: number; totalDamage?: number; killerName?: string; isVictory?: boolean }) => void;
   onItemUnlocked: (type: 'WEAPON' | 'STAT' | 'CURSE', id: string) => void;
   onEnemyDefeated?: (enemyId: string) => void;
   onUnlockItem?: (itemId: string) => void;
@@ -178,6 +180,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   isClickToMoveActive = false,
   mobileMode = false,
   instaKill = false,
+  isBossRush = false,
+  isTrueWitchMode = false,
   onTogglePause,
   onUpdatePlayer,
   onUpdateSurvivalTime,
@@ -320,6 +324,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const lastBossEpochRef = useRef<number>(0);
   const bossFightDurationRef = useRef<number>(0);
   const lockedCameraRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const bossRushQueueRef = useRef<string[]>(['carnivore_plant', 'haunted_eye', 'night_bear']);
+  const bossRushIndexRef = useRef<number>(0);
+  const bossRushPauseTimerRef = useRef<number>(5.0);
+  const totalDamageDealtRef = useRef<number>(0);
   const bossAttackCooldownRef = useRef<number>(2.0);
   const bossAttackCountRef = useRef<number>(0);
   const bossContactCooldownRef = useRef<number>(0);
@@ -461,7 +469,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       walkTargetRef.current = null;
       lastBossEpochRef.current = 0;
       bossFightDurationRef.current = 0;
-      isBossFightRef.current = false;
       bossInstanceRef.current = null;
       bossTimerRef.current = 90;
       bossContactCooldownRef.current = 0;
@@ -472,6 +479,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       nextEntityId.current = 1;
       enemyTimeOffsetRef.current = 0;
       lastReportedHpRef.current = player.hp;
+      bossRushIndexRef.current = 0;
+      bossRushPauseTimerRef.current = 5.0;
+      totalDamageDealtRef.current = 0;
+      if (isBossRush) {
+        isBossFightRef.current = true;
+        const canvas = canvasRef.current;
+        const p = playerRef.current;
+        if (canvas && p) {
+          lockedCameraRef.current = {
+            x: p.x - canvas.width / 2,
+            y: p.y - canvas.height / 2,
+          };
+        }
+      } else {
+        isBossFightRef.current = false;
+      }
       if (onBossUpdate) {
         onBossUpdate(null, false, 0, 0);
       }
@@ -974,13 +997,44 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       survivalTimeRef.current += dt;
       onUpdateSurvivalTime(survivalTimeRef.current);
 
+      // Boss Rush Mode Logic
+      if (isBossRush) {
+        // Locked at Level 1
+        if (p.level > 1 || p.exp > 0) {
+          p.level = 1;
+          p.exp = 0;
+          onUpdatePlayer({ level: 1, exp: 0 });
+        }
+
+        if (!bossInstanceRef.current) {
+          bossRushPauseTimerRef.current -= dt;
+          if (bossRushPauseTimerRef.current <= 0) {
+            if (bossRushIndexRef.current < bossRushQueueRef.current.length) {
+              const bId = bossRushQueueRef.current[bossRushIndexRef.current];
+              spawnBossFight(bId);
+            } else {
+              // Victory!
+              onGameOver({
+                time: survivalTimeRef.current,
+                level: 1,
+                kills: killsCountRef.current,
+                bossesKilled: bossesKilledRef.current,
+                totalDamage: totalDamageDealtRef.current,
+                isVictory: true,
+              });
+              return;
+            }
+          }
+        }
+      }
+
       // Boss Fight Trigger (Spawn every 5 mins = 300s, 600s, etc.)
       const currentBossEpoch = Math.floor(survivalTimeRef.current / 300);
-      if (currentBossEpoch > 0 && currentBossEpoch > lastBossEpochRef.current && !isBossFightRef.current) {
+      if (!isBossRush && currentBossEpoch > 0 && currentBossEpoch > lastBossEpochRef.current && !isBossFightRef.current) {
         lastBossEpochRef.current = currentBossEpoch;
         const destinyControlItem = statItemsRef.current.find((s) => s.id === 'destiny_control');
-        if (destinyControlItem && onTriggerBossSelection) {
-          const count = destinyControlItem.level === 1 ? 2 : 3;
+        if (destinyControlItem && destinyControlItem.level >= 2 && onTriggerBossSelection) {
+          const count = destinyControlItem.level >= 4 ? 3 : 2;
           const shuffled = [...BOSS_POOL].sort(() => 0.5 - Math.random());
           const selection = shuffled.slice(0, count);
           onTriggerBossSelection(selection);
@@ -1177,7 +1231,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               const dps = 20;
               const dmgThisFrame = dps * dt;
               playerRef.current.hp = Math.max(0, playerRef.current.hp - dmgThisFrame);
+              lastReportedHpRef.current = playerRef.current.hp;
               onUpdatePlayer({ hp: playerRef.current.hp });
+
+              if (playerRef.current.hp <= 0) {
+                playerRef.current.hp = 0;
+                lastReportedHpRef.current = 0;
+                onUpdatePlayer({ hp: 0 });
+                onGameOver({
+                  time: survivalTimeRef.current,
+                  level: playerRef.current.level,
+                  kills: killsCountRef.current,
+                  bossesKilled: bossesKilledRef.current,
+                  killerName: boss.name,
+                });
+                return;
+              }
 
               eyeGazeDamageAccumulatorRef.current += dmgThisFrame;
               if (eyeGazeDamageAccumulatorRef.current >= 2.0) {
@@ -1304,6 +1373,20 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   vy: -40,
                 });
 
+                if (p.hp <= 0) {
+                  p.hp = 0;
+                  lastReportedHpRef.current = 0;
+                  onUpdatePlayer({ hp: 0 });
+                  onGameOver({
+                    time: survivalTimeRef.current,
+                    level: p.level,
+                    kills: killsCountRef.current,
+                    bossesKilled: bossesKilledRef.current,
+                    killerName: boss.name,
+                  });
+                  return;
+                }
+
                 // Knockback
                 const kAngle = Math.atan2(p.y - boss.y, p.x - boss.x);
                 const kDist = 120;
@@ -1419,6 +1502,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   a.hasHit = true;
                   const heavyDamage = a.damage;
                   playerRef.current.hp = Math.max(0, playerRef.current.hp - heavyDamage);
+                  lastReportedHpRef.current = playerRef.current.hp;
                   soundEngine.playHit();
                   if (screenShakeEnabledRef.current) {
                     screenShakeRef.current = 14;
@@ -1449,6 +1533,20 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     });
                   }
                   onUpdatePlayer({ hp: playerRef.current.hp });
+
+                  if (playerRef.current.hp <= 0) {
+                    playerRef.current.hp = 0;
+                    lastReportedHpRef.current = 0;
+                    onUpdatePlayer({ hp: 0 });
+                    onGameOver({
+                      time: survivalTimeRef.current,
+                      level: playerRef.current.level,
+                      kills: killsCountRef.current,
+                      bossesKilled: bossesKilledRef.current,
+                      killerName: boss.name,
+                    });
+                    return;
+                  }
                 }
               }
             }
@@ -1461,25 +1559,27 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           if (onEnemyDefeated) {
             onEnemyDefeated(boss.id);
           }
-          // Boss drops 1 Yellow Orb (75 EXP) and 1 25HP healing food
-          expGemsRef.current.push({
-            id: nextEntityId.current++,
-            x: boss.x,
-            y: boss.y,
-            value: 75,
-            color: '#eab308',
-            radius: 9.5,
-          });
+          // Boss drops 1 Yellow Orb (75 EXP) and 1 25HP healing food (Disabled in Boss Rush)
+          if (!isBossRush) {
+            expGemsRef.current.push({
+              id: nextEntityId.current++,
+              x: boss.x,
+              y: boss.y,
+              value: 75,
+              color: '#eab308',
+              radius: 9.5,
+            });
 
-          // Always drop 25HP healing food with the yellow orb
-          pickupsRef.current.push({
-            id: nextEntityId.current++,
-            type: 'FOOD',
-            x: boss.x + 20,
-            y: boss.y + 10,
-            healAmount: 25,
-            radius: 12,
-          });
+            // Always drop 25HP healing food with the yellow orb
+            pickupsRef.current.push({
+              id: nextEntityId.current++,
+              type: 'FOOD',
+              x: boss.x + 20,
+              y: boss.y + 10,
+              healAmount: 25,
+              radius: 12,
+            });
+          }
 
           // Massive celebration spark burst
           for (let k = 0; k < 45; k++) {
@@ -1505,30 +1605,91 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               weapon.kills = (weapon.kills || 0) + 1;
             }
           }
-          isBossFightRef.current = false;
-          bossInstanceRef.current = null;
-          lastBossEpochRef.current = Math.max(lastBossEpochRef.current, Math.floor(survivalTimeRef.current / 300), 1);
-          if (onBossUpdate) {
-            onBossUpdate(null, false, 0, 0);
+
+          if (isBossRush) {
+            if (!isTrueWitchMode) {
+              p.hp = Math.min(p.maxHp, p.hp + 25);
+              lastReportedHpRef.current = p.hp;
+              onUpdatePlayer({ hp: p.hp });
+
+              floatingTextsRef.current.push({
+                id: nextEntityId.current++,
+                x: p.x + (Math.random() - 0.5) * 16,
+                y: p.y - 18,
+                text: '+25 HP',
+                color: '#22c55e',
+                life: 0,
+                maxLife: 1.0,
+                vy: -45,
+              });
+
+              // Green healing sparkles matching food pickup
+              for (let k = 0; k < 12; k++) {
+                const ang = Math.random() * Math.PI * 2;
+                const spd = Math.random() * 80 + 25;
+                particlesRef.current.push({
+                  x: p.x,
+                  y: p.y,
+                  vx: Math.cos(ang) * spd,
+                  vy: Math.sin(ang) * spd,
+                  size: Math.random() * 4 + 2,
+                  color: '#4ade80',
+                  alpha: 1,
+                  decay: 2.4,
+                });
+              }
+            }
+
+            soundEngine.playLevelUp();
+
+            bossRushIndexRef.current += 1;
+            bossInstanceRef.current = null;
+            isBossFightRef.current = true;
+
+            if (bossRushIndexRef.current < bossRushQueueRef.current.length) {
+              bossRushPauseTimerRef.current = 5.0;
+            } else {
+              onGameOver({
+                time: survivalTimeRef.current,
+                level: 1,
+                kills: killsCountRef.current,
+                bossesKilled: bossesKilledRef.current,
+                totalDamage: totalDamageDealtRef.current,
+                isVictory: true,
+              });
+              return;
+            }
+          } else {
+            isBossFightRef.current = false;
+            bossInstanceRef.current = null;
+            lastBossEpochRef.current = Math.max(lastBossEpochRef.current, Math.floor(survivalTimeRef.current / 300), 1);
+            if (onBossUpdate) {
+              onBossUpdate(null, false, 0, 0);
+            }
           }
-          if (onUnlockItem) {
-            if (boss.id === 'carnivore_plant') {
-              onUnlockItem('vine_snare');
-            } else if (boss.id === 'haunted_eye') {
-              onUnlockItem('medusas_eye');
-            } else if (boss.id === 'night_bear') {
-              onUnlockItem('nightbears_claws');
+          if (!isBossRush) {
+            if (onEnemyDefeated) {
+              onEnemyDefeated(boss.id);
+            }
+            if (onUnlockItem) {
+              if (boss.id === 'carnivore_plant') {
+                onUnlockItem('vine_snare');
+              } else if (boss.id === 'haunted_eye') {
+                onUnlockItem('medusas_eye');
+              } else if (boss.id === 'night_bear') {
+                onUnlockItem('nightbears_claws');
+              }
             }
           }
         }
       }
 
-      // Check Minute 7:30 Epoch: The Witch's Deal (450 seconds)
-      if (survivalTimeRef.current >= 450 && !dealTriggeredRef.current) {
+      // Check Minute 7:30 Epoch: The Witch's Deal (450 seconds) - Disabled in Boss Rush
+      if (!isBossRush && survivalTimeRef.current >= 450 && !dealTriggeredRef.current) {
         dealTriggeredRef.current = true;
         soundEngine.playWitchDeal();
-        const rfItem = statItemsRef.current.find((s) => s.id === 'rabbits_foot');
-        const dealCount = rfItem && rfItem.level >= 2 ? 3 : 2;
+        const destinyItem = statItemsRef.current.find((s) => s.id === 'destiny_control');
+        const dealCount = destinyItem && destinyItem.level >= 3 ? 3 : 2;
         const shuffled = [...WITCH_DEALS].sort(() => 0.5 - Math.random());
         onTriggerWitchDeal(shuffled.slice(0, dealCount));
         return;
@@ -1615,8 +1776,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
       }
 
-      // Passive HP Regeneration
-      if (p.hpRegen > 0 && p.hp < p.maxHp) {
+      // Passive HP Regeneration (strictly when player is alive and True Witch Mode is not active)
+      if (!isTrueWitchMode && p.hpRegen > 0 && p.hp > 0 && p.hp < p.maxHp) {
         p.hp = Math.min(p.maxHp, p.hp + p.hpRegen * dt);
       }
 
@@ -1720,6 +1881,20 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             triggerDashEndAoE();
             walkTargetRef.current = null;
             p.isDashing = false;
+
+            if (p.hp <= 0) {
+              p.hp = 0;
+              lastReportedHpRef.current = 0;
+              onUpdatePlayer({ hp: 0 });
+              onGameOver({
+                time: survivalTimeRef.current,
+                level: p.level,
+                kills: killsCountRef.current,
+                bossesKilled: bossesKilledRef.current,
+                killerName: boss.name,
+              });
+              return;
+            }
             dashVxRef.current = 0;
             dashVyRef.current = 0;
 
@@ -2297,7 +2472,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             enemy.y += Math.sin(kbAngle) * proj.knockback;
 
             // Vampirism effect
-            if (proj.vampirismRatio > 0) {
+            if (!isTrueWitchMode && proj.vampirismRatio > 0) {
               const healed = actualDmg * proj.vampirismRatio;
               p.hp = Math.min(p.maxHp, p.hp + healed);
             }
@@ -2744,7 +2919,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             }
           }
           soundEngine.playEnemyDeath();
-          if (onEnemyDefeated) {
+          if (!isBossRush && onEnemyDefeated) {
             onEnemyDefeated(
               enemy.type === 'BAT' ? 'bat' :
               enemy.type === 'GHOUL' ? 'ghoul' : 
@@ -2772,86 +2947,88 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             continue;
           }
 
-          // Enemy Drops: Red Orb grants 10 EXP; 10% chance for special drop (Magnet ~1%, Food and Upgraded Orbs ~9%)
-          const isVillageKnight = enemy.isRed || enemy.name === 'Village Knight';
-          const specialRoll = Math.random();
+          // Enemy Drops (Disabled in Boss Rush mode)
+          if (!isBossRush) {
+            const isVillageKnight = enemy.isRed || enemy.name === 'Village Knight';
+            const specialRoll = Math.random();
 
-          const pushExpDrop = (fallbackValue: number, fallbackColor: string, fallbackRadius: number) => {
-            const chance = isVillageKnight ? 0.10 : 0.01;
-            if (p.expToNextLevel > 700 && Math.random() < chance) {
-              expGemsRef.current.push({
-                id: nextEntityId.current++,
-                x: enemy.x,
-                y: enemy.y,
-                value: 75,
-                color: '#eab308',
-                radius: 9.5,
-              });
-            } else {
-              expGemsRef.current.push({
-                id: nextEntityId.current++,
-                x: enemy.x,
-                y: enemy.y,
-                value: fallbackValue,
-                color: fallbackColor,
-                radius: fallbackRadius,
-              });
-            }
-          };
+            const pushExpDrop = (fallbackValue: number, fallbackColor: string, fallbackRadius: number) => {
+              const chance = isVillageKnight ? 0.10 : 0.01;
+              if (p.expToNextLevel > 700 && Math.random() < chance) {
+                expGemsRef.current.push({
+                  id: nextEntityId.current++,
+                  x: enemy.x,
+                  y: enemy.y,
+                  value: 75,
+                  color: '#eab308',
+                  radius: 9.5,
+                });
+              } else {
+                expGemsRef.current.push({
+                  id: nextEntityId.current++,
+                  x: enemy.x,
+                  y: enemy.y,
+                  value: fallbackValue,
+                  color: fallbackColor,
+                  radius: fallbackRadius,
+                });
+              }
+            };
 
-          if (specialRoll < 0.01) {
-            // Rare Magnet Drop (~1% chance)
-            pickupsRef.current.push({
-              id: nextEntityId.current++,
-              type: 'MAGNET',
-              x: enemy.x,
-              y: enemy.y,
-              radius: 11,
-            });
-
-            // Normal EXP drop accompanying the magnet
-            if (isVillageKnight) {
-              pushExpDrop(10, '#ef4444', 7);
-            } else {
-              pushExpDrop(enemy.exp, '#38bdf8', 5);
-            }
-          } else if (specialRoll < 0.10) {
-            // Other Special Drops (remaining ~9% chance)
-            if (isVillageKnight) {
-              // Village's Knight: higher-level orb doesn't apply; drops Food (deals 25 dmg) + standard Red Orb (10 EXP)
+            if (specialRoll < 0.01) {
+              // Rare Magnet Drop (~1% chance)
               pickupsRef.current.push({
                 id: nextEntityId.current++,
-                type: 'FOOD',
+                type: 'MAGNET',
                 x: enemy.x,
                 y: enemy.y,
-                healAmount: enemy.damage, // 25 HP
                 radius: 11,
               });
-              pushExpDrop(10, '#ef4444', 7);
-            } else {
-              // Peasants: 50% Food (+ standard blue gem), 50% Higher level EXP orb (Red Orb instead of blue)
-              if (Math.random() < 0.5) {
+
+              // Normal EXP drop accompanying the magnet
+              if (isVillageKnight) {
+                pushExpDrop(10, '#ef4444', 7);
+              } else {
+                pushExpDrop(enemy.exp, '#38bdf8', 5);
+              }
+            } else if (specialRoll < 0.10) {
+              // Other Special Drops (remaining ~9% chance)
+              if (isVillageKnight) {
+                // Village's Knight: higher-level orb doesn't apply; drops Food (deals 25 dmg) + standard Red Orb (10 EXP)
                 pickupsRef.current.push({
                   id: nextEntityId.current++,
                   type: 'FOOD',
                   x: enemy.x,
                   y: enemy.y,
-                  healAmount: enemy.damage, // 10 or 12 HP
+                  healAmount: enemy.damage, // 25 HP
                   radius: 11,
                 });
-                pushExpDrop(enemy.exp, '#38bdf8', 5);
-              } else {
-                // Higher level EXP orb than their own (Peasants drop Red Orb instead of blue one)
                 pushExpDrop(10, '#ef4444', 7);
+              } else {
+                // Peasants: 50% Food (+ standard blue gem), 50% Higher level EXP orb (Red Orb instead of blue)
+                if (Math.random() < 0.5) {
+                  pickupsRef.current.push({
+                    id: nextEntityId.current++,
+                    type: 'FOOD',
+                    x: enemy.x,
+                    y: enemy.y,
+                    healAmount: enemy.damage, // 10 or 12 HP
+                    radius: 11,
+                  });
+                  pushExpDrop(enemy.exp, '#38bdf8', 5);
+                } else {
+                  // Higher level EXP orb than their own (Peasants drop Red Orb instead of blue one)
+                  pushExpDrop(10, '#ef4444', 7);
+                }
               }
-            }
-          } else {
-            // Normal 90% drops:
-            if (isVillageKnight) {
-              pushExpDrop(10, '#ef4444', 7);
             } else {
-              // Normal cyan diamond EXP gem
-              pushExpDrop(enemy.exp, '#38bdf8', 5);
+              // Normal 90% drops:
+              if (isVillageKnight) {
+                pushExpDrop(10, '#ef4444', 7);
+              } else {
+                // Normal cyan diamond EXP gem
+                pushExpDrop(enemy.exp, '#38bdf8', 5);
+              }
             }
           }
 
@@ -2937,84 +3114,93 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
       }
 
-      // EXP Attraction & Collection
-      const magnetRadius = p.magnetRadius;
-      for (let i = expGemsRef.current.length - 1; i >= 0; i--) {
-        const gem = expGemsRef.current[i];
-        const gdist = Math.hypot(p.x - gem.x, p.y - gem.y);
-
-        // Attract towards player
-        if (gdist <= magnetRadius) {
-          const pullSpeed = 420;
-          gem.x += ((p.x - gem.x) / gdist) * pullSpeed * dt;
-          gem.y += ((p.y - gem.y) / gdist) * pullSpeed * dt;
+      // EXP Attraction & Collection (Disabled in Boss Rush mode)
+      if (isBossRush) {
+        expGemsRef.current = [];
+        if (p.level > 1 || p.exp > 0) {
+          p.level = 1;
+          p.exp = 0;
+          onUpdatePlayer({ level: 1, exp: 0 });
         }
+      } else {
+        const magnetRadius = p.magnetRadius;
+        for (let i = expGemsRef.current.length - 1; i >= 0; i--) {
+          const gem = expGemsRef.current[i];
+          const gdist = Math.hypot(p.x - gem.x, p.y - gem.y);
 
-        // Pickup
-        if (gdist <= p.radius + gem.radius) {
-          soundEngine.playExpPickup();
-          const earnedExp = gem.value * (p.expMultiplier || 1.0);
-          p.exp += earnedExp;
-
-          if (gem.color === '#eab308' || gem.color === '#facc15') {
-            // Yellow Boss Orb (75 EXP)
-            floatingTextsRef.current.push({
-              id: nextEntityId.current++,
-              x: p.x + (Math.random() - 0.5) * 20,
-              y: p.y - 18,
-              text: `+${Math.round(earnedExp)} BOSS EXP!`,
-              color: '#facc15',
-              life: 0,
-              maxLife: 1.2,
-              vy: -45,
-            });
-
-            for (let k = 0; k < 18; k++) {
-              const ang = Math.random() * Math.PI * 2;
-              const spd = Math.random() * 95 + 30;
-              particlesRef.current.push({
-                x: p.x,
-                y: p.y,
-                vx: Math.cos(ang) * spd,
-                vy: Math.sin(ang) * spd,
-                size: Math.random() * 4 + 2,
-                color: '#fde047',
-                alpha: 1,
-                decay: 2.0,
-              });
-            }
-          } else if (gem.color === '#ef4444') {
-            // Red EXP Orb (10 EXP)
-            floatingTextsRef.current.push({
-              id: nextEntityId.current++,
-              x: p.x + (Math.random() - 0.5) * 20,
-              y: p.y - 12,
-              text: `+${Math.round(earnedExp)} EXP`,
-              color: '#f43f5e',
-              life: 0,
-              maxLife: 0.85,
-              vy: -40,
-            });
+          // Attract towards player
+          if (gdist <= magnetRadius) {
+            const pullSpeed = 420;
+            gem.x += ((p.x - gem.x) / gdist) * pullSpeed * dt;
+            gem.y += ((p.y - gem.y) / gdist) * pullSpeed * dt;
           }
 
-          expGemsRef.current.splice(i, 1);
+          // Pickup
+          if (gdist <= p.radius + gem.radius) {
+            soundEngine.playExpPickup();
+            const earnedExp = gem.value * (p.expMultiplier || 1.0);
+            p.exp += earnedExp;
 
-          // Check Level Up!
-          if (p.exp >= p.expToNextLevel) {
-            let levelsGained = 0;
-            while (p.exp >= p.expToNextLevel) {
-              p.exp -= p.expToNextLevel;
-              p.level += 1;
-              p.expToNextLevel = getExpNeededForLevel(p.level);
-              levelsGained++;
+            if (gem.color === '#eab308' || gem.color === '#facc15') {
+              // Yellow Boss Orb (75 EXP)
+              floatingTextsRef.current.push({
+                id: nextEntityId.current++,
+                x: p.x + (Math.random() - 0.5) * 20,
+                y: p.y - 18,
+                text: `+${Math.round(earnedExp)} BOSS EXP!`,
+                color: '#facc15',
+                life: 0,
+                maxLife: 1.2,
+                vy: -45,
+              });
+
+              for (let k = 0; k < 18; k++) {
+                const ang = Math.random() * Math.PI * 2;
+                const spd = Math.random() * 95 + 30;
+                particlesRef.current.push({
+                  x: p.x,
+                  y: p.y,
+                  vx: Math.cos(ang) * spd,
+                  vy: Math.sin(ang) * spd,
+                  size: Math.random() * 4 + 2,
+                  color: '#fde047',
+                  alpha: 1,
+                  decay: 2.0,
+                });
+              }
+            } else if (gem.color === '#ef4444') {
+              // Red EXP Orb (10 EXP)
+              floatingTextsRef.current.push({
+                id: nextEntityId.current++,
+                x: p.x + (Math.random() - 0.5) * 20,
+                y: p.y - 12,
+                text: `+${Math.round(earnedExp)} EXP`,
+                color: '#f43f5e',
+                life: 0,
+                maxLife: 0.85,
+                vy: -40,
+              });
             }
 
-            onUpdatePlayer({ exp: p.exp, level: p.level, expToNextLevel: p.expToNextLevel });
-            soundEngine.playLevelUp();
-            onTriggerLevelUp(levelsGained);
-            return;
-          } else {
-            onUpdatePlayer({ exp: p.exp });
+            expGemsRef.current.splice(i, 1);
+
+            // Check Level Up!
+            if (p.exp >= p.expToNextLevel) {
+              let levelsGained = 0;
+              while (p.exp >= p.expToNextLevel) {
+                p.exp -= p.expToNextLevel;
+                p.level += 1;
+                p.expToNextLevel = getExpNeededForLevel(p.level);
+                levelsGained++;
+              }
+
+              onUpdatePlayer({ exp: p.exp, level: p.level, expToNextLevel: p.expToNextLevel });
+              soundEngine.playLevelUp();
+              onTriggerLevelUp(levelsGained);
+              return;
+            } else {
+              onUpdatePlayer({ exp: p.exp });
+            }
           }
         }
       }
@@ -3099,6 +3285,34 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
       }
       ctx.restore();
+
+      // Boss Rush Pause Countdown Banner Overlay
+      if (isBossRush && !bossInstanceRef.current && bossRushPauseTimerRef.current > 0) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(10, 5, 20, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#c084fc';
+        ctx.font = 'bold 36px serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#9333ea';
+        ctx.shadowBlur = 20;
+        const bossNames = ['Carnivore Plant', 'Haunted Eye', 'NightBear'];
+        const nextName = bossNames[bossRushIndexRef.current] || 'Final Boss';
+        ctx.fillText(`BOSS RUSH MODE`, canvas.width / 2, canvas.height / 2 - 70);
+
+        ctx.fillStyle = '#f3f4f6';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.shadowBlur = 10;
+        ctx.fillText(`Next Challenger: ${nextName}`, canvas.width / 2, canvas.height / 2 - 15);
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 52px monospace';
+        ctx.shadowColor = '#d97706';
+        ctx.shadowBlur = 15;
+        ctx.fillText(`${Math.ceil(bossRushPauseTimerRef.current)}s`, canvas.width / 2, canvas.height / 2 + 55);
+        ctx.restore();
+      }
 
       // 1d. Medusa's Eye Slow Zone indicator
       const medusaItemRender = statItemsRef.current.find((s) => s.id === 'medusas_eye');

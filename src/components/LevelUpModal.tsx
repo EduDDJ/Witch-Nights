@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WeaponDefinition, StatItemDefinition } from '../types/game';
-import { Sparkles, Flame, Skull, BookOpen, Crosshair, Zap, Radio, Droplet, Maximize2, Shield, Wind, Footprints, Compass, Heart, ArrowUpCircle, PlusCircle, Clover, Eye, Sprout } from 'lucide-react';
+import { Sparkles, Flame, Skull, BookOpen, Crosshair, Zap, Radio, Droplet, Maximize2, Shield, Wind, Footprints, Compass, Heart, ArrowUpCircle, PlusCircle, Clover, Eye, Sprout, RotateCcw } from 'lucide-react';
 import { VampireFangsIcon } from './VampireFangsIcon';
 import { PentagramIcon } from './PentagramIcon';
 import { BroomIcon } from './BroomIcon';
@@ -32,7 +32,10 @@ interface LevelUpModalProps {
   options: LevelUpOption[];
   mobileMode?: boolean;
   isDevLevelUp?: boolean;
+  hasExtraChoices?: boolean;
   hasRabbitsFoot?: boolean;
+  canReroll?: boolean;
+  onReroll?: () => void;
   onSelectOption: (option: LevelUpOption) => void;
 }
 
@@ -68,7 +71,10 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
   options,
   mobileMode = false,
   isDevLevelUp = false,
+  hasExtraChoices = false,
   hasRabbitsFoot = false,
+  canReroll = false,
+  onReroll,
   onSelectOption,
 }) => {
   const [isReady, setIsReady] = useState(isDevLevelUp);
@@ -86,7 +92,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
     return () => clearTimeout(timer);
   }, [level, options, isDevLevelUp]);
 
-  // Keyboard 1, 2, 3, 4 shortcuts
+  // Keyboard 1, 2, 3, 4, R shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isReady) return;
@@ -94,10 +100,13 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
       if (e.key === '2' && options[1]) onSelectOption(options[1]);
       if (e.key === '3' && options[2]) onSelectOption(options[2]);
       if (e.key === '4' && options[3]) onSelectOption(options[3]);
+      if ((e.key === 'r' || e.key === 'R') && canReroll && onReroll) {
+        onReroll();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [options, isReady, onSelectOption]);
+  }, [options, isReady, onSelectOption, canReroll, onReroll]);
 
   const getShootingTypeLabel = (type: string) => {
     switch (type) {
@@ -280,11 +289,26 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
           </div>
         )}
 
+        {/* Reroll Button (Destiny Control Rank 5) */}
+        {canReroll && onReroll && isReady && (
+          <div className="flex justify-center mt-3">
+            <button
+              type="button"
+              id="reroll-options-button"
+              onClick={onReroll}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-950 via-purple-900 to-amber-950 hover:from-amber-900 hover:to-purple-800 text-amber-200 hover:text-white font-bold text-xs sm:text-sm shadow-lg border border-amber-500/60 hover:border-amber-300 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+            >
+              <RotateCcw className="w-4 h-4 text-amber-400" />
+              <span>Reroll Options (1 Left)</span>
+            </button>
+          </div>
+        )}
+
         {/* Footer Hint */}
         <div className={`text-center text-slate-400 ${mobileMode ? 'mt-2 text-[10px] sm:text-xs' : 'mt-4 text-xs'}`}>
           {isReady ? (
             <span>
-              Press <kbd className="px-1 py-0.2 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">1</kbd>, <kbd className="px-1 py-0.2 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">2</kbd>, <kbd className="px-1 py-0.2 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">3</kbd>{hasRabbitsFoot && <span>, or <kbd className="px-1 py-0.2 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">4</kbd></span>} or click to choose.
+              Press <kbd className="px-1 py-0.2 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">1</kbd>, <kbd className="px-1 py-0.2 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">2</kbd>, <kbd className="px-1 py-0.2 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">3</kbd>{(hasExtraChoices || hasRabbitsFoot) && <span>, or <kbd className="px-1 py-0.2 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">4</kbd></span>}{canReroll && <span> (Press <kbd className="px-1 py-0.2 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">R</kbd> to reroll)</span>} or click to choose.
             </span>
           ) : (
             <span className="text-purple-400 font-medium inline-flex items-center gap-1.5 animate-pulse">

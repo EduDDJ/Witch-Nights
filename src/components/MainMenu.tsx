@@ -1,8 +1,9 @@
 import React from 'react';
-import { BookOpen, Play, Settings, HelpCircle } from 'lucide-react';
+import { BookOpen, Play, Settings, HelpCircle, Skull } from 'lucide-react';
 
 interface MainMenuProps {
   onStartGame: () => void;
+  onOpenBossRush: () => void;
   onOpenCollection: () => void;
   onOpenOptions: () => void;
   onOpenTutorial: () => void;
@@ -12,6 +13,7 @@ interface MainMenuProps {
 
 export const MainMenu: React.FC<MainMenuProps> = ({
   onStartGame,
+  onOpenBossRush,
   onOpenCollection,
   onOpenOptions,
   onOpenTutorial,
@@ -32,7 +34,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         <div className="w-[420px] h-[420px] border border-purple-400/15 rounded-full border-dashed" />
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center gap-12 sm:gap-20 w-full z-10">
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 sm:gap-10 w-full z-10">
         {/* Top Header */}
         <header className="text-center flex flex-col items-center">
           {/* Title "Witch Nights" */}
@@ -47,8 +49,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         {/* Middle Controls & Buttons */}
         <main className="flex flex-col items-center w-full max-w-lg">
           <div className="flex flex-col sm:flex-row items-start justify-center gap-4 w-full">
-            {/* Column with "Start Game" button and "Tutorial" button under it */}
-            <div className="flex-1 w-full flex flex-col items-center gap-2">
+            {/* Column with "Start Game" and "Boss Rush" buttons */}
+            <div className="flex-1 w-full flex flex-col items-center gap-3">
               <button
                 id="start-game-button"
                 onClick={onStartGame}
@@ -58,19 +60,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <span>Start Game</span>
               </button>
 
-              {/* Tutorial button under "Start Game" */}
               <button
-                id="tutorial-button"
-                onClick={onOpenTutorial}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
-                title="Learn how to play"
+                id="boss-rush-button"
+                onClick={onOpenBossRush}
+                className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-stone-900 via-purple-950 to-stone-900 hover:bg-purple-950 text-purple-200 hover:text-white font-bold text-lg sm:text-xl shadow-xl shadow-purple-950/50 hover:shadow-purple-800/60 hover:-translate-y-0.5 transition-all duration-200 border-2 border-purple-600/60 hover:border-purple-400 flex items-center justify-center gap-3 cursor-pointer"
               >
-                <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
-                <span>Tutorial</span>
+                <Skull className="w-6 h-6 text-purple-400 group-hover:scale-110 transition-transform" />
+                <span>Boss Rush</span>
               </button>
             </div>
 
-            {/* Column with "Collection" button and "Options" button under it */}
+            {/* Column with "Collection" button and Tutorial/Options row under it */}
             <div className="flex-1 w-full flex flex-col items-center gap-2">
               <button
                 id="collection-button"
@@ -84,16 +84,28 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 </span>
               </button>
 
-              {/* Options button under "Collection" */}
-              <button
-                id="options-button"
-                onClick={onOpenOptions}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
-                title="Game Options"
-              >
-                <Settings className="w-3.5 h-3.5 text-purple-400" />
-                <span>Options</span>
-              </button>
+              {/* Tutorial and Options side-by-side */}
+              <div className="flex w-full gap-2">
+                <button
+                  id="tutorial-button"
+                  onClick={onOpenTutorial}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
+                  title="Learn how to play"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Tutorial</span>
+                </button>
+
+                <button
+                  id="options-button"
+                  onClick={onOpenOptions}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
+                  title="Game Options"
+                >
+                  <Settings className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Options</span>
+                </button>
+              </div>
             </div>
           </div>
         </main>
