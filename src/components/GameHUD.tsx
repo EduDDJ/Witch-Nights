@@ -244,7 +244,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       {isBossFight && boss && (
         <div
           id="boss-health-hud"
-          className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-lg sm:max-w-xl pointer-events-auto flex flex-col gap-1.5 drop-shadow-[0_8px_24px_rgba(0,0,0,0.95)] z-40 animate-in fade-in slide-in-from-bottom-3 duration-300"
+          className="absolute bottom-4 sm:bottom-6 left-[58%] -translate-x-1/2 w-[92%] max-w-lg sm:max-w-xl pointer-events-auto flex flex-col gap-1.5 drop-shadow-[0_8px_24px_rgba(0,0,0,0.95)] z-40 animate-in fade-in slide-in-from-bottom-3 duration-300"
         >
           {/* Top Row above the bar: Bigger Boss Name (top-left) & 1:30 Countdown (top-right) */}
           <div className="flex items-end justify-between px-1">

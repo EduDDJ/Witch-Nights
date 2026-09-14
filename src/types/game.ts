@@ -42,6 +42,7 @@ export interface BossInstance {
   name: string;
   hp: number;
   maxHp: number;
+  damage: number;
   radius: number;
   widthRadius?: number;
   heightRadius?: number;
@@ -94,7 +95,7 @@ export interface StatItemTier {
 export interface StatItemDefinition {
   id: string;
   name: string;
-  statType: 'VAMPIRISM' | 'PROJECTILE_SIZE' | 'KNOCKBACK' | 'DASH_COOLDOWN' | 'MOVE_SPEED' | 'DAMAGE_BOOST' | 'MAGNET_RADIUS' | 'MAX_HEALTH' | 'EXTRA_CHOICES' | 'DESTINY_CONTROL' | 'MEDUSA_SLOW';
+  statType: 'VAMPIRISM' | 'PROJECTILE_SIZE' | 'KNOCKBACK' | 'DASH_COOLDOWN' | 'MOVE_SPEED' | 'DAMAGE_BOOST' | 'MAGNET_RADIUS' | 'MAX_HEALTH' | 'EXTRA_CHOICES' | 'DESTINY_CONTROL' | 'MEDUSA_SLOW' | 'DASH_DAMAGE';
   icon: string;
   description: string;
   unlockCondition?: string;
@@ -142,7 +143,7 @@ export interface Enemy {
   exp: number;
   color: string;
   name: string;
-  type: 'BAT' | 'GHOUL' | 'WRAITH';
+  type: 'BAT' | 'GHOUL' | 'WRAITH' | 'MINI_EYE';
   vx: number;
   vy: number;
   hitFlashTimer: number;
@@ -150,6 +151,7 @@ export interface Enemy {
   isRed?: boolean;
   vineRootedDuration?: number;
   lastHitBy?: string;
+  facingDir?: number; // 1 for facing right, -1 for facing left
 }
 
 export interface Projectile {
@@ -175,6 +177,8 @@ export interface Projectile {
   homingTargetId?: number | null;
   vineRootDuration?: number;
   isLaser?: boolean;
+  hitEnemyIds?: Set<number>;
+  hitBoss?: boolean;
 }
 
 export interface AreaZone {
@@ -214,6 +218,15 @@ export interface ExpGem {
   y: number;
   value: number;
   color: string;
+  radius: number;
+}
+
+export interface WorldPickup {
+  id: number;
+  type: 'FOOD' | 'MAGNET';
+  x: number;
+  y: number;
+  healAmount?: number;
   radius: number;
 }
 
@@ -260,6 +273,7 @@ export interface PlayerStats {
   magnetRadius: number; // base 90
   hpRegen: number; // hp per second
   expMultiplier?: number; // default 1.0
+  dashDamage?: number; // damage dealt to enemies during dash
 }
 
 export type DashMode = 'MOVEMENT' | 'CURSOR';
@@ -271,4 +285,5 @@ export interface GameOptions {
   screenShake: boolean;
   damageNumbers: boolean;
   mobileMode: boolean;
+  brightness: number; // 50 to 150 (percentage)
 }

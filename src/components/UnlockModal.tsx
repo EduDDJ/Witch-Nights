@@ -1,6 +1,7 @@
 import React from 'react';
-import { Sprout, Eye, Check, Sparkles, HelpCircle } from 'lucide-react';
+import { Sprout, Eye, Check, Sparkles, HelpCircle, Flame, Skull, BookOpen, Crosshair, Zap, Sword } from 'lucide-react';
 import { ALL_WEAPONS, ALL_STAT_ITEMS } from '../data/gameData';
+import { VampireFangsIcon } from './VampireFangsIcon';
 
 interface UnlockModalProps {
   itemId: string;
@@ -11,6 +12,13 @@ interface UnlockModalProps {
 const ICON_MAP: Record<string, React.ElementType> = {
   Sprout: Sprout,
   Eye: Eye,
+  Fangs: VampireFangsIcon,
+  Flame: Flame,
+  Skull: Skull,
+  BookOpen: BookOpen,
+  Crosshair: Crosshair,
+  Zap: Zap,
+  Sword: Sword,
 };
 
 export const UnlockModal: React.FC<UnlockModalProps> = ({ itemId, mobileMode = false, onContinue }) => {

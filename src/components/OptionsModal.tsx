@@ -1,5 +1,5 @@
-import React from 'react';
-import { Volume2, VolumeX, Wind, Crosshair, Sparkles, X, Sliders, Smartphone } from 'lucide-react';
+import React, { useState } from 'react';
+import { Volume2, VolumeX, Wind, Crosshair, Sparkles, X, Sliders, Smartphone, RotateCcw, Check, BookOpen } from 'lucide-react';
 import { GameOptions, DashMode } from '../types/game';
 import { soundEngine } from '../utils/audio';
 
@@ -7,14 +7,18 @@ interface OptionsModalProps {
   options: GameOptions;
   onChangeOptions: (updated: Partial<GameOptions>) => void;
   onClose: () => void;
+  onResetCollection?: () => void;
 }
 
 export const OptionsModal: React.FC<OptionsModalProps> = ({
   options,
   onChangeOptions,
   onClose,
+  onResetCollection,
 }) => {
   const isMobile = options.mobileMode;
+  const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
+  const [resetSuccess, setResetSuccess] = useState<boolean>(false);
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
@@ -242,7 +246,64 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 {options.damageNumbers ? 'ON' : 'OFF'}
               </button>
             </div>
+
+            {/* Brightness Slider */}
+            <div className="flex flex-col gap-1 pt-1.5 border-t border-purple-900/30">
+              <div className="flex justify-between items-center text-[10px] sm:text-xs text-slate-300">
+                <span className="font-semibold">Screen Brightness</span>
+                <span className="font-mono font-bold text-amber-300">
+                  {options.brightness}%
+                </span>
+              </div>
+              <input
+                id="brightness-slider"
+                type="range"
+                min="50"
+                max="150"
+                step="5"
+                value={options.brightness}
+                onChange={(e) => onChangeOptions({ brightness: parseInt(e.target.value, 10) })}
+                className="w-full h-1.5 sm:h-2 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-amber-500"
+              />
+              <div className="flex justify-between text-[8px] text-slate-500 font-mono">
+                <span>50% (Dark)</span>
+                <span>100% (Default)</span>
+                <span>150% (Bright)</span>
+              </div>
+            </div>
           </div>
+
+          {/* COLLECTION PROGRESS & DATA SECTION */}
+          {onResetCollection && (
+            <div className={`rounded-xl bg-purple-950/40 border border-purple-800/40 flex flex-col ${isMobile ? 'p-2.5 gap-2' : 'p-3.5 gap-2.5'}`}>
+              <div className="font-semibold text-purple-200 flex items-center justify-between text-xs sm:text-sm">
+                <span className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-rose-400" />
+                  Collection & Progress
+                </span>
+                {resetSuccess && (
+                  <span className="text-[10px] sm:text-xs text-emerald-400 font-mono flex items-center gap-1 animate-in fade-in">
+                    <Check className="w-3 h-3" /> Collection Reset
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-slate-200">Reset Collection</div>
+                  <div className="text-[10px] text-slate-400">Clear unlocked codex entries for weapons, passives & curses</div>
+                </div>
+                <button
+                  id="options-reset-collection-btn"
+                  onClick={() => setShowResetConfirm(true)}
+                  className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer bg-rose-950/60 hover:bg-rose-900/90 text-rose-300 hover:text-white border border-rose-700/60 flex items-center gap-1.5 shrink-0"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Reset
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -256,6 +317,57 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Full-Screen Reset Confirmation Dialog */}
+      {showResetConfirm && (
+        <div
+          id="collection-reset-confirm-overlay"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-150"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            id="collection-reset-confirm-card"
+            className="w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#1c112e] to-[#0f0a1c] border-2 border-rose-500/80 rounded-2xl sm:rounded-3xl p-6 sm:p-7 shadow-2xl shadow-rose-950/80 text-center flex flex-col gap-5 select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-rose-950/80 border-2 border-rose-500 flex items-center justify-center text-rose-400 shadow-lg shadow-rose-950/70">
+                <RotateCcw className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-serif font-bold text-slate-100 tracking-wide">
+                Reset Collection?
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed px-2">
+                Are you sure you want to reset all unlocked items in your collection? This action is permanent and cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-center mt-2">
+              <button
+                id="reset-confirm-no-btn"
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold transition-all cursor-pointer border border-slate-600 shadow-md hover:text-white"
+              >
+                No, Cancel
+              </button>
+              <button
+                id="reset-confirm-yes-btn"
+                onClick={() => {
+                  if (onResetCollection) {
+                    onResetCollection();
+                    setResetSuccess(true);
+                    setTimeout(() => setResetSuccess(false), 3000);
+                  }
+                  setShowResetConfirm(false);
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-lg shadow-rose-950/70 border border-rose-400/40"
+              >
+                Yes, Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -99,10 +99,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         </main>
       </div>
 
-      {/* Atmospheric minimal footer */}
-      <footer className="z-10 py-3 text-center text-xs text-purple-400/40 tracking-wider">
-        Witch Nights • Blood Moon Survival
-      </footer>
+
     </div>
   );
 };

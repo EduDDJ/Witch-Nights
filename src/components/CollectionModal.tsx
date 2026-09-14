@@ -38,7 +38,6 @@ interface CollectionModalProps {
   unlockedEnemies?: string[];
   mobileMode?: boolean;
   onClose: () => void;
-  onResetCollection: () => void;
 }
 
 const WEAPON_ICONS: Record<string, React.ElementType> = {
@@ -77,6 +76,33 @@ const CURSE_ICONS: Record<string, React.ElementType> = {
   Wind,
   RotateCcw,
 };
+
+const PitchforkPeasantIcon: React.FC<any> = (props) => (
+  <img
+    src={`${import.meta.env.BASE_URL}assets/aistudio/peasant_pitchfork.png`}
+    alt="Pitchfork Peasant"
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
+
+const TorchPeasantIcon: React.FC<any> = (props) => (
+  <img
+    src={`${import.meta.env.BASE_URL}assets/aistudio/peasant_torch.png`}
+    alt="Torch Peasant"
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
+
+const VillageKnightIcon: React.FC<any> = (props) => (
+  <img
+    src={`${import.meta.env.BASE_URL}assets/aistudio/village_knight.png`}
+    alt="Village Knight"
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
 
 const createNormalEnemyIcon = (color: string) => {
   const Icon: React.FC<any> = (props) => (
@@ -136,6 +162,39 @@ const HauntedEyeIcon: React.FC<any> = (props) => {
   );
 };
 
+const MiniEyeIcon: React.FC<any> = (props) => {
+  const color = props.style?.color || '#dc2626';
+  return (
+    <svg viewBox="0 0 24 24" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
+      <circle cx="12" cy="12" r="10" fill="#2b0606" stroke="#991b1b" strokeWidth="1.5" />
+      <circle cx="12" cy="12" r="5" fill={color} />
+      <circle cx="12" cy="12" r="2" fill="#000000" />
+    </svg>
+  );
+};
+
+const NightBearIcon: React.FC<any> = (props) => {
+  const color = props.style?.color || '#3b2f2f';
+  return (
+    <svg viewBox="0 0 40 40" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
+      {/* Hulking Body */}
+      <circle cx="20" cy="22" r="16" fill={color} />
+      {/* Ears */}
+      <circle cx="10" cy="12" r="5" fill={color} />
+      <circle cx="30" cy="12" r="5" fill={color} />
+      {/* Inner Ears */}
+      <circle cx="10" cy="12" r="2.5" fill="#1c1917" />
+      <circle cx="30" cy="12" r="2.5" fill="#1c1917" />
+      {/* Glowing Eyes */}
+      <circle cx="14" cy="20" r="2.5" fill="#ef4444" />
+      <circle cx="26" cy="20" r="2.5" fill="#ef4444" />
+      {/* Snout */}
+      <ellipse cx="20" cy="27" rx="7" ry="5" fill="#292524" />
+      <circle cx="20" cy="26" r="2" fill="#000000" />
+    </svg>
+  );
+};
+
 interface EnemyCollectionData {
   id: string;
   name: string;
@@ -156,28 +215,28 @@ interface EnemyCollectionData {
 
 export const ENEMIES_DATA: EnemyCollectionData[] = [
   {
-    id: 'bat',
-    name: 'Pitchfork Peasant',
-    color: '#a855f7',
+    id: 'wraith',
+    name: 'Torch Peasant',
+    color: '#38bdf8',
     damage: 10,
     maxHp: 20,
     speed: '1.0x',
     isBoss: false,
-    description: 'A local villager armed with a pitchfork, driven by shadow-madness. Moves at standard speed.'
+    description: 'A peasant carrying a flickering torch through the shadows. The baseline villager moving at standard speed.'
   },
   {
-    id: 'wraith',
-    name: 'Torch Peasant',
-    color: '#38bdf8',
+    id: 'bat',
+    name: 'Pitchfork Peasant',
+    color: '#a855f7',
     damage: 12,
     maxHp: 24,
-    speed: '0.9x',
+    speed: '1.15x',
     isBoss: false,
-    description: 'A peasant carrying a cursed torch. Slower but more resilient and dangerous than those with pitchforks.'
+    description: 'A maddened villager wielding an iron pitchfork. Hardier, swifter, and more aggressive than torch-bearing peasants.'
   },
   {
     id: 'ghoul',
-    name: "Village's Knight",
+    name: 'Village Knight',
     color: '#ef4444',
     damage: 25,
     maxHp: 30,
@@ -191,7 +250,7 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
     name: 'Carnivore Plant',
     color: '#22c55e',
     damage: 20,
-    maxHp: 1000,
+    maxHp: 1400,
     speed: '0.0x',
     isBoss: true,
     description: 'A stationary botanical nightmare with vicious roots and an insatiable appetite.',
@@ -201,17 +260,40 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
     ]
   },
   {
+    id: 'mini_eye',
+    name: 'Mini Eye',
+    color: '#dc2626',
+    damage: 15,
+    maxHp: 1,
+    speed: '2.0x',
+    isBoss: false,
+    description: 'A tiny, swift ocular minion spawned when the Haunted Eye reveals its true gaze. They relentlessly pursue the witch.'
+  },
+  {
     id: 'haunted_eye',
     name: 'Haunted Eye',
     color: '#dc2626',
     damage: 20,
-    maxHp: 750,
+    maxHp: 800,
     speed: '0.0x',
     isBoss: true,
-    description: 'A colossal panoramic ocular terror that curses anyone who meets its gaze.',
+    description: 'A colossal panoramic ocular terror that stays open until its trio of Mini Eye minions are defeated.',
     attacks: [
-      { name: 'Occult Tear', damage: '10', telegraph: 'Instant', description: 'Weeps magical projectiles that drift toward the player.' },
-      { name: 'Gaze Curse', damage: '20 DPS', telegraph: '1.00s', description: 'When the eye opens, player must look away (cursor below the witch) or suffer rapid damage.' }
+      { name: 'Blood Tears', damage: '10', telegraph: 'Instant', description: 'Weeps magical projectiles that drift toward the player.' },
+      { name: 'Gaze Curse', damage: '20 DPS', telegraph: '1.00s', description: 'When the eye opens, player must look away (cursor below the witch) or suffer rapid damage. The eye only closes when all 3 Mini Eyes are destroyed.' }
+    ]
+  },
+  {
+    id: 'night_bear',
+    name: 'NightBear',
+    color: '#3b2f2f',
+    damage: 25,
+    maxHp: 1200,
+    speed: '2.5x',
+    isBoss: true,
+    description: 'A dark, hulking beast that relentlessly charges at its prey. It becomes dizzy after several failed attempts.',
+    attacks: [
+      { name: 'Charge', damage: '25', telegraph: '0.6s', description: 'NightBear readies himself and then charges at high speed. He is invincible during the charge and only stops when hitting a wall.' }
     ]
   }
 ];
@@ -250,12 +332,10 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
   unlockedEnemies = [],
   mobileMode = false,
   onClose,
-  onResetCollection,
 }) => {
   const [activeTab, setActiveTab] = useState<'WEAPONS' | 'PASSIVES' | 'CURSES' | 'ENEMIES'>('WEAPONS');
   const [selectedItem, setSelectedItem] = useState<HoveredItemData | null>(null);
   const [showUpgradeInfo, setShowUpgradeInfo] = useState<boolean>(false);
-  const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
 
   const discoveredEnemiesCount = ENEMIES_DATA.filter((e) => unlockedEnemies.includes(e.id)).length;
   const totalCollected = unlockedWeapons.length + unlockedItems.length + unlockedCurses.length + discoveredEnemiesCount;
@@ -318,28 +398,16 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
             </p>
           </div>
 
-          {/* Right Header Buttons: X (exit) is ABOVE Reset in Mobile Mode so it's always accessible and player isn't locked */}
-          <div className={`flex ${mobileMode ? 'flex-col items-end gap-1.5' : 'flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-3'}`}>
+          {/* Right Header Button: X (exit) */}
+          <div className="flex items-center">
             <button
               id="collection-close-btn"
               onClick={onClose}
-              className={`w-8 h-8 rounded-full bg-slate-900 hover:bg-purple-900 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 transition-colors cursor-pointer shadow-md ${
-                mobileMode ? 'order-1' : 'order-1 sm:order-2'
-              }`}
+              className="w-8 h-8 rounded-full bg-slate-900 hover:bg-purple-900 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 transition-colors cursor-pointer shadow-md"
               aria-label="Close Collection"
               title="Close Collection"
             >
               <X className="w-4 h-4" />
-            </button>
-            <button
-              id="collection-reset-btn"
-              onClick={() => setShowResetConfirm(true)}
-              className={`text-xs text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors px-2 py-0.5 sm:px-2.5 sm:py-1 rounded bg-slate-900 border border-slate-800 cursor-pointer ${
-                mobileMode ? 'order-2 text-[11px]' : 'order-2 sm:order-1'
-              }`}
-              title="Reset unlocked collection items"
-            >
-              <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Reset
             </button>
           </div>
         </div>
@@ -638,8 +706,13 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                 const isDiscovered = unlockedEnemies?.includes(e.id) || false;
                 
                 let EnemyIcon = createNormalEnemyIcon(e.color);
+                if (e.id === 'wraith') EnemyIcon = TorchPeasantIcon;
+                if (e.id === 'bat') EnemyIcon = PitchforkPeasantIcon;
+                if (e.id === 'ghoul') EnemyIcon = VillageKnightIcon;
                 if (e.id === 'carnivore_plant') EnemyIcon = CarnivorePlantIcon;
                 if (e.id === 'haunted_eye') EnemyIcon = HauntedEyeIcon;
+                if (e.id === 'mini_eye') EnemyIcon = MiniEyeIcon;
+                if (e.id === 'night_bear') EnemyIcon = NightBearIcon;
 
                 const DisplayIcon = isDiscovered ? EnemyIcon : HelpCircle;
 
@@ -655,6 +728,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                   isLegendary: e.isBoss,
                   description: e.description,
                   unlockCondition: 'Defeat this enemy to reveal its stats.',
+                  bulletColor: e.color,
                   icon: DisplayIcon,
                   enemyStats: {
                     damage: e.damage,
@@ -875,7 +949,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                         : `??? (Locked Item)`}
                       {selectedItem.isLegendary && (
                         <span className="text-[10px] font-bold text-amber-300 bg-amber-950/80 border border-amber-500/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                          <Sparkles className="w-2.5 h-2.5 text-amber-400" /> Legendary
+                          <Sparkles className="w-2.5 h-2.5 text-amber-400" /> {selectedItem.category === 'ENEMY' ? 'Boss Enemy' : 'Legendary'}
                         </span>
                       )}
                     </h3>
@@ -1004,7 +1078,9 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                               statsList.push(`Dash Cooldown: ${t.statValue}s`);
                             } else if (selectedItem.id === 'blood_ruby') {
                               statsList.push(`Max HP: +${t.statValue}`);
-                              statsList.push(`Regen: +0.5 HP/s`);
+                              statsList.push(`Regen: +0.1 HP/s`);
+                            } else if (selectedItem.id === 'nightbears_claws') {
+                              statsList.push(`Dash Damage: ${t.statValue}`);
                             } else if (selectedItem.id === 'rabbits_foot') {
                               statsList.push(`Level Choices: +1`);
                             } else if (selectedItem.id === 'destiny_control') {
@@ -1029,6 +1105,11 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                                 const pct = Math.round((diff / prevVal) * 100);
                                 statsList.push(`Vampirism: +${pct}%`);
                               }
+                            } else if (selectedItem.id === 'nightbears_claws') {
+                              const diff = currVal - prevVal;
+                              if (diff > 0) {
+                                statsList.push(`Dash Damage: +${Math.round(diff)}`);
+                              }
                             } else if (selectedItem.id === 'medusas_eye') {
                               // Handled entirely in text description
                             } else if (selectedItem.id === 'broom_of_haste') {
@@ -1043,10 +1124,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                               if (diff > 0) {
                                 statsList.push(`Max HP: +${diff}`);
                               }
-                              // Regen changes based on current tier description
-                              if (t.tier === 4) statsList.push('Regen: +0.2 HP/s');
-                              else if (t.tier === 5) statsList.push('Regen: +0.1 HP/s');
-                              else if (t.tier === 6) statsList.push('Regen: +0.7 HP/s');
+                              statsList.push('Regen: +0.1 HP/s');
                             } else if (selectedItem.id === 'rabbits_foot') {
                               // Choices exception - absolute number
                               const diff = currVal - prevVal;
@@ -1134,40 +1212,6 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Reset Confirmation Dialog */}
-        {showResetConfirm && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-            <div className="w-full max-w-sm bg-slate-900 border-2 border-rose-500/80 rounded-2xl p-5 shadow-2xl shadow-rose-950/60 text-center flex flex-col gap-4">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 rounded-full bg-rose-950/80 border border-rose-500 flex items-center justify-center text-rose-400">
-                  <RotateCcw className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-serif font-bold text-slate-100">Reset Collection?</h3>
-                <p className="text-xs text-slate-300">
-                  Are you sure you want to reset all unlocked items in your collection? This action cannot be undone.
-                </p>
-              </div>
-              <div className="flex gap-2.5 justify-center mt-1">
-                <button
-                  onClick={() => setShowResetConfirm(false)}
-                  className="flex-1 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors cursor-pointer border border-slate-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    onResetCollection();
-                    setShowResetConfirm(false);
-                  }}
-                  className="flex-1 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors cursor-pointer shadow-lg shadow-rose-950/60"
-                >
-                  Yes, Reset
-                </button>
               </div>
             </div>
           </div>

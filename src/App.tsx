@@ -46,6 +46,7 @@ const DEFAULT_OPTIONS: GameOptions = {
   screenShake: true,
   damageNumbers: true,
   mobileMode: false,
+  brightness: 100,
 };
 
 const INITIAL_PLAYER_STATS: PlayerStats = {
@@ -67,8 +68,9 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   knockbackMult: 1.0,
   damageMult: 1.0,
   magnetRadius: 100,
-  hpRegen: 0.0,
+  hpRegen: 0.5,
   expMultiplier: 1.0,
+  dashDamage: 0,
 };
 
 export default function App() {
@@ -87,6 +89,7 @@ export default function App() {
 
   // Modals & Overlays during run
   const [levelUpOptions, setLevelUpOptions] = useState<LevelUpOption[] | null>(null);
+  const [pendingLevelUps, setPendingLevelUps] = useState<number>(0);
   const [witchDealCurses, setWitchDealCurses] = useState<CurseChoice[] | null>(null);
   const [bossSelectOptions, setBossSelectOptions] = useState<BossDefinition[] | null>(null);
   const [gameOverStats, setGameOverStats] = useState<{ time: number; level: number; kills: number; bossesKilled: number; killerName?: string } | null>(null);
@@ -246,7 +249,8 @@ export default function App() {
     let dmgMult = 1.0;
     let magnetMult = 1.0;
     let bonusHp = 0;
-    let regen = 0.0;
+    let regen = 0.5;
+    let dDamage = 0;
 
     currentStatItems.forEach((owned) => {
       const def = ALL_STAT_ITEMS.find((item) => item.id === owned.id);
@@ -277,7 +281,10 @@ export default function App() {
           break;
         case 'MAX_HEALTH':
           bonusHp += tier.statValue;
-          regen += 0.5 * owned.level;
+          regen += 0.1 * owned.level;
+          break;
+        case 'DASH_DAMAGE':
+          dDamage = tier.statValue;
           break;
         case 'EXTRA_CHOICES':
           break;
@@ -300,6 +307,7 @@ export default function App() {
         maxHp: newMaxHp,
         hp: newHp,
         hpRegen: regen,
+        dashDamage: dDamage,
       };
     });
   }, []);
@@ -314,6 +322,7 @@ export default function App() {
     setSurvivalTime(0);
     setMaxWeapons(5);
     setLevelUpOptions(null);
+    setPendingLevelUps(0);
     setWitchDealCurses(null);
     setGameOverStats(null);
     setBoss(null);
@@ -408,16 +417,19 @@ export default function App() {
   }, []);
 
   // Generate 3 Level Up Choices
-  const handleTriggerLevelUp = useCallback(() => {
+  const handleTriggerLevelUp = useCallback((extraLevels = 1, currentWeapons = weapons, currentStatItems = statItems) => {
     if (witchDealCurses !== null) return;
+    if (extraLevels > 1) {
+      setPendingLevelUps((prev) => prev + extraLevels - 1);
+    }
     const choices: LevelUpOption[] = [];
 
-    const isFirstLevelUp = weapons.length === 1 && statItems.length === 0;
+    const isFirstLevelUp = currentWeapons.length === 1 && currentStatItems.length === 0;
 
     if (isFirstLevelUp) {
       // First level up: exclusively offer new weapons
       ALL_WEAPONS.forEach((wDef) => {
-        if (!weapons.some((w) => w.id === wDef.id) && unlockedItemIds.includes(wDef.id)) {
+        if (!currentWeapons.some((w) => w.id === wDef.id) && unlockedItemIds.includes(wDef.id)) {
           choices.push({
             kind: 'WEAPON_NEW',
             definition: wDef,
@@ -426,7 +438,7 @@ export default function App() {
       });
     } else {
       // 1. Upgrades for already owned weapons (if level < 6)
-      weapons.forEach((owned) => {
+      currentWeapons.forEach((owned) => {
         if (owned.level < 6) {
           const def = ALL_WEAPONS.find((w) => w.id === owned.id);
           if (def) {
@@ -441,9 +453,9 @@ export default function App() {
       });
 
       // 2. New weapons entirely (if player has < maxWeapons slots)
-      if (weapons.length < maxWeapons) {
+      if (currentWeapons.length < maxWeapons) {
         ALL_WEAPONS.forEach((wDef) => {
-          if (!weapons.some((w) => w.id === wDef.id) && unlockedItemIds.includes(wDef.id)) {
+          if (!currentWeapons.some((w) => w.id === wDef.id) && unlockedItemIds.includes(wDef.id)) {
             choices.push({
               kind: 'WEAPON_NEW',
               definition: wDef,
@@ -453,7 +465,7 @@ export default function App() {
       }
 
       // 3. Upgrades for already owned stat items (if level < maxTier)
-      statItems.forEach((owned) => {
+      currentStatItems.forEach((owned) => {
         const def = ALL_STAT_ITEMS.find((s) => s.id === owned.id);
         const maxTier = def ? def.tiers.length : 6;
         if (owned.level < maxTier) {
@@ -469,9 +481,9 @@ export default function App() {
       });
 
       // 4. New stat items entirely (if player has < 5 passives)
-      if (statItems.length < 5) {
+      if (currentStatItems.length < 5) {
         ALL_STAT_ITEMS.forEach((sDef) => {
-          if (!statItems.some((s) => s.id === sDef.id) && unlockedItemIds.includes(sDef.id)) {
+          if (!currentStatItems.some((s) => s.id === sDef.id) && unlockedItemIds.includes(sDef.id)) {
             choices.push({
               kind: 'STAT_NEW',
               definition: sDef,
@@ -482,7 +494,7 @@ export default function App() {
     }
 
     // Shuffle and pick options (4 options if Rabbit's Foot Rank 1+, else 3)
-    const rfItem = statItems.find((s) => s.id === 'rabbits_foot');
+    const rfItem = currentStatItems.find((s) => s.id === 'rabbits_foot');
     const choiceCount = rfItem && rfItem.level >= 1 ? 4 : 3;
     const shuffled = [...choices].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, choiceCount);
@@ -491,36 +503,55 @@ export default function App() {
 
   // Apply chosen Level Up boon
   const handleSelectLevelUpOption = (option: LevelUpOption) => {
+    let nextWeapons = weapons;
+    let nextStatItems = statItems;
+
     if (option.kind === 'WEAPON_NEW') {
-      const nextWeapons = [
+      nextWeapons = [
         ...weapons,
         { id: option.definition.id, level: 1, lastFired: 0, statsMultiplier: 1.0 },
       ];
       setWeapons(nextWeapons);
       handleItemUnlocked('WEAPON', option.definition.id);
     } else if (option.kind === 'WEAPON_UPGRADE') {
-      const nextWeapons = weapons.map((w) =>
+      nextWeapons = weapons.map((w) =>
         w.id === option.definition.id ? { ...w, level: option.nextTier } : w
       );
       setWeapons(nextWeapons);
     } else if (option.kind === 'STAT_NEW') {
-      const nextStatItems = [...statItems, { id: option.definition.id, level: 1 }];
+      nextStatItems = [...statItems, { id: option.definition.id, level: 1 }];
       setStatItems(nextStatItems);
       handleItemUnlocked('STAT', option.definition.id);
       recalculatePassives(nextStatItems);
     } else if (option.kind === 'STAT_UPGRADE') {
-      const nextStatItems = statItems.map((s) =>
+      nextStatItems = statItems.map((s) =>
         s.id === option.definition.id ? { ...s, level: option.nextTier } : s
       );
       setStatItems(nextStatItems);
       recalculatePassives(nextStatItems);
     }
 
-    setLevelUpOptions(null);
     if (isLevelUpFromDevTools) {
+      setLevelUpOptions(null);
       setIsLevelUpFromDevTools(false);
       setIsPauseMenuOpen(true);
       setIsDevToolsOpen(true);
+    } else {
+      setPendingLevelUps((prev) => {
+        if (prev > 0) {
+          const nextPending = prev - 1;
+          setTimeout(() => {
+            soundEngine.playLevelUp();
+            handleTriggerLevelUp(1, nextWeapons, nextStatItems);
+          }, 0);
+          return nextPending;
+        } else {
+          setTimeout(() => {
+            setLevelUpOptions(null);
+          }, 0);
+          return 0;
+        }
+      });
     }
   };
 
@@ -677,7 +708,10 @@ export default function App() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-slate-950 font-sans text-slate-100">
+    <div 
+      className="relative w-screen h-screen overflow-hidden bg-slate-950 font-sans text-slate-100"
+      style={{ filter: `brightness(${options.brightness}%)` }}
+    >
       {/* 1. MAIN MENU SCREEN */}
       {screen === 'MENU' && (
         <MainMenu
@@ -700,7 +734,6 @@ export default function App() {
           unlockedEnemies={unlockedEnemies}
           mobileMode={options.mobileMode}
           onClose={() => setScreen('MENU')}
-          onResetCollection={handleResetCollection}
         />
       )}
 
@@ -823,7 +856,6 @@ export default function App() {
               unlockedEnemies={unlockedEnemies}
               mobileMode={options.mobileMode}
               onClose={() => setIsCollectionFromPause(false)}
-              onResetCollection={handleResetCollection}
             />
           )}
 
@@ -888,6 +920,7 @@ export default function App() {
           options={options}
           onChangeOptions={handleUpdateOptions}
           onClose={() => setIsOptionsOpen(false)}
+          onResetCollection={handleResetCollection}
         />
       )}
 

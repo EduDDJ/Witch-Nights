@@ -4,7 +4,7 @@ export const BOSS_POOL: BossDefinition[] = [
   {
     id: 'carnivore_plant',
     name: 'Carnivore Plant',
-    maxHp: 1000,
+    maxHp: 1400,
     damage: 20,
     radius: 40,
     color: '#22c55e',
@@ -12,12 +12,20 @@ export const BOSS_POOL: BossDefinition[] = [
   {
     id: 'haunted_eye',
     name: 'Haunted Eye',
-    maxHp: 750,
+    maxHp: 800,
     damage: 20,
     radius: 65,
     widthRadius: 155, // Panoramic wide ocular boss (~310px width)
     heightRadius: 55, // ~110px height
     color: '#dc2626',
+  },
+  {
+    id: 'night_bear',
+    name: 'NightBear',
+    maxHp: 800,
+    damage: 25,
+    radius: 50,
+    color: '#3b2f2f', // Dark brown/black bear color
   }
 ];
 
@@ -302,28 +310,27 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     description: 'Pulls scattered EXP crystals from great distances automatically.',
     color: '#ea580c',
     tiers: [
-      { tier: 1, name: 'Faint Pull', description: '+50% EXP pickup radius.', statValue: 1.5 },
-      { tier: 2, name: 'Magnetic Core', description: '+40% EXP pickup radius (1.9x total).', statValue: 1.9 },
-      { tier: 3, name: 'Grave Magnet', description: '+40% EXP pickup radius (2.3x total).', statValue: 2.3 },
-      { tier: 4, name: 'Soul Siphon', description: '+50% EXP pickup radius (2.8x total).', statValue: 2.8 },
-      { tier: 5, name: 'Void Beacon', description: '+60% EXP pickup radius (3.4x total).', statValue: 3.4 },
-      { tier: 6, name: 'Black Hole Relic', description: 'Screen-wide EXP vacuum (4.5x total radius)! Never leave gems behind.', statValue: 4.5 },
+      { tier: 1, name: 'Faint Pull', description: '+25% EXP collection radius (1.25x total).', statValue: 1.25 },
+      { tier: 2, name: 'Magnetic Core', description: '+25% EXP collection radius (1.50x total).', statValue: 1.50 },
+      { tier: 3, name: 'Grave Magnet', description: '+25% EXP collection radius (1.75x total).', statValue: 1.75 },
+      { tier: 4, name: 'Soul Siphon', description: '+25% EXP collection radius (2.00x total).', statValue: 2.00 },
+      { tier: 5, name: 'Void Beacon', description: '+25% EXP collection radius (2.25x total).', statValue: 2.25 },
+      { tier: 6, name: 'Black Hole Relic', description: '+25% EXP collection radius (2.50x total).', statValue: 2.50 },
     ]
   },
   {
     id: 'blood_ruby',
-    name: 'Blood Ruby',
+    name: 'Bloodstone',
     statType: 'MAX_HEALTH',
     icon: 'Heart',
     description: 'Infuses witch vitality with ancient bloodstone, increasing Max HP and passive HP regen.',
     color: '#ea580c',
     tiers: [
-      { tier: 1, name: 'Heartstone', description: '+25 Max HP and +0.5 HP/s passive regeneration (125 total).', statValue: 25 },
-      { tier: 2, name: 'Vigor Bead', description: '+25 Max HP and +0.5 HP/s regen (+50 Max HP, clean 150 total).', statValue: 50 },
-      { tier: 3, name: 'Vital Vein', description: '+25 Max HP and +0.5 HP/s regen (+75 Max HP total).', statValue: 75 },
-      { tier: 4, name: 'Gore Gem', description: '+30 Max HP and +0.7 HP/s regen (+105 Max HP total).', statValue: 105 },
-      { tier: 5, name: 'Blood Core', description: '+40 Max HP and +0.8 HP/s regen (+145 Max HP total).', statValue: 145 },
-      { tier: 6, name: 'Immortal Heart', description: '+55 Max HP (+200 Max HP total) and +1.5 HP/s continuous healing.', statValue: 200 },
+      { tier: 1, name: 'Heartstone', description: '+20 Max HP and +0.1 HP/s passive regeneration.', statValue: 20 },
+      { tier: 2, name: 'Vigor Bead', description: '+20 Max HP and +0.1 HP/s regen (+40 Max HP total).', statValue: 40 },
+      { tier: 3, name: 'Vital Vein', description: '+20 Max HP and +0.1 HP/s regen (+60 Max HP total).', statValue: 60 },
+      { tier: 4, name: 'Gore Gem', description: '+20 Max HP and +0.1 HP/s regen (+80 Max HP total).', statValue: 80 },
+      { tier: 5, name: 'Blood Core', description: '+20 Max HP and +0.1 HP/s regen (+100 Max HP total).', statValue: 100 },
     ]
   },
   {
@@ -358,6 +365,24 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
         description: 'Adds a 3rd boss option to the selection pool at every 5-minute interval.',
         statValue: 2
       }
+    ]
+  },
+  {
+    id: 'nightbears_claws',
+    name: "Nightbear's Claws",
+    statType: 'DASH_DAMAGE',
+    icon: 'Fangs',
+    description: "Cursed obsidian claws that allow you to shred through enemies. Damages and knockbacks enemies that touch you while you Dash.",
+    unlockCondition: "Defeat NightBear to unlock.",
+    isLegendary: true,
+    color: '#ea580c', // Artifact Orange
+    tiers: [
+      { tier: 1, name: 'Razor Claws', description: 'Deals 20 damage and applies strong knockback to enemies you dash through.', statValue: 20 },
+      { tier: 2, name: 'Serrated Edge', description: 'Damage and knockback increased to 140%.', statValue: 28 },
+      { tier: 3, name: 'Obsidian Talons', description: 'Damage and knockback increased to 180%.', statValue: 36 },
+      { tier: 4, name: 'Nightmare Shredder', description: 'Damage and knockback increased to 220%.', statValue: 44 },
+      { tier: 5, name: 'Gore Ripper', description: 'Damage and knockback increased to 260%.', statValue: 52 },
+      { tier: 6, name: 'The Eternal Hunt', description: 'Max Rank! Damage and knockback increased to 300%. Shred through the darkness.', statValue: 60 },
     ]
   }
 ];

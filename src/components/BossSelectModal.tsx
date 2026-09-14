@@ -84,6 +84,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
           {bosses.map((boss, idx) => {
             const isPlant = boss.id === 'carnivore_plant';
             const isEye = boss.id === 'haunted_eye';
+            const isBear = boss.id === 'night_bear';
 
             return (
               <button
@@ -93,7 +94,9 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                 className={`group relative text-left rounded-2xl p-4 transition-all duration-200 border-2 flex flex-col justify-between overflow-hidden cursor-pointer ${
                   isPlant
                     ? 'bg-gradient-to-b from-emerald-950/60 via-slate-900 to-emerald-950/40 border-emerald-500/50 hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-900/40'
-                    : 'bg-gradient-to-b from-rose-950/60 via-slate-900 to-rose-950/40 border-rose-500/50 hover:border-rose-400 hover:shadow-lg hover:shadow-rose-900/40'
+                    : isEye 
+                    ? 'bg-gradient-to-b from-rose-950/60 via-slate-900 to-rose-950/40 border-rose-500/50 hover:border-rose-400 hover:shadow-lg hover:shadow-rose-900/40'
+                    : 'bg-gradient-to-b from-stone-950/60 via-slate-900 to-stone-950/40 border-stone-500/50 hover:border-stone-400 hover:shadow-lg hover:shadow-stone-900/40'
                 }`}
               >
                 {/* Hotkey Tag */}
@@ -110,7 +113,9 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                       className={`w-24 h-24 rounded-2xl flex items-center justify-center border-2 transition-transform duration-300 group-hover:scale-105 shadow-inner ${
                         isPlant
                           ? 'bg-emerald-950/80 border-emerald-500/60 shadow-emerald-900/50'
-                          : 'bg-rose-950/80 border-rose-500/60 shadow-rose-900/50'
+                          : isEye
+                          ? 'bg-rose-950/80 border-rose-500/60 shadow-rose-900/50'
+                          : 'bg-stone-950/80 border-stone-500/60 shadow-stone-900/50'
                       }`}
                     >
                       {isPlant && (
@@ -160,6 +165,26 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                           <circle cx="60" cy="35" r="7" fill="#be123c" opacity="0.6" />
                         </svg>
                       )}
+
+                      {isBear && (
+                        <svg
+                          viewBox="0 0 100 100"
+                          className="w-20 h-20 drop-shadow-md group-hover:scale-110 transition-transform"
+                          aria-label="NightBear Visual"
+                        >
+                          {/* Dark Hulking Body */}
+                          <circle cx="50" cy="55" r="40" fill="#1c1917" />
+                          {/* Bear Ears */}
+                          <circle cx="25" cy="30" r="12" fill="#1c1917" />
+                          <circle cx="75" cy="30" r="12" fill="#1c1917" />
+                          {/* Glowing Eyes */}
+                          <circle cx="35" cy="48" r="5" fill="#ef4444" />
+                          <circle cx="65" cy="48" r="5" fill="#ef4444" />
+                          {/* Snout */}
+                          <ellipse cx="50" cy="65" rx="18" ry="12" fill="#292524" />
+                          <circle cx="50" cy="62" r="5" fill="#000000" />
+                        </svg>
+                      )}
                     </div>
                   </div>
 
@@ -167,7 +192,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                   <div className="text-center mt-2">
                     <h3
                       className={`text-lg sm:text-xl font-bold font-serif ${
-                        isPlant ? 'text-emerald-200' : 'text-rose-200'
+                        isPlant ? 'text-emerald-200' : isEye ? 'text-rose-200' : 'text-stone-200'
                       }`}
                     >
                       {boss.name}
@@ -176,10 +201,12 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                       className={`inline-block text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full mt-1 ${
                         isPlant
                           ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-700/50'
-                          : 'bg-rose-900/60 text-rose-300 border border-rose-700/50'
+                          : isEye
+                          ? 'bg-rose-900/60 text-rose-300 border border-rose-700/50'
+                          : 'bg-stone-900/60 text-stone-300 border border-stone-700/50'
                       }`}
                     >
-                      {isPlant ? 'Botanical Grove Terror' : 'Abyssal Ocular Watcher'}
+                      {isPlant ? 'Botanical Grove Terror' : isEye ? 'Abyssal Ocular Watcher' : 'Primal Shadow Stalker'}
                     </div>
                   </div>
 
@@ -200,19 +227,34 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                           <span>Defeating it unlocks the legendary Vine Attack!</span>
                         </div>
                       </>
-                    ) : (
+                    ) : isEye ? (
                       <>
                         <div className="flex items-start gap-1.5 text-slate-300">
                           <span className="text-rose-400 font-bold">•</span>
-                          <span>Weeps slow homing tears while closed that can be dodged by moving.</span>
+                          <span>Weeps slow homing tears while closed and spawns Mini Eye minions to hunt you down.</span>
                         </div>
                         <div className="flex items-start gap-1.5 text-amber-300 font-medium">
                           <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                          <span>While open, deals 20 DPS unless cursor is kept away from Boss (cursor Y &gt; Witch, pointing downward)! Look away when it opens!</span>
+                          <span>When it opens, you must look away (cursor Y &gt; Witch) to avoid its deadly gaze curse!</span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-amber-300 font-medium pt-1">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                          <span>Defeating it unlocks the legendary Medusa's Eye!</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-stone-400 font-bold">•</span>
+                          <span>A hulking beast that charges relentlessly across the arena.</span>
                         </div>
                         <div className="flex items-start gap-1.5 text-slate-300">
-                          <span className="text-rose-400 font-bold">•</span>
-                          <span>No laser attacks when open—only its deadly gaze curse.</span>
+                          <span className="text-stone-400 font-bold">•</span>
+                          <span>Invincible while charging, but gets dizzy after 3 consecutive strikes.</span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-amber-300 font-medium pt-1">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                          <span>Defeating it unlocks the legendary Nightbear's Claws!</span>
                         </div>
                       </>
                     )}
@@ -225,7 +267,9 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                     className={`w-full py-2 px-3 rounded-xl font-bold text-center text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${
                       isPlant
                         ? 'bg-emerald-600 group-hover:bg-emerald-500 text-white shadow-md shadow-emerald-950'
-                        : 'bg-rose-600 group-hover:bg-rose-500 text-white shadow-md shadow-rose-950'
+                        : isEye
+                        ? 'bg-rose-600 group-hover:bg-rose-500 text-white shadow-md shadow-rose-950'
+                        : 'bg-stone-600 group-hover:bg-stone-700 text-white shadow-md shadow-stone-950'
                     }`}
                   >
                     <Swords className="w-3.5 h-3.5" />

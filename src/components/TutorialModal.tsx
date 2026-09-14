@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Compass, Wind, Sparkles, Skull, X, Check, Swords, Crown, Navigation } from 'lucide-react';
+import { Compass, Wind, Sparkles, Skull, X, Check, Swords, Crown, Navigation, Heart } from 'lucide-react';
 
 interface TutorialModalProps {
   onClose: () => void;
@@ -49,7 +49,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
           </div>
         </div>
 
-        {/* 6 Core Mechanics Grid */}
+        {/* Core Mechanics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-6">
           {/* 1. Moving & Targeting */}
           <div className="p-4 rounded-2xl bg-stone-900/85 border border-purple-800/40 flex flex-col gap-2">
@@ -98,11 +98,24 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
               <span>Boss Encounters & Hazard Zones</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Formidable bosses like the <strong>Carnivore Plant</strong> emerge during your run. Watch out for red telegraphed hazard rings with <strong>⚠ warning sigils</strong>—activate your <strong>Phase Dash</strong> to evade before the jaws snap shut!
+              Formidable bosses like the <strong>Carnivore Plant</strong> emerge during your run. Each boss has a <strong>Base Max HP</strong> (their health at Level 1), which scales by <strong>+12% for every player level</strong>. Watch out for red telegraphed hazard rings—activate your <strong>Phase Dash</strong> to evade!
             </p>
           </div>
 
-          {/* 4. Weapons & Artifacts */}
+          {/* 4. Vitality & Regeneration */}
+          <div className="p-4 rounded-2xl bg-stone-900/85 border border-emerald-800/40 flex flex-col gap-2">
+            <div className="flex items-center gap-2 text-emerald-300 font-bold text-sm">
+              <div className="w-6 h-6 rounded-lg bg-emerald-950 flex items-center justify-center border border-emerald-700/50">
+                <Heart className="w-3.5 h-3.5 text-emerald-300" />
+              </div>
+              <span>Vitality & Regeneration</span>
+            </div>
+            <p className="text-xs text-stone-300 leading-relaxed">
+              You possess a natural <strong>passive healing of 0.5 HP/s</strong>. This vital regeneration can be significantly upgraded by finding and leveling up the <strong>Bloodstone</strong> artifact!
+            </p>
+          </div>
+
+          {/* 5. Weapons & Artifacts */}
           <div className="p-4 rounded-2xl bg-stone-900/85 border border-amber-800/40 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
               <div className="w-6 h-6 rounded-lg bg-amber-950 flex items-center justify-center border border-amber-700/50">
@@ -111,24 +124,24 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
               <span>Weapons & Artifacts</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Equip up to <strong>6 Weapons</strong> alongside <strong>6 passive Artifacts</strong> that bestow persistent stat enhancements. Every weapon level-up also grants an innate <strong>+10% damage bonus</strong>.
+              Equip up to <strong>5 active Weapons</strong> alongside <strong>5 passive Artifacts</strong> that bestow persistent stat enhancements. Every weapon level-up also grants an innate <strong>+10% damage bonus</strong>.
             </p>
           </div>
 
-          {/* 5. Slain Foes & Red EXP Gems */}
+          {/* 6. Slain Foes & Red EXP Gems */}
           <div className="p-4 rounded-2xl bg-stone-900/85 border border-purple-800/40 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-purple-300 font-bold text-sm">
               <div className="w-6 h-6 rounded-lg bg-purple-950 flex items-center justify-center border border-purple-700/50">
                 <Sparkles className="w-3.5 h-3.5 text-purple-300" />
               </div>
-              <span>EXP Gems & Elite Monsters</span>
+              <span>EXP Orbs & Enemy Drops</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Collect cyan EXP gems from defeated enemies to level up. Sturdier, high-threat <strong>Red Elite foes</strong> drop glowing <strong>Red EXP Orbs</strong> for accelerated level progression!
+              Defeat foes to harvest EXP: standard cyan gems, elite <strong>Village Knight</strong> red orbs (<strong>10 EXP</strong>), and colossal Boss yellow orbs (<strong>75 EXP</strong>). Enemies also have a 10% chance to drop special items like <strong>Healing Food (+25 HP)</strong>, upgraded orbs, or rare EXP Magnets (~1%).
             </p>
           </div>
 
-          {/* 6. The Witch's Deal */}
+          {/* 7. The Witch's Deal */}
           <div className="p-4 rounded-2xl bg-stone-900/85 border border-rose-800/40 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
               <div className="w-6 h-6 rounded-lg bg-rose-950 flex items-center justify-center border border-rose-700/50">

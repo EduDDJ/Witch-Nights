@@ -8,6 +8,7 @@ import {
   AreaZone,
   NovaPulse,
   ExpGem,
+  WorldPickup,
   FloatingText,
   Particle,
   CurseChoice,
@@ -154,7 +155,7 @@ interface GameCanvasProps {
   onTogglePause?: () => void;
   onUpdatePlayer: (stats: Partial<PlayerStats>) => void;
   onUpdateSurvivalTime: (time: number) => void;
-  onTriggerLevelUp: () => void;
+  onTriggerLevelUp: (extraLevels?: number) => void;
   onTriggerWitchDeal: (curses: CurseChoice[]) => void;
   onGameOver: (finalStats: { time: number; level: number; kills: number; bossesKilled: number; killerName?: string }) => void;
   onItemUnlocked: (type: 'WEAPON' | 'STAT' | 'CURSE', id: string) => void;
@@ -190,6 +191,52 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   onTriggerBossSelection,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const witchImageRef = useRef<HTMLImageElement | null>(null);
+  const peasantImageRef = useRef<HTMLImageElement | null>(null);
+  const peasantTorchImageRef = useRef<HTMLImageElement | null>(null);
+  const villageKnightImageRef = useRef<HTMLImageElement | null>(null);
+  const groundTileImageRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = 'https://i.imgur.com/uvH316Y.png';
+    img.onload = () => {
+      witchImageRef.current = img;
+    };
+    img.onerror = () => {
+      // Fallback to local asset
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/1789315841509.png`;
+      fallback.onload = () => {
+        witchImageRef.current = fallback;
+      };
+    };
+
+    const peasantImg = new Image();
+    peasantImg.src = `${import.meta.env.BASE_URL}assets/aistudio/peasant_pitchfork.png`;
+    peasantImg.onload = () => {
+      peasantImageRef.current = peasantImg;
+    };
+
+    const torchImg = new Image();
+    torchImg.src = `${import.meta.env.BASE_URL}assets/aistudio/peasant_torch.png`;
+    torchImg.onload = () => {
+      peasantTorchImageRef.current = torchImg;
+    };
+
+    const knightImg = new Image();
+    knightImg.src = `${import.meta.env.BASE_URL}assets/aistudio/village_knight.png`;
+    knightImg.onload = () => {
+      villageKnightImageRef.current = knightImg;
+    };
+
+    const groundImg = new Image();
+    groundImg.src = `${import.meta.env.BASE_URL}assets/aistudio/ground_tile.png`;
+    groundImg.onload = () => {
+      groundTileImageRef.current = groundImg;
+    };
+  }, []);
 
   // Mutable Game State refs for high-performance 60fps loop
   const playerRef = useRef<PlayerStats>(player);
@@ -215,6 +262,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const aoeZonesRef = useRef<AreaZone[]>([]);
   const novaPulsesRef = useRef<NovaPulse[]>([]);
   const expGemsRef = useRef<ExpGem[]>([]);
+  const pickupsRef = useRef<WorldPickup[]>([]);
   const floatingTextsRef = useRef<FloatingText[]>([]);
   const particlesRef = useRef<Particle[]>([]);
   const dashGhostsRef = useRef<{ x: number; y: number; alpha: number }[]>([]);
@@ -243,12 +291,19 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const bossAttackCooldownRef = useRef<number>(2.0);
   const bossAttackCountRef = useRef<number>(0);
   const bossContactCooldownRef = useRef<number>(0);
+  const bossDashHitCooldownRef = useRef<number>(0);
   const bossHitFlashRef = useRef<number>(0);
   const eyePhaseRef = useRef<'CLOSED' | 'WARNING' | 'OPEN'>('CLOSED');
   const eyePhaseTimerRef = useRef<number>(3.5);
   const eyeGazeDamageAccumulatorRef = useRef<number>(0);
   const eyeTearsFiredRef = useRef<number>(0);
   const eyeOpenAttackCountRef = useRef<number>(0);
+  const nightBearStateRef = useRef<'IDLE' | 'TELEGRAPH' | 'CHARGING' | 'DIZZY'>('IDLE');
+  const nightBearTimerRef = useRef<number>(0);
+  const nightBearChargesRef = useRef<number>(0);
+  const nightBearChargeTargetRef = useRef<{ x: number; y: number } | null>(null);
+  const nightBearChargeAngleRef = useRef<number>(0);
+  const nightBearHasHitPlayerRef = useRef<boolean>(false);
   const lastSpawnTime = useRef<number>(999);
   const nextEntityId = useRef<number>(1);
   const dealTriggeredRef = useRef<boolean>(false);
@@ -284,6 +339,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     currentP.projSizeMult = player.projSizeMult;
     currentP.dashCooldown = player.dashCooldown;
     currentP.hpRegen = player.hpRegen;
+    currentP.dashDamage = player.dashDamage;
   }, [player, survivalTime]);
 
   useEffect(() => { weaponsRef.current = weapons; }, [weapons]);
@@ -321,7 +377,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       || BOSS_POOL[Math.floor(Math.random() * BOSS_POOL.length)];
 
     // Boss scales relative to current player level
-    const levelMult = 1 + (p.level * 0.12);
+    const levelMult = 1 + ((p.level - 1) * 0.12);
     const scaledMaxHp = Math.round(selectedBoss.maxHp * levelMult);
 
     // Boss occupies ~10% screen at the top center of the locked screen
@@ -363,6 +419,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       aoeZonesRef.current = [];
       novaPulsesRef.current = [];
       expGemsRef.current = [];
+      pickupsRef.current = [];
       floatingTextsRef.current = [];
       particlesRef.current = [];
       dashGhostsRef.current = [];
@@ -376,6 +433,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       bossInstanceRef.current = null;
       bossTimerRef.current = 90;
       bossContactCooldownRef.current = 0;
+      bossDashHitCooldownRef.current = 0;
       eyeOpenAttackCountRef.current = 0;
       eyeTearsFiredRef.current = 0;
       lastSpawnTime.current = 999;
@@ -757,16 +815,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
         // Enemy Archetypes
         const roll = Math.random();
-        let type: Enemy['type'] = 'BAT';
-        let color = '#a855f7';
+        let type: Enemy['type'] = 'WRAITH';
+        let color = '#38bdf8';
         let radius = 13;
-        let hp = baseHp;
-        let name = 'Pitchfork Peasant';
-        let damage = 10; // Normal enemy deals 10 damage
+        let hp = baseHp; // Base 20 HP
+        let name = 'Torch Peasant';
+        let damage = 10; // Base enemy deals 10 damage
         let isRed = false;
-        speed = baseSpeed * 1.05;
+        speed = baseSpeed * 1.0; // Base 1x speed
 
-        // Red Enemy (Village's Knight): Healthier elite enemy, deals 25 damage, drops high-value Red EXP Orb!
+        // Red Enemy (Village Knight): Healthier elite enemy, deals 25 damage, drops high-value Red EXP Orb!
         // Rare elite spawn rate calibrated so player reaches level 5 around minute ~5 instead of minute 2
         const isRedTimeEligible = curTime >= 80;
         const redSpawnChance = curTime >= 300 ? 0.82 : curTime >= 180 ? 0.88 : 0.93;
@@ -775,17 +833,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           color = '#ef4444'; // Distinct crimson red
           radius = 16;
           hp = baseHp * 1.5; // 30 HP if base is 20
-          name = "Village's Knight";
+          name = 'Village Knight';
           speed = baseSpeed * 0.75;
           damage = 25; // 25 damage for Red enemy
           isRed = true;
         } else if (Math.random() > 0.5) {
-          type = 'WRAITH';
-          color = '#38bdf8';
+          type = 'BAT';
+          color = '#a855f7';
           radius = 13;
-          hp = baseHp * 1.2; // 24 HP if base is 20
-          name = 'Torch Peasant';
-          speed = baseSpeed * 0.9;
+          hp = Math.round(baseHp * 1.2); // 24 HP if base is 20
+          name = 'Pitchfork Peasant';
+          speed = baseSpeed * 1.15; // 1.15x speed
           damage = 12;
           isRed = false;
         }
@@ -809,6 +867,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           hitFlashTimer: 0,
           attackCooldown: 0,
           isRed,
+          facingDir: (p.x - ex) < 0 ? -1 : 1,
         });
       }
     }
@@ -836,6 +895,48 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
       // Simulation speed multiplier
       const dt = rawDt * gameSpeedRef.current;
+      const p = playerRef.current;
+
+      // Arena Wall Bounds for clamping movement during boss fight
+      const minX = isBossFightRef.current ? lockedCameraRef.current.x + 24 : -Infinity;
+      const maxX = isBossFightRef.current ? lockedCameraRef.current.x + canvas.width - 24 : Infinity;
+      const minY = isBossFightRef.current ? lockedCameraRef.current.y + 24 : -Infinity;
+      const maxY = isBossFightRef.current ? lockedCameraRef.current.y + canvas.height - 24 : Infinity;
+
+      const triggerDashEndAoE = () => {
+        if (p.dashDamage > 0) {
+          const aoeRadius = 100;
+          const kbForce = p.dashDamage * 8; // Powerful final blast
+
+          // Visual Shred Burst
+          for (let k = 0; k < 20; k++) {
+            const pAng = Math.random() * Math.PI * 2;
+            const pSpd = Math.random() * 180 + 60;
+            particlesRef.current.push({
+              x: p.x,
+              y: p.y,
+              vx: Math.cos(pAng) * pSpd,
+              vy: Math.sin(pAng) * pSpd,
+              size: Math.random() * 4 + 2,
+              color: '#ea580c', // Artifact Orange
+              alpha: 1,
+              decay: 3.2,
+            });
+          }
+
+          // Knockback nearby enemies
+          enemiesRef.current.forEach((enemy) => {
+            const dist = Math.hypot(enemy.x - p.x, enemy.y - p.y);
+            if (dist < aoeRadius) {
+              const ang = Math.atan2(enemy.y - p.y, enemy.x - p.x);
+              enemy.x += Math.cos(ang) * kbForce;
+              enemy.y += Math.sin(ang) * kbForce;
+              // Visual hit flash
+              enemy.hp -= 1; // Minimal damage to trigger flinch
+            }
+          });
+        }
+      };
 
       // Increment Survival Timer
       survivalTimeRef.current += dt;
@@ -983,9 +1084,38 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             }
             if (eyePhaseTimerRef.current <= 0) {
               eyePhaseRef.current = 'OPEN';
-              eyePhaseTimerRef.current = 3.5; // Open for 3.5 seconds (was 5.0)
               eyeOpenAttackCountRef.current++;
               soundEngine.playHit();
+              
+              // Spawn 3 Mini Eyes from the bottom of the arena (left, center, right)
+              const activeCamX = lockedCameraRef.current.x;
+              const activeCamY = lockedCameraRef.current.y;
+              const spawnY = activeCamY + canvas.height + 60;
+              const playerLevel = playerRef.current.level;
+              
+              for (let i = 0; i < 3; i++) {
+                const spawnX = activeCamX + (canvas.width / 4) * (i + 1);
+                enemiesRef.current.push({
+                  id: nextEntityId.current++,
+                  x: spawnX,
+                  y: spawnY,
+                  hp: 1,
+                  maxHp: 1,
+                  level: playerLevel,
+                  speed: 120, // 2x base speed (~60 base * 2)
+                  radius: 9,
+                  damage: 15,
+                  exp: 0,
+                  color: '#dc2626',
+                  name: 'Mini Eye',
+                  type: 'MINI_EYE',
+                  vx: 0,
+                  vy: 0,
+                  hitFlashTimer: 0,
+                  attackCooldown: 0,
+                });
+              }
+
               if (screenShakeEnabledRef.current) {
                 screenShakeRef.current = 8;
               }
@@ -993,10 +1123,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 id: nextEntityId.current++,
                 x: boss.x,
                 y: boss.y - (boss.heightRadius || boss.radius) - 24,
-                text: '👁️ EYE OPEN! LOOK AWAY FROM BOSS (CURSOR Y > WITCH)!',
+                text: '👁️ EYE OPEN! DEFEAT MINI EYES TO CLOSE IT!',
                 color: '#ff2222',
-                life: 1.8,
-                maxLife: 1.8,
+                life: 2.2,
+                maxLife: 2.2,
                 vy: -20,
               });
             }
@@ -1025,7 +1155,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   id: nextEntityId.current++,
                   x: playerRef.current.x,
                   y: playerRef.current.y - 25,
-                  text: '-20 DPS (LOOK AWAY FROM BOSS: Y > WITCH!)',
+                  text: '-20 DPS (LOOK AWAY FROM BOSS!)',
                   color: '#ef4444',
                   life: 0.6,
                   maxLife: 0.6,
@@ -1058,12 +1188,102 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             }
 
             // Note: The Eye doesn't shoot lasers when open anymore.
+            // Requirement: Only when player defeats all 4 Mini Eyes that the Eye closes itself again
+            const miniEyeCount = enemiesRef.current.filter(e => e.type === 'MINI_EYE').length;
 
-            if (eyePhaseTimerRef.current <= 0) {
+            if (miniEyeCount === 0) {
               eyePhaseRef.current = 'CLOSED';
-              eyePhaseTimerRef.current = 4.0 + Math.random() * 1.5;
+              // Adjusted duration so all 4 Blood Tears (fired over 3s, lasting 4.5s) despawn exactly as next attack warns
+              eyePhaseTimerRef.current = 7.0 + Math.random() * 1.5;
               bossAttackCooldownRef.current = 0.5;
               eyeTearsFiredRef.current = 0;
+            }
+          }
+        } else if (boss.id === 'night_bear') {
+          if (nightBearStateRef.current === 'IDLE') {
+            bossAttackCooldownRef.current -= dt;
+            if (bossAttackCooldownRef.current <= 0) {
+              nightBearStateRef.current = 'TELEGRAPH';
+              nightBearTimerRef.current = 0.6;
+              nightBearChargeTargetRef.current = { x: p.x, y: p.y };
+              nightBearChargeAngleRef.current = Math.atan2(p.y - boss.y, p.x - boss.x);
+              soundEngine.playShoot('wisp');
+            }
+          } else if (nightBearStateRef.current === 'TELEGRAPH') {
+            nightBearTimerRef.current -= dt;
+            if (nightBearTimerRef.current <= 0) {
+              nightBearStateRef.current = 'CHARGING';
+              nightBearHasHitPlayerRef.current = false;
+              soundEngine.playHit();
+            }
+          } else if (nightBearStateRef.current === 'CHARGING') {
+            const chargeSpeed = 650;
+            boss.x += Math.cos(nightBearChargeAngleRef.current) * chargeSpeed * dt;
+            boss.y += Math.sin(nightBearChargeAngleRef.current) * chargeSpeed * dt;
+
+            // Wall check
+            const hitWallX = boss.x <= minX + boss.radius || boss.x >= maxX - boss.radius;
+            const hitWallY = boss.y <= minY + boss.radius || boss.y >= maxY - boss.radius;
+
+            if (hitWallX || hitWallY) {
+              // Clamp to walls
+              boss.x = Math.max(minX + boss.radius, Math.min(maxX - boss.radius, boss.x));
+              boss.y = Math.max(minY + boss.radius, Math.min(maxY - boss.radius, boss.y));
+
+              nightBearChargesRef.current++;
+              if (screenShakeEnabledRef.current) screenShakeRef.current = 10;
+              
+              if (nightBearChargesRef.current < 3) {
+                nightBearStateRef.current = 'TELEGRAPH';
+                nightBearTimerRef.current = 0.6;
+                nightBearChargeTargetRef.current = { x: p.x, y: p.y };
+                nightBearChargeAngleRef.current = Math.atan2(p.y - boss.y, p.x - boss.x);
+              } else {
+                nightBearStateRef.current = 'DIZZY';
+                nightBearTimerRef.current = 3.0;
+                nightBearChargesRef.current = 0;
+              }
+            }
+
+            // Charge damage to player
+            if (!nightBearHasHitPlayerRef.current) {
+              const distToP = Math.hypot(p.x - boss.x, p.y - boss.y);
+              if (distToP < p.radius + boss.radius) {
+                nightBearHasHitPlayerRef.current = true;
+                const chargeDmg = boss.damage;
+                p.hp = Math.max(0, p.hp - chargeDmg);
+                lastReportedHpRef.current = p.hp;
+                onUpdatePlayer({ hp: p.hp });
+                soundEngine.playPlayerHurt();
+                
+                // Set contact cooldown to avoid double-hitting with general boss contact logic
+                bossContactCooldownRef.current = 0.55;
+
+                if (screenShakeEnabledRef.current) screenShakeRef.current = 12;
+
+                floatingTextsRef.current.push({
+                  id: nextEntityId.current++,
+                  x: p.x,
+                  y: p.y - 20,
+                  text: `-${chargeDmg}`,
+                  color: '#ef4444',
+                  life: 0,
+                  maxLife: 0.8,
+                  vy: -40,
+                });
+
+                // Knockback
+                const kAngle = Math.atan2(p.y - boss.y, p.x - boss.x);
+                const kDist = 120;
+                p.x = Math.max(minX, Math.min(maxX, p.x + Math.cos(kAngle) * kDist));
+                p.y = Math.max(minY, Math.min(maxY, p.y + Math.sin(kAngle) * kDist));
+              }
+            }
+          } else if (nightBearStateRef.current === 'DIZZY') {
+            nightBearTimerRef.current -= dt;
+            if (nightBearTimerRef.current <= 0) {
+              nightBearStateRef.current = 'IDLE';
+              bossAttackCooldownRef.current = 1.0;
             }
           }
         }
@@ -1209,20 +1429,25 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           if (onEnemyDefeated) {
             onEnemyDefeated(boss.id);
           }
-          // Spawn 12 Red EXP Orbs in a circle around defeated boss
-          const orbCount = 12;
-          for (let k = 0; k < orbCount; k++) {
-            const orbAng = (k / orbCount) * Math.PI * 2;
-            const orbDist = 45 + Math.random() * 35;
-            expGemsRef.current.push({
-              id: nextEntityId.current++,
-              x: boss.x + Math.cos(orbAng) * orbDist,
-              y: boss.y + Math.sin(orbAng) * orbDist,
-              value: 15,
-              color: '#ef4444',
-              radius: 6,
-            });
-          }
+          // Boss drops 1 Yellow Orb (75 EXP) and 1 25HP healing food
+          expGemsRef.current.push({
+            id: nextEntityId.current++,
+            x: boss.x,
+            y: boss.y,
+            value: 75,
+            color: '#eab308',
+            radius: 9.5,
+          });
+
+          // Always drop 25HP healing food with the yellow orb
+          pickupsRef.current.push({
+            id: nextEntityId.current++,
+            type: 'FOOD',
+            x: boss.x + 20,
+            y: boss.y + 10,
+            healAmount: 25,
+            radius: 12,
+          });
 
           // Massive celebration spark burst
           for (let k = 0; k < 45; k++) {
@@ -1259,6 +1484,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               onUnlockItem('vine_snare');
             } else if (boss.id === 'haunted_eye') {
               onUnlockItem('medusas_eye');
+            } else if (boss.id === 'night_bear') {
+              onUnlockItem('nightbears_claws');
             }
           }
         }
@@ -1275,14 +1502,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         return;
       }
 
-      const p = playerRef.current;
-
-      // Arena Wall Bounds for clamping movement during boss fight
-      const minX = isBossFightRef.current ? lockedCameraRef.current.x + 24 : -Infinity;
-      const maxX = isBossFightRef.current ? lockedCameraRef.current.x + canvas.width - 24 : Infinity;
-      const minY = isBossFightRef.current ? lockedCameraRef.current.y + 24 : -Infinity;
-      const maxY = isBossFightRef.current ? lockedCameraRef.current.y + canvas.height - 24 : Infinity;
-
       // Dash Cooldown & Movement Update
       if (p.dashTimer > 0) {
         p.dashTimer = Math.max(0, p.dashTimer - dt);
@@ -1297,6 +1516,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         // Leave visual dash ghost
         dashGhostsRef.current.push({ x: p.x, y: p.y, alpha: 0.75 });
         if (p.dashDuration <= 0) {
+          triggerDashEndAoE();
           p.isDashing = false;
           dashVxRef.current = 0;
           dashVyRef.current = 0;
@@ -1372,6 +1592,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       if (bossContactCooldownRef.current > 0) {
         bossContactCooldownRef.current -= dt;
       }
+      if (bossDashHitCooldownRef.current > 0) {
+        bossDashHitCooldownRef.current -= dt;
+      }
 
       // Boss Body Touch Collision (Player takes 10 damage & is knocked backwards when touching the Carnivore Plant Boss)
       if (isBossFightRef.current && bossInstanceRef.current) {
@@ -1390,9 +1613,34 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
 
         if (isContact) {
-          if (bossContactCooldownRef.current <= 0) {
+          if (p.isDashing && p.dashDamage && p.dashDamage > 0) {
+            // Nightbear's Claws: Damage the boss while dashing
+            // We'll use a local ref for boss dash cooldown to avoid machine-gunning
+            if (bossDashHitCooldownRef.current <= 0) {
+              bossDashHitCooldownRef.current = 0.5;
+              const actualDmg = p.dashDamage * 2.5 * (instaKillRef.current ? 100 : 1); // Bosses take more damage from this
+              boss.hp -= actualDmg;
+              bossHitFlashRef.current = 0.1;
+              
+            soundEngine.playHit();
+
+            floatingTextsRef.current.push({
+                id: nextEntityId.current++,
+                x: boss.x + (Math.random() - 0.5) * 20,
+                y: boss.y - 30,
+                text: `${Math.round(actualDmg)}`,
+                color: '#f87171',
+                life: 0,
+                maxLife: 0.8,
+                vy: -50,
+              });
+              
+              // We still allow the dash to be "interrupted" by boss mass for feel, 
+              // but you don't take damage.
+            }
+          } else if (bossContactCooldownRef.current <= 0) {
             bossContactCooldownRef.current = 0.55;
-            const contactDmg = 10;
+            const contactDmg = boss.damage;
             p.hp = Math.max(0, p.hp - contactDmg);
             lastReportedHpRef.current = p.hp;
             onUpdatePlayer({ hp: p.hp });
@@ -1432,11 +1680,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
             // Knock player backwards away from the boss
             const knockAngle = distToBoss > 0.001 ? Math.atan2(p.y - boss.y, p.x - boss.x) : Math.PI / 2;
-            const knockbackDistance = contactThreshold + 90;
+            const knockbackDistance = contactThreshold + (p.isDashing ? 180 : 90);
             p.x = Math.max(minX, Math.min(maxX, boss.x + Math.cos(knockAngle) * knockbackDistance));
             p.y = Math.max(minY, Math.min(maxY, boss.y + Math.sin(knockAngle) * knockbackDistance));
 
             // Stop Mobile Movement walk and dash recoil
+            triggerDashEndAoE();
             walkTargetRef.current = null;
             p.isDashing = false;
             dashVxRef.current = 0;
@@ -1542,6 +1791,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 knockback: 18 * p.knockbackMult,
                 vampirismRatio: p.vampirism,
                 isLaser: true,
+                hitEnemyIds: new Set<number>(),
+                hitBoss: false,
               });
             } else {
               for (let i = 0; i < count; i++) {
@@ -1570,6 +1821,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   maxDuration: 1.8,
                   knockback: 18 * p.knockbackMult,
                   vampirismRatio: p.vampirism,
+                  hitEnemyIds: new Set<number>(),
+                  hitBoss: false,
                 });
               }
             }
@@ -1674,6 +1927,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     knockback: 14 * p.knockbackMult,
                     vampirismRatio: p.vampirism,
                     homingTargetId: target.id,
+                    hitEnemyIds: new Set<number>(),
+                    hitBoss: false,
                   });
                 }
               } else if (activeBoss) {
@@ -1696,6 +1951,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     maxDuration: 2.2,
                     knockback: 14 * p.knockbackMult,
                     vampirismRatio: p.vampirism,
+                    hitEnemyIds: new Set<number>(),
+                    hitBoss: false,
                   });
                 }
               }
@@ -1872,7 +2129,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
 
         // Check collision with Boss
-        if (isBossFightRef.current && bossInstanceRef.current) {
+        if (isBossFightRef.current && bossInstanceRef.current && !proj.hitBoss) {
           const boss = bossInstanceRef.current;
           let isBossHit = false;
 
@@ -1901,6 +2158,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           }
 
           if (isBossHit) {
+            proj.hitBoss = true;
             const actualDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : proj.damage;
             boss.hp -= actualDmg;
             boss.lastHitBy = proj.weaponId;
@@ -1938,6 +2196,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         // Check collision with enemies
         for (let j = 0; j < enemiesRef.current.length; j++) {
           const enemy = enemiesRef.current[j];
+          if (proj.hitEnemyIds?.has(enemy.id)) continue;
           let isHit = false;
 
           if (proj.isLaser) {
@@ -1975,6 +2234,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           }
 
           if (isHit) {
+            if (!proj.hitEnemyIds) proj.hitEnemyIds = new Set<number>();
+            proj.hitEnemyIds.add(enemy.id);
+
             const actualDmg = instaKillRef.current ? Math.max(enemy.hp + 10, 999999) : proj.damage;
             enemy.hp -= actualDmg;
             enemy.lastHitBy = proj.weaponId;
@@ -2202,8 +2464,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       const medusaRadius = medusaItem ? 20 + medusaItem.level * 20 : 0;
       const medusaSlowMult = medusaItem ? Math.max(0.3, 1.0 - (0.2 + medusaItem.level * 0.05)) : 1.0;
 
-      for (let i = enemiesRef.current.length - 1; i >= 0; i--) {
+      // 1. Advance enemies towards player and update timers / knockbacks
+      for (let i = 0; i < enemiesRef.current.length; i++) {
         const enemy = enemiesRef.current[i];
+        if (enemy.hp <= 0) continue;
 
         if (enemy.hitFlashTimer > 0) {
           enemy.hitFlashTimer -= dt;
@@ -2232,6 +2496,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const edy = p.y - enemy.y;
         const edist = Math.hypot(edx, edy);
 
+        // Update facing direction sensor based on walking direction towards player (or knockback)
+        if (Math.abs(enemy.vx) > 30) {
+          enemy.facingDir = enemy.vx < 0 ? -1 : 1;
+        } else if (Math.abs(edx) > 2) {
+          enemy.facingDir = edx < 0 ? -1 : 1;
+        }
+
         // Medusa's Eye Slow effect check
         const enemyCursorDist = Math.hypot(enemy.x - mouseWorldX, enemy.y - mouseWorldY);
         const isMedusaSlowed = medusaItem && enemyCursorDist <= medusaRadius;
@@ -2242,9 +2513,145 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           enemy.x += (edx / edist) * currentEnemySpeed * dt;
           enemy.y += (edy / edist) * currentEnemySpeed * dt;
         }
+      }
 
+      // 2. Enemy-to-enemy collision resolution & congestion handling
+      const numEnemies = enemiesRef.current.length;
+      for (let iter = 0; iter < 2; iter++) {
+        for (let i = 0; i < numEnemies; i++) {
+          const e1 = enemiesRef.current[i];
+          if (e1.hp <= 0) continue;
+
+          for (let j = i + 1; j < numEnemies; j++) {
+            const e2 = enemiesRef.current[j];
+            if (e2.hp <= 0) continue;
+
+            const dx = e2.x - e1.x;
+            const dy = e2.y - e1.y;
+            const distSq = dx * dx + dy * dy;
+            const minDist = e1.radius + e2.radius;
+
+            if (distSq < minDist * minDist) {
+              const dist = Math.sqrt(distSq) || 0.001;
+              const overlap = minDist - dist;
+              const nx = dx / dist;
+              const ny = dy / dist;
+
+              // Compare distance to player to determine leading vs trailing enemy
+              const d1 = Math.hypot(e1.x - p.x, e1.y - p.y);
+              const d2 = Math.hypot(e2.x - p.x, e2.y - p.y);
+
+              let front = e1;
+              let back = e2;
+              let frontDist = d1;
+              let backDist = d2;
+              let dirFrontToBackX = nx;
+              let dirFrontToBackY = ny;
+
+              if (d2 < d1) {
+                front = e2;
+                back = e1;
+                frontDist = d2;
+                backDist = d1;
+                dirFrontToBackX = -nx;
+                dirFrontToBackY = -ny;
+              }
+
+              // Check if leading enemy is slower than trailing enemy
+              const isFrontSlower = front.speed < back.speed;
+              const isSideBySide = Math.abs(frontDist - backDist) < 4;
+
+              let frontWeight = 0.5;
+              let backWeight = 0.5;
+
+              if (!isSideBySide) {
+                if (isFrontSlower) {
+                  // Slower enemy in front: trailing faster enemy MUST be kept behind!
+                  // Front enemy holds its ground and does not get shoved into player.
+                  frontWeight = 0.0;
+                  backWeight = 1.0;
+                } else if (front.speed > back.speed) {
+                  frontWeight = 0.25;
+                  backWeight = 0.75;
+                } else {
+                  frontWeight = 0.1;
+                  backWeight = 0.9;
+                }
+              }
+
+              // Displace along separation normal
+              front.x -= dirFrontToBackX * overlap * frontWeight;
+              front.y -= dirFrontToBackY * overlap * frontWeight;
+              back.x += dirFrontToBackX * overlap * backWeight;
+              back.y += dirFrontToBackY * overlap * backWeight;
+
+              // When the front enemy is slower, strictly keep the faster enemy behind it
+              if (isFrontSlower && Math.abs(back.vx) <= 80 && Math.abs(back.vy) <= 80) {
+                const currentBackDist = Math.hypot(back.x - p.x, back.y - p.y);
+                const minAllowedBackDist = frontDist + minDist * 0.85;
+                if (currentBackDist < minAllowedBackDist) {
+                  const bPdx = back.x - p.x;
+                  const bPdy = back.y - p.y;
+                  const bPdist = Math.hypot(bPdx, bPdy) || 0.001;
+                  back.x = p.x + (bPdx / bPdist) * minAllowedBackDist;
+                  back.y = p.y + (bPdy / bPdist) * minAllowedBackDist;
+                }
+
+                // Add gentle lateral diversion so rear enemies naturally fan out around front enemies
+                const fx = front.x - p.x;
+                const fy = front.y - p.y;
+                const fLen = Math.hypot(fx, fy) || 1;
+                const tx = -fy / fLen;
+                const ty = fx / fLen;
+                const dotTangent = (back.x - front.x) * tx + (back.y - front.y) * ty;
+                const sideSign = dotTangent !== 0 ? Math.sign(dotTangent) : (back.id % 2 === 0 ? 1 : -1);
+                back.x += tx * sideSign * 0.35 * overlap;
+                back.y += ty * sideSign * 0.35 * overlap;
+              }
+            }
+          }
+        }
+      }
+
+      // 3. Check Player Hurt, Deaths, EXP Drops
+      for (let i = enemiesRef.current.length - 1; i >= 0; i--) {
+        const enemy = enemiesRef.current[i];
+        const edx = p.x - enemy.x;
+        const edy = p.y - enemy.y;
+        const edist = Math.hypot(edx, edy);
         // Check collision with Player
         if (edist <= p.radius + enemy.radius) {
+          // Nightbear's Claws: Damage and knockback enemies while dashing
+          if (p.isDashing && p.dashDamage && p.dashDamage > 0 && enemy.hitFlashTimer <= 0) {
+            const actualDmg = p.dashDamage * (instaKillRef.current ? 100 : 1);
+            enemy.hp -= actualDmg;
+            enemy.hitFlashTimer = 0.15; // Cooldown for dash damage on this enemy
+
+            // Knockback
+            const kbAngle = Math.atan2(enemy.y - p.y, enemy.x - p.x);
+            const kbForce = p.dashDamage * 6.0;
+            enemy.x += Math.cos(kbAngle) * kbForce;
+            enemy.y += Math.sin(kbAngle) * kbForce;
+
+            // Damage text
+            floatingTextsRef.current.push({
+              id: nextEntityId.current++,
+              x: enemy.x + (Math.random() - 0.5) * 10,
+              y: enemy.y - 10,
+              text: `${Math.round(actualDmg)}`,
+              color: '#f87171',
+              life: 0,
+              maxLife: 0.65,
+              vy: -45,
+            });
+
+            soundEngine.playHit();
+
+            if (enemy.hp <= 0) {
+              // Standard enemy death logic (handled below by the hp <= 0 check)
+            }
+          }
+
           // If dashing, immune to damage!
           // Enemies only deal damage once on collision, then get knocked back away
           if (!p.isDashing && (!enemy.attackCooldown || enemy.attackCooldown <= 0)) {
@@ -2308,7 +2715,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           if (onEnemyDefeated) {
             onEnemyDefeated(
               enemy.type === 'BAT' ? 'bat' :
-              enemy.type === 'GHOUL' ? 'ghoul' : 'wraith'
+              enemy.type === 'GHOUL' ? 'ghoul' : 
+              enemy.type === 'MINI_EYE' ? 'mini_eye' : 'wraith'
             );
           }
 
@@ -2326,31 +2734,174 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             });
           }
 
-          // Drop EXP Gem or Red EXP Orb
-          if (enemy.isRed || enemy.color === '#ef4444') {
-            // Healthier (red) enemies drop Red EXP Orbs with high EXP reward
-            const redExpValue = Math.max(4, Math.round(enemy.exp * 2.2));
-            expGemsRef.current.push({
+          // Mini Eye has no drops
+          if (enemy.type === 'MINI_EYE') {
+            enemiesRef.current.splice(i, 1);
+            continue;
+          }
+
+          // Enemy Drops: Red Orb grants 10 EXP; 10% chance for special drop (Magnet ~1%, Food and Upgraded Orbs ~9%)
+          const isVillageKnight = enemy.isRed || enemy.name === 'Village Knight';
+          const specialRoll = Math.random();
+
+          const pushExpDrop = (fallbackValue: number, fallbackColor: string, fallbackRadius: number) => {
+            const chance = isVillageKnight ? 0.10 : 0.01;
+            if (p.expToNextLevel > 700 && Math.random() < chance) {
+              expGemsRef.current.push({
+                id: nextEntityId.current++,
+                x: enemy.x,
+                y: enemy.y,
+                value: 75,
+                color: '#eab308',
+                radius: 9.5,
+              });
+            } else {
+              expGemsRef.current.push({
+                id: nextEntityId.current++,
+                x: enemy.x,
+                y: enemy.y,
+                value: fallbackValue,
+                color: fallbackColor,
+                radius: fallbackRadius,
+              });
+            }
+          };
+
+          if (specialRoll < 0.01) {
+            // Rare Magnet Drop (~1% chance)
+            pickupsRef.current.push({
               id: nextEntityId.current++,
+              type: 'MAGNET',
               x: enemy.x,
               y: enemy.y,
-              value: redExpValue,
-              color: '#ef4444',
-              radius: 7,
+              radius: 11,
             });
+
+            // Normal EXP drop accompanying the magnet
+            if (isVillageKnight) {
+              pushExpDrop(10, '#ef4444', 7);
+            } else {
+              pushExpDrop(enemy.exp, '#38bdf8', 5);
+            }
+          } else if (specialRoll < 0.10) {
+            // Other Special Drops (remaining ~9% chance)
+            if (isVillageKnight) {
+              // Village's Knight: higher-level orb doesn't apply; drops Food (deals 25 dmg) + standard Red Orb (10 EXP)
+              pickupsRef.current.push({
+                id: nextEntityId.current++,
+                type: 'FOOD',
+                x: enemy.x,
+                y: enemy.y,
+                healAmount: enemy.damage, // 25 HP
+                radius: 11,
+              });
+              pushExpDrop(10, '#ef4444', 7);
+            } else {
+              // Peasants: 50% Food (+ standard blue gem), 50% Higher level EXP orb (Red Orb instead of blue)
+              if (Math.random() < 0.5) {
+                pickupsRef.current.push({
+                  id: nextEntityId.current++,
+                  type: 'FOOD',
+                  x: enemy.x,
+                  y: enemy.y,
+                  healAmount: enemy.damage, // 10 or 12 HP
+                  radius: 11,
+                });
+                pushExpDrop(enemy.exp, '#38bdf8', 5);
+              } else {
+                // Higher level EXP orb than their own (Peasants drop Red Orb instead of blue one)
+                pushExpDrop(10, '#ef4444', 7);
+              }
+            }
           } else {
-            // Normal cyan diamond EXP gem
-            expGemsRef.current.push({
-              id: nextEntityId.current++,
-              x: enemy.x,
-              y: enemy.y,
-              value: enemy.exp,
-              color: '#38bdf8',
-              radius: 5,
-            });
+            // Normal 90% drops:
+            if (isVillageKnight) {
+              pushExpDrop(10, '#ef4444', 7);
+            } else {
+              // Normal cyan diamond EXP gem
+              pushExpDrop(enemy.exp, '#38bdf8', 5);
+            }
           }
 
           enemiesRef.current.splice(i, 1);
+        }
+      }
+
+      // World Pickups (Food & Magnet) Collection
+      for (let i = pickupsRef.current.length - 1; i >= 0; i--) {
+        const pickup = pickupsRef.current[i];
+        const pdist = Math.hypot(p.x - pickup.x, p.y - pickup.y);
+
+        if (pdist <= p.radius + pickup.radius + 6) {
+          if (pickup.type === 'FOOD') {
+            const heal = pickup.healAmount || 10;
+            p.hp = Math.min(p.maxHp, p.hp + heal);
+            onUpdatePlayer({ hp: p.hp });
+
+            soundEngine.playLevelUp();
+            floatingTextsRef.current.push({
+              id: nextEntityId.current++,
+              x: p.x + (Math.random() - 0.5) * 16,
+              y: p.y - 18,
+              text: `+${heal} HP`,
+              color: '#22c55e',
+              life: 0,
+              maxLife: 1.0,
+              vy: -45,
+            });
+
+            // Green healing sparkles
+            for (let k = 0; k < 12; k++) {
+              const ang = Math.random() * Math.PI * 2;
+              const spd = Math.random() * 80 + 25;
+              particlesRef.current.push({
+                x: p.x,
+                y: p.y,
+                vx: Math.cos(ang) * spd,
+                vy: Math.sin(ang) * spd,
+                size: Math.random() * 4 + 2,
+                color: '#4ade80',
+                alpha: 1,
+                decay: 2.4,
+              });
+            }
+          } else if (pickup.type === 'MAGNET') {
+            soundEngine.playShoot('nova');
+            const totalGems = expGemsRef.current.length;
+            // Teleport all uncollected EXP orbs directly to the player
+            for (const gem of expGemsRef.current) {
+              gem.x = p.x + (Math.random() - 0.5) * 10;
+              gem.y = p.y + (Math.random() - 0.5) * 10;
+            }
+
+            floatingTextsRef.current.push({
+              id: nextEntityId.current++,
+              x: p.x,
+              y: p.y - 20,
+              text: `MAGNET VACUUM! (${totalGems})`,
+              color: '#38bdf8',
+              life: 0,
+              maxLife: 1.3,
+              vy: -40,
+            });
+
+            // Electric shockwave particles
+            for (let k = 0; k < 28; k++) {
+              const ang = (k / 28) * Math.PI * 2;
+              particlesRef.current.push({
+                x: p.x,
+                y: p.y,
+                vx: Math.cos(ang) * 190,
+                vy: Math.sin(ang) * 190,
+                size: 3.5,
+                color: '#38bdf8',
+                alpha: 1,
+                decay: 2.2,
+              });
+            }
+          }
+
+          pickupsRef.current.splice(i, 1);
         }
       }
 
@@ -2373,8 +2924,35 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           const earnedExp = gem.value * (p.expMultiplier || 1.0);
           p.exp += earnedExp;
 
-          // If Red EXP Orb, spawn floating EXP reward text in crimson
-          if (gem.color === '#ef4444') {
+          if (gem.color === '#eab308' || gem.color === '#facc15') {
+            // Yellow Boss Orb (75 EXP)
+            floatingTextsRef.current.push({
+              id: nextEntityId.current++,
+              x: p.x + (Math.random() - 0.5) * 20,
+              y: p.y - 18,
+              text: `+${Math.round(earnedExp)} BOSS EXP!`,
+              color: '#facc15',
+              life: 0,
+              maxLife: 1.2,
+              vy: -45,
+            });
+
+            for (let k = 0; k < 18; k++) {
+              const ang = Math.random() * Math.PI * 2;
+              const spd = Math.random() * 95 + 30;
+              particlesRef.current.push({
+                x: p.x,
+                y: p.y,
+                vx: Math.cos(ang) * spd,
+                vy: Math.sin(ang) * spd,
+                size: Math.random() * 4 + 2,
+                color: '#fde047',
+                alpha: 1,
+                decay: 2.0,
+              });
+            }
+          } else if (gem.color === '#ef4444') {
+            // Red EXP Orb (10 EXP)
             floatingTextsRef.current.push({
               id: nextEntityId.current++,
               x: p.x + (Math.random() - 0.5) * 20,
@@ -2391,13 +2969,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
           // Check Level Up!
           if (p.exp >= p.expToNextLevel) {
-            p.exp -= p.expToNextLevel;
-            p.level += 1;
-            p.expToNextLevel = getExpNeededForLevel(p.level);
+            let levelsGained = 0;
+            while (p.exp >= p.expToNextLevel) {
+              p.exp -= p.expToNextLevel;
+              p.level += 1;
+              p.expToNextLevel = getExpNeededForLevel(p.level);
+              levelsGained++;
+            }
 
             onUpdatePlayer({ exp: p.exp, level: p.level, expToNextLevel: p.expToNextLevel });
             soundEngine.playLevelUp();
-            onTriggerLevelUp();
+            onTriggerLevelUp(levelsGained);
             return;
           } else {
             onUpdatePlayer({ exp: p.exp });
@@ -2458,34 +3040,29 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       const endRow = startRow + Math.ceil(canvas.height / tileSize) + 2;
 
       ctx.save();
-      for (let col = startCol; col <= endCol; col++) {
-        for (let row = startRow; row <= endRow; row++) {
-          const screenX = col * tileSize - cameraX;
-          const screenY = row * tileSize - cameraY;
-
-          // Gothic stone/grass biome alternating pattern
-          const hash = Math.abs(Math.sin(col * 12.9898 + row * 78.233) * 43758.5453) % 1;
-          if (hash > 0.85) {
-            ctx.fillStyle = '#140f22';
-          } else if (hash > 0.6) {
-            ctx.fillStyle = '#100b1a';
-          } else {
-            ctx.fillStyle = '#0c0816';
+      const groundImg = groundTileImageRef.current;
+      if (groundImg) {
+        ctx.imageSmoothingEnabled = false;
+        for (let col = startCol; col <= endCol; col++) {
+          for (let row = startRow; row <= endRow; row++) {
+            const screenX = col * tileSize - cameraX;
+            const screenY = row * tileSize - cameraY;
+            ctx.drawImage(groundImg, screenX, screenY, tileSize, tileSize);
           }
-          ctx.fillRect(screenX, screenY, tileSize, tileSize);
-
-          // Subtle grid borders
-          ctx.strokeStyle = '#1d152c';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(screenX, screenY, tileSize, tileSize);
-
-          // Occult rune markings scattered on ground
-          if (hash > 0.94) {
-            ctx.strokeStyle = '#381755';
-            ctx.lineWidth = 1.2;
-            ctx.beginPath();
-            ctx.arc(screenX + tileSize / 2, screenY + tileSize / 2, 14, 0, Math.PI * 2);
-            ctx.stroke();
+        }
+        // Darken the ground texture a bit for improved contrast and atmosphere
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else {
+        for (let col = startCol; col <= endCol; col++) {
+          for (let row = startRow; row <= endRow; row++) {
+            const screenX = col * tileSize - cameraX;
+            const screenY = row * tileSize - cameraY;
+            ctx.fillStyle = '#0c0816';
+            ctx.fillRect(screenX, screenY, tileSize, tileSize);
+            ctx.strokeStyle = '#1d152c';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(screenX, screenY, tileSize, tileSize);
           }
         }
       }
@@ -2876,18 +3453,149 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         });
       }
 
-      // 3. Render EXP Gems & Red EXP Orbs
+      // 2.5 Render World Pickups (Food & Magnet)
+      const curRunTime = survivalTimeRef.current;
+      pickupsRef.current.forEach((pickup) => {
+        const sx = pickup.x - cameraX;
+        const sy = pickup.y - cameraY;
+        const bob = Math.sin(curRunTime * 6 + pickup.id) * 3;
+
+        ctx.save();
+        if (pickup.type === 'FOOD') {
+          // Roasted Feast / Healing Food
+          ctx.shadowColor = '#4ade80';
+          ctx.shadowBlur = 12;
+
+          // Glowing soft green aura
+          ctx.fillStyle = 'rgba(74, 222, 128, 0.22)';
+          ctx.beginPath();
+          ctx.arc(sx, sy + bob, 15, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Bone handle
+          ctx.fillStyle = '#f8fafc';
+          ctx.beginPath();
+          ctx.roundRect(sx - 10, sy + bob - 1, 8, 4, 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(sx - 11, sy + bob - 1, 2.5, 0, Math.PI * 2);
+          ctx.arc(sx - 11, sy + bob + 3, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Roast meat body
+          ctx.fillStyle = '#b45309';
+          ctx.beginPath();
+          ctx.ellipse(sx + 3, sy + bob + 1, 9, 6.5, -0.25, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Crispy glaze highlight
+          ctx.fillStyle = '#f59e0b';
+          ctx.beginPath();
+          ctx.ellipse(sx + 4, sy + bob - 0.5, 6, 4, -0.25, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Specular shine
+          ctx.fillStyle = '#fef08a';
+          ctx.beginPath();
+          ctx.arc(sx + 2, sy + bob - 1.5, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          // HP heal badge
+          ctx.font = 'bold 9px monospace';
+          ctx.fillStyle = '#4ade80';
+          ctx.textAlign = 'center';
+          ctx.fillText(`+${pickup.healAmount || 10}`, sx, sy + bob - 10);
+        } else if (pickup.type === 'MAGNET') {
+          // Magnet pickup
+          ctx.shadowColor = '#38bdf8';
+          ctx.shadowBlur = 14;
+
+          // Pulsing magnetic field ring
+          const magPulse = 1 + 0.2 * Math.sin(curRunTime * 8 + pickup.id);
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(sx, sy + bob, 16 * magPulse, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Horseshoe Magnet
+          // Red arch
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 4;
+          ctx.lineCap = 'butt';
+          ctx.beginPath();
+          ctx.arc(sx, sy + bob - 2, 7, 0, Math.PI, false);
+          ctx.stroke();
+
+          // Legs of horseshoe
+          ctx.beginPath();
+          ctx.moveTo(sx - 7, sy + bob - 2);
+          ctx.lineTo(sx - 7, sy + bob + 5);
+          ctx.moveTo(sx + 7, sy + bob - 2);
+          ctx.lineTo(sx + 7, sy + bob + 5);
+          ctx.stroke();
+
+          // Silver magnetic poles
+          ctx.strokeStyle = '#f1f5f9';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(sx - 7, sy + bob + 4);
+          ctx.lineTo(sx - 7, sy + bob + 7);
+          ctx.moveTo(sx + 7, sy + bob + 4);
+          ctx.lineTo(sx + 7, sy + bob + 7);
+          ctx.stroke();
+
+          // Mini electric sparks
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.arc(sx - 7, sy + bob + 10, 1.8, 0, Math.PI * 2);
+          ctx.arc(sx + 7, sy + bob + 10, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      // 3. Render EXP Gems & Red/Yellow EXP Orbs
       expGemsRef.current.forEach((gem) => {
         const sx = gem.x - cameraX;
         const sy = gem.y - cameraY;
 
         ctx.save();
+        const isYellow = gem.color === '#eab308' || gem.color === '#facc15';
+        const isRed = gem.color === '#ef4444';
         ctx.shadowColor = gem.color;
-        ctx.shadowBlur = gem.color === '#ef4444' ? 14 : 8;
+        ctx.shadowBlur = isYellow ? 20 : isRed ? 14 : 8;
         ctx.fillStyle = gem.color;
 
-        if (gem.color === '#ef4444') {
-          // Distinct glowing Red EXP Orb
+        if (isYellow) {
+          // Distinct majestic glowing Yellow Boss EXP Orb (75 EXP)
+          const pulse = 1 + 0.12 * Math.sin(Date.now() * 0.007 + gem.id);
+
+          // Outer radiant halo
+          ctx.fillStyle = 'rgba(250, 204, 21, 0.35)';
+          ctx.beginPath();
+          ctx.arc(sx, sy, 14 * pulse, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Golden orb body
+          ctx.fillStyle = '#eab308';
+          ctx.beginPath();
+          ctx.arc(sx, sy, 9, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Inner gleaming core
+          ctx.fillStyle = '#fef08a';
+          ctx.beginPath();
+          ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Specular glint
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(sx - 2.5, sy - 2.5, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (isRed) {
+          // Distinct glowing Red EXP Orb (10 EXP)
           ctx.beginPath();
           ctx.arc(sx, sy, 6.5, 0, Math.PI * 2);
           ctx.fill();
@@ -3024,26 +3732,88 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.filter = 'grayscale(85%)';
         }
 
-        // Hit flash white
-        if (enemy.hitFlashTimer > 0) {
-          ctx.fillStyle = '#ffffff';
-        } else {
+        const isPitchforkPeasant = enemy.name === 'Pitchfork Peasant' || enemy.type === 'BAT';
+        const isTorchPeasant = enemy.name === 'Torch Peasant' || enemy.type === 'WRAITH';
+        const isVillageKnightEnemy = enemy.isRed || enemy.name === 'Village Knight';
+        const isMiniEye = enemy.type === 'MINI_EYE';
+
+        const customEnemyImg = isPitchforkPeasant
+          ? peasantImageRef.current
+          : isTorchPeasant
+          ? peasantTorchImageRef.current
+          : isVillageKnightEnemy
+          ? villageKnightImageRef.current
+          : null;
+
+        if (customEnemyImg) {
+          const img = customEnemyImg;
+          const width = enemy.radius * 2 * 1.5;
+          const height = width * (img.naturalHeight / img.naturalWidth || 1.0);
+
+          ctx.save();
+          ctx.translate(sx, sy);
+
+          // Face moving direction horizontally (same direction sensor as the Witch)
+          const facing = enemy.facingDir !== undefined ? enemy.facingDir : (p.x - enemy.x < 0 ? -1 : 1);
+          if (facing < 0) {
+            ctx.scale(-1, 1);
+          }
+
+          ctx.imageSmoothingEnabled = false;
+          // If flashing from hit
+          if (enemy.hitFlashTimer > 0) {
+            ctx.filter = 'brightness(300%)';
+          }
+          ctx.drawImage(img, -width / 2, -height / 2, width, height);
+          ctx.restore();
+        } else if (isMiniEye) {
+          // Draw Mini Eye
+          ctx.save();
+          if (enemy.hitFlashTimer > 0) {
+            ctx.fillStyle = '#ffffff';
+          } else {
+            ctx.fillStyle = '#2b0606';
+          }
+          ctx.strokeStyle = '#991b1b';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(sx, sy, enemy.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          // Pupil
           ctx.fillStyle = enemy.color;
+          ctx.beginPath();
+          ctx.arc(sx, sy, enemy.radius * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.arc(sx, sy, enemy.radius * 0.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          // Hit flash white
+          if (enemy.hitFlashTimer > 0) {
+            ctx.fillStyle = '#ffffff';
+          } else {
+            ctx.fillStyle = enemy.color;
+          }
+
+          ctx.shadowColor = enemy.color;
+          ctx.shadowBlur = 6;
+
+          ctx.beginPath();
+          ctx.arc(sx, sy, enemy.radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Enemy face / horns / eyes
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.arc(sx - enemy.radius * 0.35, sy - 2, 2.5, 0, Math.PI * 2);
+          ctx.arc(sx + enemy.radius * 0.35, sy - 2, 2.5, 0, Math.PI * 2);
+          ctx.fill();
         }
-
-        ctx.shadowColor = enemy.color;
-        ctx.shadowBlur = 6;
-
-        ctx.beginPath();
-        ctx.arc(sx, sy, enemy.radius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Enemy face / horns / eyes
-        ctx.fillStyle = '#0f172a';
-        ctx.beginPath();
-        ctx.arc(sx - enemy.radius * 0.35, sy - 2, 2.5, 0, Math.PI * 2);
-        ctx.arc(sx + enemy.radius * 0.35, sy - 2, 2.5, 0, Math.PI * 2);
-        ctx.fill();
 
         // Visible Vine Trap overlay if rooted
         if (enemy.vineRootedDuration && enemy.vineRootedDuration > 0) {
@@ -3177,6 +3947,84 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.beginPath();
           ctx.arc(bx - r * 0.45, by - r * 0.5, 3.5, 0, Math.PI * 2);
           ctx.arc(bx + r * 0.45, by - r * 0.5, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (boss.id === 'night_bear') {
+          // NightBear Boss Rendering
+          const r = boss.radius;
+          const isCharging = nightBearStateRef.current === 'CHARGING';
+          const isDizzy = nightBearStateRef.current === 'DIZZY';
+          const isTelegraph = nightBearStateRef.current === 'TELEGRAPH';
+          
+          // Aura
+          ctx.shadowColor = isFlashing ? '#ffffff' : (isCharging ? '#ef4444' : '#3b2f2f');
+          ctx.shadowBlur = isCharging ? 30 : 15;
+
+          // Shake if charging or telegraphing
+          let offsetX = 0;
+          let offsetY = 0;
+          if (isTelegraph) {
+            offsetX = (Math.random() - 0.5) * 6;
+            offsetY = (Math.random() - 0.5) * 6;
+          }
+
+          // Main body (Hulking Beast)
+          ctx.fillStyle = isFlashing ? '#ffffff' : '#1c1917';
+          ctx.beginPath();
+          ctx.arc(bx + offsetX, by + offsetY, r * 1.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Ears
+          ctx.fillStyle = isFlashing ? '#ffffff' : '#1c1917';
+          ctx.beginPath();
+          ctx.arc(bx + offsetX - r * 0.7, by + offsetY - r * 0.8, r * 0.4, 0, Math.PI * 2);
+          ctx.arc(bx + offsetX + r * 0.7, by + offsetY - r * 0.8, r * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Eyes
+          if (isDizzy) {
+            // X Eyes
+            ctx.strokeStyle = '#f87171';
+            ctx.lineWidth = 3;
+            // Left X
+            ctx.beginPath();
+            ctx.moveTo(bx + offsetX - r * 0.5, by + offsetY - r * 0.2);
+            ctx.lineTo(bx + offsetX - r * 0.2, by + offsetY + r * 0.1);
+            ctx.moveTo(bx + offsetX - r * 0.2, by + offsetY - r * 0.2);
+            ctx.lineTo(bx + offsetX - r * 0.5, by + offsetY + r * 0.1);
+            ctx.stroke();
+            // Right X
+            ctx.beginPath();
+            ctx.moveTo(bx + offsetX + r * 0.2, by + offsetY - r * 0.2);
+            ctx.lineTo(bx + offsetX + r * 0.5, by + offsetY + r * 0.1);
+            ctx.moveTo(bx + offsetX + r * 0.5, by + offsetY - r * 0.2);
+            ctx.lineTo(bx + offsetX + r * 0.2, by + offsetY + r * 0.1);
+            ctx.stroke();
+          } else {
+            // Glowing red eyes
+            ctx.fillStyle = isTelegraph ? '#ff0000' : '#ef4444';
+            ctx.beginPath();
+            ctx.arc(bx + offsetX - r * 0.4, by + offsetY - r * 0.1, 6, 0, Math.PI * 2);
+            ctx.arc(bx + offsetX + r * 0.4, by + offsetY - r * 0.1, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupils
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(bx + offsetX - r * 0.4, by + offsetY - r * 0.1, 2, 0, Math.PI * 2);
+            ctx.arc(bx + offsetX + r * 0.4, by + offsetY - r * 0.1, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Snout
+          ctx.fillStyle = isFlashing ? '#ffffff' : '#292524';
+          ctx.beginPath();
+          ctx.ellipse(bx + offsetX, by + offsetY + r * 0.3, r * 0.5, r * 0.35, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Nose
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.arc(bx + offsetX, by + offsetY + r * 0.25, 6, 0, Math.PI * 2);
           ctx.fill();
         } else if (boss.id === 'haunted_eye') {
           // Haunted Eye Boss Rendering (Wide Panoramic Occult Entity)
@@ -3387,57 +4235,65 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       const playerScreenY = p.y - cameraY;
 
       ctx.save();
-      // Witch base circle
-      ctx.shadowColor = '#a855f7';
-      ctx.shadowBlur = 14;
+      if (witchImageRef.current) {
+        const img = witchImageRef.current;
+        // Balance dimensions: base width on player radius, 1:1 square ratio for pixel art sprite
+        const width = p.radius * 2 * 1.5;
+        const height = width * (img.naturalHeight / img.naturalWidth || 1.0);
 
-      // Aura circle
-      ctx.beginPath();
-      ctx.arc(playerScreenX, playerScreenY, p.radius + 3, 0, Math.PI * 2);
-      ctx.fillStyle = p.isDashing ? '#38bdf8' : '#3b0764';
-      ctx.fill();
+        ctx.translate(playerScreenX, playerScreenY);
 
-      // Body robe
-      ctx.beginPath();
-      ctx.arc(playerScreenX, playerScreenY, p.radius, 0, Math.PI * 2);
-      ctx.fillStyle = '#581c87';
-      ctx.fill();
+        // Flip horizontally if moving left
+        if (lastMoveDirRef.current.dx < 0) {
+          ctx.scale(-1, 1);
+        }
 
-      // Witch Hat brim & cone
-      ctx.fillStyle = '#110c1c';
-      ctx.strokeStyle = '#581c87';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(playerScreenX, playerScreenY - 4, 15, 4.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+        ctx.imageSmoothingEnabled = false;
+        // Draw centered at translated origin
+        ctx.drawImage(img, -width / 2, -height / 2, width, height);
+      } else {
+        // Body robe
+        ctx.beginPath();
+        ctx.arc(playerScreenX, playerScreenY, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#581c87';
+        ctx.fill();
 
-      ctx.beginPath();
-      ctx.moveTo(playerScreenX - 7, playerScreenY - 5);
-      ctx.lineTo(playerScreenX + 7, playerScreenY - 5);
-      ctx.lineTo(playerScreenX, playerScreenY - 18);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+        // Witch Hat brim & cone
+        ctx.fillStyle = '#110c1c';
+        ctx.strokeStyle = '#581c87';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(playerScreenX, playerScreenY - 4, 15, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
 
-      // Purple ribbon & gold buckle on hat
-      ctx.fillStyle = '#c084fc';
-      ctx.fillRect(playerScreenX - 5.5, playerScreenY - 7.5, 11, 2.2);
-      ctx.fillStyle = '#facc15';
-      ctx.fillRect(playerScreenX - 1.5, playerScreenY - 8, 3, 2.8);
+        ctx.beginPath();
+        ctx.moveTo(playerScreenX - 7, playerScreenY - 5);
+        ctx.lineTo(playerScreenX + 7, playerScreenY - 5);
+        ctx.lineTo(playerScreenX, playerScreenY - 18);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
 
-      // Face
-      ctx.fillStyle = '#fce7f3';
-      ctx.beginPath();
-      ctx.arc(playerScreenX, playerScreenY + 3, 7, 0, Math.PI * 2);
-      ctx.fill();
+        // Purple ribbon & gold buckle on hat
+        ctx.fillStyle = '#c084fc';
+        ctx.fillRect(playerScreenX - 5.5, playerScreenY - 7.5, 11, 2.2);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(playerScreenX - 1.5, playerScreenY - 8, 3, 2.8);
 
-      // Glowing Eyes
-      ctx.fillStyle = '#9333ea';
-      ctx.beginPath();
-      ctx.arc(playerScreenX - 2.5, playerScreenY + 2, 1.2, 0, Math.PI * 2);
-      ctx.arc(playerScreenX + 2.5, playerScreenY + 2, 1.2, 0, Math.PI * 2);
-      ctx.fill();
+        // Face
+        ctx.fillStyle = '#fce7f3';
+        ctx.beginPath();
+        ctx.arc(playerScreenX, playerScreenY + 3, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glowing Eyes
+        ctx.fillStyle = '#9333ea';
+        ctx.beginPath();
+        ctx.arc(playerScreenX - 2.5, playerScreenY + 2, 1.2, 0, Math.PI * 2);
+        ctx.arc(playerScreenX + 2.5, playerScreenY + 2, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.restore();
 
       // 9. Render Particles
