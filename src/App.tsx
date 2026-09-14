@@ -176,12 +176,13 @@ export default function App() {
   // Persistent Collection state across runs (saved in localStorage)
   const [unlockedWeapons, setUnlockedWeapons] = useState<string[]>(() => {
     try {
-      const v = localStorage.getItem('witch_nights_default_undiscovered_v3');
+      const v = localStorage.getItem('witch_nights_default_undiscovered_v4');
       if (!v) {
-        localStorage.setItem('witch_nights_default_undiscovered_v3', 'true');
+        localStorage.setItem('witch_nights_default_undiscovered_v4', 'true');
         localStorage.setItem('witch_nights_weapons', JSON.stringify([]));
         localStorage.setItem('witch_nights_items', JSON.stringify([]));
         localStorage.setItem('witch_nights_curses', JSON.stringify([]));
+        localStorage.setItem('witch_nights_enemies', JSON.stringify([]));
         localStorage.setItem('witch_nights_unlocked_ids', JSON.stringify(DEFAULT_UNLOCKED_ITEM_IDS));
         return [];
       }
@@ -194,6 +195,8 @@ export default function App() {
 
   const [unlockedItems, setUnlockedItems] = useState<string[]>(() => {
     try {
+      const v = localStorage.getItem('witch_nights_default_undiscovered_v4');
+      if (!v) return [];
       const saved = localStorage.getItem('witch_nights_items');
       return saved ? JSON.parse(saved) : [];
     } catch {
@@ -203,6 +206,8 @@ export default function App() {
 
   const [unlockedCurses, setUnlockedCurses] = useState<string[]>(() => {
     try {
+      const v = localStorage.getItem('witch_nights_default_undiscovered_v4');
+      if (!v) return [];
       const saved = localStorage.getItem('witch_nights_curses');
       return saved ? JSON.parse(saved) : [];
     } catch {
@@ -212,6 +217,8 @@ export default function App() {
 
   const [unlockedItemIds, setUnlockedItemIds] = useState<string[]>(() => {
     try {
+      const v = localStorage.getItem('witch_nights_default_undiscovered_v4');
+      if (!v) return DEFAULT_UNLOCKED_ITEM_IDS;
       const saved = localStorage.getItem('witch_nights_unlocked_ids');
       return saved ? JSON.parse(saved) : DEFAULT_UNLOCKED_ITEM_IDS;
     } catch {
@@ -221,6 +228,8 @@ export default function App() {
 
   const [unlockedEnemies, setUnlockedEnemies] = useState<string[]>(() => {
     try {
+      const v = localStorage.getItem('witch_nights_default_undiscovered_v4');
+      if (!v) return [];
       const saved = localStorage.getItem('witch_nights_enemies');
       return saved ? JSON.parse(saved) : [];
     } catch {
@@ -798,6 +807,7 @@ export default function App() {
     setIsTrueWitchUnlocked(false);
     setIsTrueWitchMode(false);
     try {
+      localStorage.setItem('witch_nights_default_undiscovered_v4', 'true');
       localStorage.setItem('witch_nights_weapons', JSON.stringify([]));
       localStorage.setItem('witch_nights_items', JSON.stringify([]));
       localStorage.setItem('witch_nights_curses', JSON.stringify([]));
