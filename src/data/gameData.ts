@@ -1,4 +1,36 @@
-import { WeaponDefinition, StatItemDefinition, CurseChoice, BossDefinition } from '../types/game';
+import { WeaponDefinition, StatItemDefinition, CurseChoice, BossDefinition, CharacterDefinition } from '../types/game';
+
+export const CHARACTERS: CharacterDefinition[] = [
+  {
+    id: 'ruby',
+    name: 'Ruby',
+    title: 'Misunderstood Witch',
+    startingWeaponId: 'arcane_wand',
+    startingWeaponName: 'Arcana Blast',
+    baseMaxHp: 100,
+    speedMultiplier: 1.2,
+    speedLabel: '1.2x',
+    description: 'A good hearted woman born as a witch, fending herself because of that. And they call *her* the monster.',
+    spriteUrl: 'https://i.imgur.com/uvH316Y.png',
+    fallbackSpriteUrl: 'assets/aistudio/witch.png',
+    color: '#a855f7',
+  },
+  {
+    id: 'glowob',
+    name: 'GlOwOb',
+    title: 'Just a Goo',
+    startingWeaponId: 'brimstone_shotgun',
+    startingWeaponName: 'Acid Pellets',
+    baseMaxHp: 75,
+    speedMultiplier: 1.5,
+    speedLabel: '1.5x',
+    description: "Just a goo. People treat them like a monster, when all they want to do is... to be honest, I'm not entirely sure I know what they do.",
+    spriteUrl: 'https://i.imgur.com/xNWJ044.png',
+    fallbackSpriteUrl: 'assets/aistudio/glowob.png',
+    color: '#22c55e',
+  },
+];
+
 
 export const BOSS_POOL: BossDefinition[] = [
   {
@@ -54,24 +86,25 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
   },
   {
     id: 'brimstone_shotgun',
-    name: 'Brimstone Blaster',
+    name: 'Acid Pellets',
     shootingType: 'MOUSE_DIRECTION',
-    icon: 'Crosshair',
-    description: 'Unleashes a wide cone of incendiary brimstone pellets towards your cursor.',
-    baseDamage: 20,
+    icon: 'FlaskConical',
+    description: 'Fires corrosive acid pellets toward your cursor in rapid bursts.',
+    baseDamage: 12,
     baseInterval: 1.1,
-    baseSpeed: 580,
+    baseSpeed: 600,
     baseSize: 7,
     basePierce: 1,
-    baseCount: 4,
-    bulletColor: '#a855f7',
+    baseCount: 3,
+    bulletColor: '#22c55e',
+    iconColor: '#a855f7',
     tiers: [
-      { tier: 1, name: 'Hellfire Blast', description: 'Fires a 4-pellet spread towards cursor.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Scatter Shell', description: 'Fires +2 additional pellets and +5 damage.', damageBonus: 5, fireRateBonus: 0.9, countBonus: 2, sizeBonus: 2, pierceBonus: 0 },
-      { tier: 3, name: 'Dense Powder', description: 'Pellets pierce through +1 enemy.', damageBonus: 7, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 2, pierceBonus: 1 },
-      { tier: 4, name: 'Infernal Spray', description: 'Fires +2 more pellets (8 total) with faster reload.', damageBonus: 10, fireRateBonus: 0.8, countBonus: 2, sizeBonus: 3, pierceBonus: 0 },
-      { tier: 5, name: 'Magma Slag', description: 'Pellets explode on impact and pierce +1 more enemy.', damageBonus: 14, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 4, pierceBonus: 1 },
-      { tier: 6, name: 'Dragon Breath', description: 'Fires a 14-pellet superheated magma tidal wave that vaporizes lines of foes.', damageBonus: 24, fireRateBonus: 0.65, countBonus: 4, sizeBonus: 6, pierceBonus: 2 },
+      { tier: 1, name: 'Corrosive Salvo', description: 'Fires 3 acid pellets, with the middle pellet aiming directly at your cursor.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: 'Double Volley', description: 'Every shot fires another 3 pellets right after the first 3 in quick succession.', damageBonus: 4, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 1, pierceBonus: 0 },
+      { tier: 3, name: 'Acidic Vapors', description: 'Pellets apply corrosive Acid (7s duration, 1 hit/s dealing 10% attack damage) with a toxic green aura.', damageBonus: 6, fireRateBonus: 0.9, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
+      { tier: 4, name: 'Caustic Storm', description: 'Fires 2 more pellets in the first volley and 2 more in the second (10 pellets total per shot).', damageBonus: 9, fireRateBonus: 0.85, countBonus: 4, sizeBonus: 3, pierceBonus: 0 },
+      { tier: 5, name: 'Blight Infusion', description: 'Raises Acid duration from 7s to 10s.', damageBonus: 13, fireRateBonus: 0.8, countBonus: 0, sizeBonus: 4, pierceBonus: 0 },
+      { tier: 6, name: 'Dissolving Core', description: 'Every pellet gains +2 penetration, melting through hordes of foes.', damageBonus: 18, fireRateBonus: 0.7, countBonus: 0, sizeBonus: 5, pierceBonus: 2 },
     ]
   },
   {
@@ -179,7 +212,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
       { tier: 1, name: 'Fire Spark', description: 'Launches 1 blazing homing fireball seeking the nearest monster.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: 'Twin Fireballs', description: 'Launches +1 homing fireball per volley (2 fireballs total) and deals +4 damage.', damageBonus: 4, fireRateBonus: 1.0, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
       { tier: 3, name: 'Blazing Agility', description: 'Fireballs fly 30% faster and deal +6 damage.', damageBonus: 6, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
-      { tier: 4, name: 'Ignition Flare', description: 'Hit enemies receive Burn effect with a red aura, taking constant damage for 5 seconds.', damageBonus: 10, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 4, pierceBonus: 0 },
+      { tier: 4, name: 'Ignition Flare', description: 'Hit enemies receive Burn effect with a red aura, dealing 10% attack damage per tick for 5 seconds.', damageBonus: 10, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 4, pierceBonus: 0 },
       { tier: 5, name: 'Inferno Surge', description: 'Deals +15 damage and strengthens homing trajectory with continuous Burn.', damageBonus: 15, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 5, pierceBonus: 0 },
       { tier: 6, name: 'Mega Fireball', description: 'Hurls a colossal Mega Fireball with slower fire rate that detonates on impact, dealing massive direct damage, splash damage, and Burn in an explosion.', damageBonus: 55, fireRateBonus: 1.45, speedBonus: 126, countBonus: 0, sizeBonus: 24, pierceBonus: 0 },
     ]
@@ -282,62 +315,31 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     name: 'Broom of Haste',
     statType: 'DASH_COOLDOWN',
     icon: 'Broom',
-    description: 'Witchcraft broom enchantment that drastically reduces Shift-dash cooldown.',
+    description: 'Witchcraft broom enchantment that reduces Shift-dash cooldown by 10% of base time per rank.',
     color: '#ea580c',
     tiers: [
-      { tier: 1, name: 'Light Bristles', description: 'Reduces dash cooldown by 0.3s (2.7s CD).', statValue: 2.7 },
-      { tier: 2, name: 'Wind Weaver', description: 'Reduces dash cooldown by 0.3s (2.4s CD).', statValue: 2.4 },
-      { tier: 3, name: 'Gale Rider', description: 'Reduces dash cooldown by 0.3s (2.1s CD).', statValue: 2.1 },
-      { tier: 4, name: 'Zephyr Flight', description: 'Reduces dash cooldown by 0.3s (1.8s CD).', statValue: 1.8 },
-      { tier: 5, name: 'Sonic Broom', description: 'Reduces dash cooldown to 1.5s! Max rank 5.', statValue: 1.5 },
+      { tier: 1, name: 'Light Bristles', description: 'Reduces dash cooldown by 10% of base time.', statValue: 0.10 },
+      { tier: 2, name: 'Wind Weaver', description: 'Reduces dash cooldown by 10% of base time (-20% total).', statValue: 0.20 },
+      { tier: 3, name: 'Gale Rider', description: 'Reduces dash cooldown by 10% of base time (-30% total).', statValue: 0.30 },
+      { tier: 4, name: 'Zephyr Flight', description: 'Reduces dash cooldown by 10% of base time (-40% total).', statValue: 0.40 },
+      { tier: 5, name: 'Sonic Broom', description: 'Reduces dash cooldown by 10% of base time (-50% total)! Max rank 5.', statValue: 0.50 },
     ]
   },
-  {
-    id: 'silver_slippers',
-    name: 'Silver Slippers',
-    statType: 'MOVE_SPEED',
-    icon: 'Footprints',
-    description: 'Lightweight enchanted footwear that speeds up base movement.',
-    color: '#ea580c',
-    tiers: [
-      { tier: 1, name: 'Nimble Steps', description: '+12% movement speed.', statValue: 1.12 },
-      { tier: 2, name: 'Swift Gait', description: '+10% movement speed (1.22x total).', statValue: 1.22 },
-      { tier: 3, name: 'Moonlight Tread', description: '+10% movement speed (1.32x total).', statValue: 1.32 },
-      { tier: 4, name: 'Fleet Shadow', description: '+10% movement speed (1.42x total).', statValue: 1.42 },
-      { tier: 5, name: 'Breeze Walker', description: '+12% movement speed (1.54x total).', statValue: 1.54 },
-      { tier: 6, name: 'Mercury Stride', description: '+16% movement speed (1.70x total). Outrun any monstrous horde.', statValue: 1.70 },
-    ]
-  },
-  {
-    id: 'black_candle',
-    name: 'Black Candle',
-    statType: 'DAMAGE_BOOST',
-    icon: 'Zap',
-    description: 'Black magic ritual candle multiplying all weapon damage output.',
-    color: '#ea580c',
-    tiers: [
-      { tier: 1, name: 'Dark Flame', description: '+15% damage to all attacks.', statValue: 1.15 },
-      { tier: 2, name: 'Shadow Wax', description: '+15% damage (1.30x total).', statValue: 1.30 },
-      { tier: 3, name: 'Occult Wick', description: '+15% damage (1.45x total).', statValue: 1.45 },
-      { tier: 4, name: 'Cursed Glow', description: '+15% damage (1.60x total).', statValue: 1.60 },
-      { tier: 5, name: 'Abyssal Fuel', description: '+20% damage (1.80x total).', statValue: 1.80 },
-      { tier: 6, name: 'Eclipse Flame', description: '+30% damage (2.10x total!). Devastating arcane power.', statValue: 2.10 },
-    ]
-  },
+
   {
     id: 'magnet_orb',
     name: 'Attractor Amulet',
     statType: 'MAGNET_RADIUS',
     icon: 'Compass',
-    description: 'Pulls scattered EXP crystals from great distances automatically.',
+    description: 'Pulls scattered EXP crystals, food, and EXP magnets from great distances automatically.',
     color: '#ea580c',
     tiers: [
-      { tier: 1, name: 'Faint Pull', description: '+25% EXP collection radius (1.25x total).', statValue: 1.25 },
-      { tier: 2, name: 'Magnetic Core', description: '+25% EXP collection radius (1.50x total).', statValue: 1.50 },
-      { tier: 3, name: 'Grave Magnet', description: '+25% EXP collection radius (1.75x total).', statValue: 1.75 },
-      { tier: 4, name: 'Soul Siphon', description: '+25% EXP collection radius (2.00x total).', statValue: 2.00 },
-      { tier: 5, name: 'Void Beacon', description: '+25% EXP collection radius (2.25x total).', statValue: 2.25 },
-      { tier: 6, name: 'Black Hole Relic', description: '+25% EXP collection radius (2.50x total).', statValue: 2.50 },
+      { tier: 1, name: 'Faint Pull', description: '+25% EXP, food & magnet collection radius (1.25x total).', statValue: 1.25 },
+      { tier: 2, name: 'Magnetic Core', description: '+25% collection radius (1.50x total).', statValue: 1.50 },
+      { tier: 3, name: 'Grave Magnet', description: '+25% collection radius (1.75x total).', statValue: 1.75 },
+      { tier: 4, name: 'Soul Siphon', description: '+25% collection radius (2.00x total).', statValue: 2.00 },
+      { tier: 5, name: 'Void Beacon', description: '+25% collection radius (2.25x total).', statValue: 2.25 },
+      { tier: 6, name: 'Black Hole Relic', description: '+25% collection radius (2.50x total). Pulls everything instantly.', statValue: 2.50 },
     ]
   },
   {
@@ -475,8 +477,6 @@ export const DEFAULT_UNLOCKED_ITEM_IDS: string[] = [
   'astral_lens',
   'repulsion_talisman',
   'broom_of_haste',
-  'silver_slippers',
-  'black_candle',
   'magnet_orb',
   'blood_ruby',
   'destiny_control',

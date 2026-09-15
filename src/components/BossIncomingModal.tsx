@@ -19,7 +19,7 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
       case 'carnivore_plant':
         return {
           title: 'Carnivore Plant',
-          subtitle: 'Bio-Organic Horda Overseer',
+          subtitle: "Greenhouse's Devil",
           color: '#22c55e',
           accent: 'emerald',
           mechanics: [
@@ -31,7 +31,7 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
       case 'haunted_eye':
         return {
           title: 'Haunted Eye',
-          subtitle: 'Ancient Panoptic Abomination',
+          subtitle: 'All-Seeing Spirit',
           color: '#dc2626',
           accent: 'rose',
           mechanics: [
@@ -45,14 +45,14 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
       default:
         return {
           title: 'NightBear',
-          subtitle: 'Frenzied Midnight Berserker',
+          subtitle: 'Uncontrollable Beast',
           color: '#b45309',
           accent: 'amber',
           mechanics: [
-            'Frenzied Charges: Sprints across the arena in high-speed linear charges.',
-            'Dizzy State: He only gets dizzy after 3 Charges, crashing into obstacles or walls and leaving him stunned with orbiting stars.'
+            'Frenzied Charges: Sprints across the arena in linear charges, becoming dizzy after crashing into walls 3 times.',
+            '"THE Bite" Attack: Triggers after 2 Charge Attack dizzy stuns. NightBear leaps to the top center and unleashes arena-wide bites! A clear opening always exists near you to escape!'
           ],
-          strategy: 'Survive and bait 3 consecutive charges into obstacles or walls. When he enters his dizzy stunned state after the 3rd charge, unleash your strongest spells!'
+          strategy: 'Bait his charges into walls to stun him. After recovering from his 2nd dizzy stun, watch for his leap to top center, then quickly react and step into the clear gap to avoid bite damage!'
         };
     }
   };
@@ -80,7 +80,48 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
             className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center border-2 shadow-xl shrink-0"
             style={{ backgroundColor: `${details.color}22`, borderColor: details.color }}
           >
-            <Skull className="w-10 h-10 sm:w-12 sm:h-12" style={{ color: details.color }} />
+            {boss.id === 'carnivore_plant' ? (
+              <img
+                src="https://i.imgur.com/kaNPLzb.png"
+                alt="Carnivore Plant"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes('carnivore_plant.png')) {
+                    target.src = `${import.meta.env.BASE_URL}assets/aistudio/carnivore_plant.png`;
+                  }
+                }}
+                className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
+              />
+            ) : boss.id === 'haunted_eye' ? (
+              <img
+                src="https://i.imgur.com/caqAbHC.png"
+                alt="Haunted Eye"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes('haunted_eye_open.png')) {
+                    target.src = `${import.meta.env.BASE_URL}assets/aistudio/haunted_eye_open.png`;
+                  }
+                }}
+                className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
+              />
+            ) : boss.id === 'night_bear' ? (
+              <img
+                src="https://i.imgur.com/Pjkp2on.png"
+                alt="NightBear"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes('night_bear.png')) {
+                    target.src = `${import.meta.env.BASE_URL}assets/aistudio/night_bear.png`;
+                  }
+                }}
+                className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
+              />
+            ) : (
+              <Skull className="w-10 h-10 sm:w-12 sm:h-12" style={{ color: details.color }} />
+            )}
           </div>
           <div className="text-center sm:text-left flex-1">
             <h2 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-wide">

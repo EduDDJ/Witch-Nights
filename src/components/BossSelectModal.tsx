@@ -119,51 +119,33 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                       }`}
                     >
                       {isPlant && (
-                        <svg
-                          viewBox="0 0 100 100"
-                          className="w-20 h-20 drop-shadow-md animate-pulse"
-                          aria-label="Carnivore Plant Visual"
-                        >
-                          {/* Leaves & Petals */}
-                          <path
-                            d="M 20 80 Q 30 50 50 65 Q 35 75 20 80 Z"
-                            fill="#15803d"
-                          />
-                          <path
-                            d="M 80 80 Q 70 50 50 65 Q 65 75 80 80 Z"
-                            fill="#15803d"
-                          />
-                          <circle cx="50" cy="50" r="32" fill="#166534" />
-                          <circle cx="50" cy="50" r="28" fill="#10b981" />
-                          {/* Snapping Mouth Cavity */}
-                          <ellipse cx="50" cy="50" rx="20" ry="14" fill="#881337" />
-                          {/* Sharp Fangs */}
-                          <polygon points="36,40 40,48 44,40" fill="#f8fafc" />
-                          <polygon points="46,40 50,49 54,40" fill="#f8fafc" />
-                          <polygon points="56,40 60,48 64,40" fill="#f8fafc" />
-                          <polygon points="38,60 42,52 46,60" fill="#f8fafc" />
-                          <polygon points="48,60 52,51 56,60" fill="#f8fafc" />
-                          <polygon points="58,60 62,52 66,60" fill="#f8fafc" />
-                          {/* Spores/Aura */}
-                          <circle cx="30" cy="35" r="3" fill="#86efac" opacity="0.8" />
-                          <circle cx="70" cy="35" r="3" fill="#86efac" opacity="0.8" />
-                        </svg>
+                        <img
+                          src="https://i.imgur.com/kaNPLzb.png"
+                          alt="Carnivore Plant Visual"
+                          crossOrigin="anonymous"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (!target.src.includes('carnivore_plant.png')) {
+                              target.src = `${import.meta.env.BASE_URL}assets/aistudio/carnivore_plant.png`;
+                            }
+                          }}
+                          className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
+                        />
                       )}
 
                       {isEye && (
-                        <svg
-                          viewBox="0 0 120 70"
-                          className="w-24 h-16 drop-shadow-md group-hover:scale-110 transition-transform"
-                          aria-label="Haunted Eye Visual"
-                        >
-                          {/* Dark Arcane Panoramic Socket Aura */}
-                          <ellipse cx="60" cy="35" rx="52" ry="26" fill="#450a0a" />
-                          <ellipse cx="60" cy="35" rx="46" ry="22" fill="#881337" />
-                          {/* Closed Eyelid */}
-                          <ellipse cx="60" cy="35" rx="42" ry="18" fill="#1e1b4b" stroke="#e11d48" strokeWidth="2" />
-                          {/* Arcane seal rune */}
-                          <circle cx="60" cy="35" r="7" fill="#be123c" opacity="0.6" />
-                        </svg>
+                        <img
+                          src="https://i.imgur.com/caqAbHC.png"
+                          alt="Haunted Eye Visual"
+                          crossOrigin="anonymous"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (!target.src.includes('haunted_eye_open.png')) {
+                              target.src = `${import.meta.env.BASE_URL}assets/aistudio/haunted_eye_open.png`;
+                            }
+                          }}
+                          className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
+                        />
                       )}
 
                       {isBear && (
@@ -201,7 +183,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                           : 'bg-stone-900/60 text-stone-300 border border-stone-700/50'
                       }`}
                     >
-                      {isPlant ? 'Botanical Grove Terror' : isEye ? 'Abyssal Ocular Watcher' : 'Primal Shadow Stalker'}
+                      {isPlant ? "Greenhouse's Devil" : isEye ? 'All-Seeing Spirit' : 'Uncontrollable Beast'}
                     </div>
                   </div>
 
@@ -241,11 +223,11 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                       <>
                         <div className="flex items-start gap-1.5 text-slate-300">
                           <span className="text-stone-400 font-bold">•</span>
-                          <span>A hulking beast that charges relentlessly across the arena.</span>
+                          <span>A hulking beast that charges across the arena, becoming dizzy after crashing into walls 3 times.</span>
                         </div>
                         <div className="flex items-start gap-1.5 text-slate-300">
                           <span className="text-stone-400 font-bold">•</span>
-                          <span>Invincible while charging, but gets dizzy after 3 consecutive strikes.</span>
+                          <span>Alternates 2 - 1 with "THE Bite": after 2 dizzy states (Charge Attacks), leaps to top center and unleashes bites with a clear opening nearby!</span>
                         </div>
                         <div className="flex items-start gap-1.5 text-amber-300 font-medium pt-1">
                           <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />

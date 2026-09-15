@@ -85,7 +85,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
               <kbd className="px-2.5 py-0.5 rounded bg-stone-800 border border-cyan-700/40">SPACEBAR</kbd>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Burst with speed and <strong>total invulnerability (i-frames)</strong> on a <strong>3s cooldown</strong>. Use Dash to pierce dense swarms or dodge lethal attacks! (Cooldown can be reduced down to 1.5s with the <em>Broom of Haste</em>).
+              Burst with speed and <strong>total invulnerability (i-frames)</strong> on a <strong>3s cooldown</strong>. Use Dash to pierce dense swarms or dodge lethal attacks! (Cooldown can be reduced by up to 50% with the <em>Broom of Haste</em>).
             </p>
           </div>
 

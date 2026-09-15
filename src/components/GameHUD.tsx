@@ -26,14 +26,16 @@ import {
   Pause,
   Clover,
   Eye,
+  FlaskConical,
 } from 'lucide-react';
 
-import { BossInstance } from '../types/game';
+import { BossInstance, CharacterDefinition } from '../types/game';
 
 interface GameHUDProps {
   player: PlayerStats;
   weapons: OwnedWeapon[];
   statItems: OwnedStatItem[];
+  character?: CharacterDefinition;
   maxWeapons?: number;
   survivalTime: number; // in seconds
   isHurt: boolean;
@@ -64,6 +66,7 @@ const WEAPON_ICONS: Record<string, React.ElementType> = {
   Radio,
   Pentagram: PentagramIcon,
   Sword,
+  FlaskConical,
 };
 
 const STAT_ICONS: Record<string, React.ElementType> = {
@@ -85,6 +88,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   player,
   weapons,
   statItems,
+  character,
   maxWeapons,
   survivalTime,
   isHurt,
@@ -163,7 +167,13 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             {/* Witch's face */}
             <div className="relative shrink-0 flex flex-col items-center">
               <div className="relative">
-                <WitchPortrait isHurt={isHurt} size={46} />
+                <WitchPortrait 
+                  isHurt={isHurt} 
+                  size={46} 
+                  spriteUrl={character?.spriteUrl}
+                  fallbackSpriteUrl={character?.fallbackSpriteUrl}
+                  characterName={character?.name}
+                />
                 <div className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 font-black text-[9px] rounded px-1 py-0.2 border border-slate-950 shadow">
                   {player.level}
                 </div>
@@ -455,7 +465,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                     <div
                       key={owned.id}
                       id={`hud-weapon-icon-${owned.id}`}
-                      onMouseEnter={() =>
+                      onMouseEnter={() => {
+                        const itemColor = def.iconColor || def.bulletColor;
                         setHoveredItem({
                           id: owned.id,
                           name: def.name,
@@ -464,9 +475,9 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                           description: def.description,
                           shootingType: def.shootingType,
                           icon: IconComp,
-                          color: def.bulletColor,
-                        })
-                      }
+                          color: itemColor,
+                        });
+                      }}
                       onMouseLeave={() => setHoveredItem(null)}
                       className="relative group cursor-pointer"
                     >
@@ -474,11 +485,11 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                       <div
                         className="w-9 h-9 rounded-lg flex items-center justify-center border-2 transition-all duration-150 hover:scale-110 hover:shadow-md shadow-purple-950/50"
                         style={{
-                          backgroundColor: `${def.bulletColor}22`,
-                          borderColor: def.bulletColor,
+                          backgroundColor: `${def.iconColor || def.bulletColor}22`,
+                          borderColor: def.iconColor || def.bulletColor,
                         }}
                       >
-                        <IconComp className="w-4 h-4 transition-transform group-hover:rotate-6" style={{ color: def.bulletColor }} />
+                        <IconComp className="w-4 h-4 transition-transform group-hover:rotate-6" style={{ color: def.iconColor || def.bulletColor }} />
                       </div>
 
                       {/* Tier indicator pips at bottom edge of image */}
@@ -498,10 +509,22 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           )}
         </div>
 
-        {/* BOTTOM RIGHT: DASH COOLDOWN CIRCLE */}
-        <div className={`pointer-events-auto relative flex flex-col items-center gap-3 transition-all duration-300 ${
+        {/* BOTTOM RIGHT: CURSOR JOYSTICK & DASH COOLDOWN CIRCLE */}
+        <div className={`pointer-events-auto relative flex flex-col items-center gap-2.5 transition-all duration-300 ${
           mobileMode && isBossFight ? 'mb-24 sm:mb-28' : ''
         }`}>
+          {/* Virtual Cursor / Aim Joystick in Mobile Mode, positioned directly above Dash button */}
+          {mobileMode && (
+            <div className="flex flex-col items-center mb-1">
+              <VirtualJoystick
+                size={108}
+                variant="cursor"
+                eventName="cursor-joystick-move"
+                idPrefix="cursor-joystick"
+              />
+            </div>
+          )}
+
           {/* Subtle Hover Tooltip for Dash */}
           {isDashHovered && (
             <div className="absolute bottom-full mb-3 px-3 py-1.5 rounded-xl bg-slate-950/95 border border-purple-500/80 text-center shadow-xl z-50 whitespace-nowrap animate-in fade-in duration-100">

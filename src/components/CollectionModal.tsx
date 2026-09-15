@@ -25,6 +25,7 @@ import {
   RotateCcw,
   CheckCircle,
   Eye,
+  FlaskConical,
 } from 'lucide-react';
 import { VampireFangsIcon } from './VampireFangsIcon';
 import { PentagramIcon } from './PentagramIcon';
@@ -52,6 +53,7 @@ const WEAPON_ICONS: Record<string, React.ElementType> = {
   Pentagram: PentagramIcon,
   Sword,
   Sprout,
+  FlaskConical,
 };
 
 const STAT_ICONS: Record<string, React.ElementType> = {
@@ -137,55 +139,37 @@ const createNormalEnemyIcon = (color: string) => {
   return Icon;
 };
 
-const CarnivorePlantIcon: React.FC<any> = (props) => {
-  const color = props.style?.color || '#22c55e';
-  return (
-    <svg viewBox="0 0 40 40" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
-      <ellipse cx="20" cy="7" rx="10" ry="5" fill="#047857" />
-      <ellipse cx="20" cy="33" rx="10" ry="5" fill="#047857" />
-      <ellipse cx="7" cy="20" rx="5" ry="10" fill="#047857" />
-      <ellipse cx="33" cy="20" rx="5" ry="10" fill="#047857" />
-      <ellipse cx="11" cy="11" rx="8" ry="4" transform="rotate(45 11 11)" fill="#047857" />
-      <ellipse cx="29" cy="29" rx="8" ry="4" transform="rotate(45 29 29)" fill="#047857" />
-      <ellipse cx="29" cy="11" rx="8" ry="4" transform="rotate(-45 29 11)" fill="#047857" />
-      <ellipse cx="11" cy="29" rx="8" ry="4" transform="rotate(-45 11 29)" fill="#047857" />
-      <circle cx="20" cy="20" r="11" fill={color} stroke="#86efac" strokeWidth="1.5" />
-      <ellipse cx="20" cy="18" rx="7.7" ry="4" fill="#450a0a" />
-      <path d="M 14 18 L 15 15 L 16 18 Z" fill="#fef08a" />
-      <path d="M 16 18 L 17 15 L 18 18 Z" fill="#fef08a" />
-      <path d="M 18 18 L 19 15 L 20 18 Z" fill="#fef08a" />
-      <path d="M 20 18 L 21 15 L 22 18 Z" fill="#fef08a" />
-      <path d="M 22 18 L 23 15 L 24 18 Z" fill="#fef08a" />
-      <path d="M 24 18 L 25 15 L 26 18 Z" fill="#fef08a" />
-      <path d="M 14 18 L 15 21 L 16 18 Z" fill="#fef08a" />
-      <path d="M 16 18 L 17 21 L 18 18 Z" fill="#fef08a" />
-      <path d="M 18 18 L 19 21 L 20 18 Z" fill="#fef08a" />
-      <path d="M 20 18 L 21 21 L 22 18 Z" fill="#fef08a" />
-      <path d="M 22 18 L 23 21 L 24 18 Z" fill="#fef08a" />
-      <path d="M 24 18 L 25 21 L 26 18 Z" fill="#fef08a" />
-      <circle cx="15" cy="14" r="3.5" fill="#facc15" />
-      <circle cx="25" cy="14" r="3.5" fill="#facc15" />
-      <circle cx="15" cy="14" r="1.5" fill="#7f1d1d" />
-      <circle cx="25" cy="14" r="1.5" fill="#7f1d1d" />
-    </svg>
-  );
-};
+const CarnivorePlantIcon: React.FC<any> = (props) => (
+  <img
+    src="https://i.imgur.com/kaNPLzb.png"
+    alt="Carnivore Plant"
+    crossOrigin="anonymous"
+    onError={(e) => {
+      const target = e.currentTarget;
+      if (!target.src.includes('carnivore_plant.png')) {
+        target.src = `${import.meta.env.BASE_URL}assets/aistudio/carnivore_plant.png`;
+      }
+    }}
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
 
-const HauntedEyeIcon: React.FC<any> = (props) => {
-  return (
-    <svg viewBox="0 0 40 40" className={props.className || "w-full h-full drop-shadow-md"} {...props}>
-      <ellipse cx="20" cy="20" rx="18" ry="9" fill="#2b0606" stroke="#991b1b" strokeWidth="2" />
-      <image
-        href="https://i.imgur.com/p2eqvL6.png"
-        x="13"
-        y="13"
-        width="14"
-        height="14"
-        preserveAspectRatio="xMidYMid meet"
-      />
-    </svg>
-  );
-};
+const HauntedEyeIcon: React.FC<any> = (props) => (
+  <img
+    src="https://i.imgur.com/caqAbHC.png"
+    alt="Haunted Eye"
+    crossOrigin="anonymous"
+    onError={(e) => {
+      const target = e.currentTarget;
+      if (!target.src.includes('haunted_eye_open.png')) {
+        target.src = `${import.meta.env.BASE_URL}assets/aistudio/haunted_eye_open.png`;
+      }
+    }}
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
 
 const MiniEyeIcon: React.FC<any> = (props) => (
   <img
@@ -341,9 +325,10 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
     maxHp: 1200,
     speed: '2.5x',
     isBoss: true,
-    description: 'A dark, hulking beast that relentlessly charges at its prey. It becomes dizzy after several failed attempts.',
+    description: 'A dark, hulking beast that alternates 2 - 1 between relentless charges and a devastating arena-wide biting frenzy called "THE Bite".',
     attacks: [
-      { name: 'Charge', damage: '25', telegraph: '0.6s', description: 'NightBear readies himself and then charges at high speed. He is invincible during the charge and only stops when hitting a wall.' }
+      { name: 'Charge', damage: '25', telegraph: '0.6s', description: 'NightBear readies himself and charges at high speed until hitting a wall. Crashing 3 times causes him to become stunned and dizzy.' },
+      { name: 'THE Bite', damage: '25', telegraph: '1.0s', description: 'After recovering from dizziness twice (2 Charge Attacks), NightBear leaps to the top center (telegraphed by a red circle) and bites in circular areas, leaving an opening nearby to escape with quick thinking.' }
     ]
   }
 ];
@@ -520,19 +505,21 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                   description: w.description,
                   unlockCondition: w.unlockCondition,
                   shootingType: w.shootingType,
-                  bulletColor: w.bulletColor,
+                  bulletColor: w.iconColor || w.bulletColor,
                   icon: DisplayIcon,
                   tiers: w.tiers,
                 };
 
+                const displayColor = w.iconColor || w.bulletColor;
+
                 const bgStyle = isLegendary
                   ? isDiscovered
-                    ? `${w.bulletColor}22`
+                    ? `${displayColor}22`
                     : isUnlocked
                     ? '#451a0333'
                     : '#78350f25'
                   : isDiscovered
-                  ? `${w.bulletColor}22`
+                  ? `${displayColor}22`
                   : isUnlocked
                   ? '#13111c'
                   : '#1e293b25';
@@ -540,7 +527,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                 const borderStyle = isLegendary
                   ? '#fbbf24'
                   : isDiscovered
-                  ? `${w.bulletColor}aa`
+                  ? `${displayColor}aa`
                   : isUnlocked
                   ? '#332a48'
                   : '#475569';
@@ -570,7 +557,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                       {isDiscovered ? (
                         <RealIcon
                           className="w-6 h-6 sm:w-8 sm:h-8 transition-transform group-hover:rotate-6"
-                          style={{ color: w.bulletColor }}
+                          style={{ color: displayColor }}
                         />
                       ) : isUnlocked ? (
                         <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
@@ -1169,7 +1156,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                             } else if (selectedItem.id === 'medusas_eye') {
                               // Handled entirely in text description
                             } else if (selectedItem.id === 'broom_of_haste') {
-                              statsList.push(`Dash Cooldown: ${t.statValue}s`);
+                              statsList.push(`Dash Cooldown: -${Math.round(t.statValue * 100)}%`);
                             } else if (selectedItem.id === 'blood_ruby') {
                               statsList.push(`Max HP: +${t.statValue}`);
                               statsList.push(`Regen: +0.1 HP/s`);
@@ -1179,10 +1166,8 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                               statsList.push(`Level Choices: 4 Options`);
                             } else {
                               const pct = Math.round((t.statValue - 1) * 100);
-                              const label = selectedItem.id === 'black_candle' ? 'All Damage' :
-                                            selectedItem.id === 'astral_lens' ? 'Spell Size' :
+                              const label = selectedItem.id === 'astral_lens' ? 'Spell Size' :
                                             selectedItem.id === 'repulsion_talisman' ? 'Knockback' :
-                                            selectedItem.id === 'silver_slippers' ? 'Move Speed' :
                                             selectedItem.id === 'magnet_orb' ? 'Pickup Radius' : 'Bonus';
                               statsList.push(`${label}: +${pct}%`);
                             }
@@ -1205,10 +1190,9 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                             } else if (selectedItem.id === 'medusas_eye') {
                               // Handled entirely in text description
                             } else if (selectedItem.id === 'broom_of_haste') {
-                              // Cooldown exception - absolute number
-                              const diff = prevVal - currVal;
-                              if (diff > 0) {
-                                statsList.push(`Cooldown: -${Math.round(diff * 10) / 10}s`);
+                              const diffPct = Math.round((currVal - prevVal) * 100);
+                              if (diffPct > 0) {
+                                statsList.push(`Dash Cooldown: -${diffPct}%`);
                               }
                             } else if (selectedItem.id === 'blood_ruby') {
                               // Max HP exception - absolute number
@@ -1226,10 +1210,8 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                               // Standard multipliers
                               const pct = ((currVal / prevVal) - 1) * 100;
                               if (pct > 0) {
-                                const label = selectedItem.id === 'black_candle' ? 'Damage' :
-                                              selectedItem.id === 'astral_lens' ? 'Spell Size' :
+                                const label = selectedItem.id === 'astral_lens' ? 'Spell Size' :
                                               selectedItem.id === 'repulsion_talisman' ? 'Knockback' :
-                                              selectedItem.id === 'silver_slippers' ? 'Move Speed' :
                                               selectedItem.id === 'magnet_orb' ? 'Pickup Radius' : 'Bonus';
                                 statsList.push(`${label}: +${Math.round(pct)}%`);
                               }

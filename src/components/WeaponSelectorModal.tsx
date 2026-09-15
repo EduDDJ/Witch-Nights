@@ -24,6 +24,7 @@ import {
   Sprout,
   Clover,
   Eye,
+  FlaskConical,
 } from 'lucide-react';
 import { VampireFangsIcon } from './VampireFangsIcon';
 import { PentagramIcon } from './PentagramIcon';
@@ -51,6 +52,7 @@ const WEAPON_ICONS: Record<string, React.ElementType> = {
   Pentagram: PentagramIcon,
   Sword,
   Sprout,
+  FlaskConical,
 };
 
 const STAT_ICONS: Record<string, React.ElementType> = {
@@ -187,7 +189,7 @@ export const WeaponSelectorModal: React.FC<WeaponSelectorModalProps> = ({
               
               const isSelected = selectedItemId === item.id;
               const color = activeTab === 'WEAPONS' 
-                ? (item as any).bulletColor 
+                ? ((item as any).iconColor || (item as any).bulletColor)
                 : (item as any).color || '#fbbf24';
 
               return (
@@ -223,7 +225,7 @@ export const WeaponSelectorModal: React.FC<WeaponSelectorModalProps> = ({
                   {(() => {
                     const Icon = (activeTab === 'WEAPONS' ? WEAPON_ICONS[selectedItem.icon] : STAT_ICONS[selectedItem.icon]) || HelpCircle;
                     const color = activeTab === 'WEAPONS'
-                      ? (selectedItem as any).bulletColor
+                      ? ((selectedItem as any).iconColor || (selectedItem as any).bulletColor)
                       : (selectedItem as any).color || '#fbbf24';
                     return <Icon className="w-8 h-8" style={{ color }} />;
                   })()}

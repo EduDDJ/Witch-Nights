@@ -12,6 +12,7 @@ import {
   GameOptions,
   BossInstance,
   BossDefinition,
+  CharacterDefinition,
 } from './types/game';
 import {
   ALL_WEAPONS,
@@ -19,6 +20,7 @@ import {
   WITCH_DEALS,
   DEFAULT_UNLOCKED_ITEM_IDS,
   BOSS_POOL,
+  CHARACTERS,
   getExpNeededForLevel,
 } from './data/gameData';
 import { MainMenu } from './components/MainMenu';
@@ -28,6 +30,7 @@ import { LevelUpModal, LevelUpOption } from './components/LevelUpModal';
 import { WitchDealModal } from './components/WitchDealModal';
 import { UnlockModal } from './components/UnlockModal';
 import { CollectionModal, ENEMIES_DATA } from './components/CollectionModal';
+import { CharacterSelectModal } from './components/CharacterSelectModal';
 import { GameOverModal } from './components/GameOverModal';
 import { OptionsModal } from './components/OptionsModal';
 import { PauseMenuModal } from './components/PauseMenuModal';
@@ -39,7 +42,7 @@ import { BossRushModal } from './components/BossRushModal';
 import { BossIncomingModal } from './components/BossIncomingModal';
 import { soundEngine } from './utils/audio';
 
-type GameScreen = 'MENU' | 'PLAYING' | 'COLLECTION';
+type GameScreen = 'MENU' | 'PLAYING' | 'COLLECTION' | 'CHARACTER_SELECT';
 
 const DEFAULT_OPTIONS: GameOptions = {
   soundEnabled: true,
@@ -77,6 +80,7 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
 
 export default function App() {
   const [screen, setScreen] = useState<GameScreen>('MENU');
+  const [selectedCharacter, setSelectedCharacter] = useState<CharacterDefinition>(CHARACTERS[0]);
 
   // Gameplay Run State
   const [player, setPlayer] = useState<PlayerStats>(INITIAL_PLAYER_STATS);
@@ -159,7 +163,7 @@ export default function App() {
           setIsCollectionFromPause(false);
           return;
         }
-        if (screen === 'COLLECTION') {
+        if (screen === 'COLLECTION' || screen === 'CHARACTER_SELECT') {
           setScreen('MENU');
           return;
         }
@@ -299,11 +303,11 @@ export default function App() {
   }, [unlockedWeapons, unlockedItems, unlockedCurses, unlockedItemIds, unlockedEnemies, enemyKills]);
 
   // Recalculate player passives whenever statItems change
-  const recalculatePassives = useCallback((currentStatItems: OwnedStatItem[], baseMaxHp = 100) => {
+  const recalculatePassives = useCallback((currentStatItems: OwnedStatItem[], customMaxHp?: number) => {
     let vamp = 0.0;
     let projSize = 1.0;
     let kb = 1.0;
-    let dashCd = 3.0;
+    let dashCdReduction = 0.0;
     let speedMult = 1.0;
     let dmgMult = 1.0;
     let magnetMult = 1.0;
@@ -327,7 +331,7 @@ export default function App() {
           kb = tier.statValue;
           break;
         case 'DASH_COOLDOWN':
-          dashCd = tier.statValue; // Reduced cooldown
+          dashCdReduction = tier.statValue; // Percentage reduction of base dash cooldown (0.10, 0.20, etc.)
           break;
         case 'MOVE_SPEED':
           speedMult = tier.statValue;
@@ -351,6 +355,10 @@ export default function App() {
     });
 
     setPlayer((prev) => {
+      const baseMaxHp = customMaxHp ?? selectedCharacter?.baseMaxHp ?? 100;
+      const baseDashCd = INITIAL_PLAYER_STATS.dashCooldown;
+      const calculatedDashCd = Math.max(0.5, baseDashCd * (1 - dashCdReduction));
+      const baseSpeed = 165 * (selectedCharacter?.speedMultiplier ?? 1.2);
       const newMaxHp = baseMaxHp + bonusHp;
       const hpGain = Math.max(0, newMaxHp - prev.maxHp);
       const newHp = Math.min(newMaxHp, prev.hp + hpGain);
@@ -359,8 +367,8 @@ export default function App() {
         vampirism: vamp,
         projectileSizeMult: projSize,
         knockbackMult: kb,
-        dashCooldown: dashCd,
-        speed: 165 * speedMult,
+        dashCooldown: calculatedDashCd,
+        speed: baseSpeed * speedMult,
         damageMult: dmgMult,
         magnetRadius: 100 * magnetMult,
         maxHp: newMaxHp,
@@ -369,15 +377,23 @@ export default function App() {
         dashDamage: dDamage,
       };
     });
-  }, []);
+  }, [selectedCharacter]);
 
-  // Start a new run (Normal Game)
-  const handleStartGame = () => {
+  // Start a new run (Normal Game) with selected character
+  const handleStartGame = (character: CharacterDefinition = selectedCharacter) => {
+    setSelectedCharacter(character);
     setIsBossRush(false);
-    handleItemUnlocked('WEAPON', 'arcane_wand');
+    handleItemUnlocked('WEAPON', character.startingWeaponId);
     setGameRunId((prev) => prev + 1);
-    setPlayer({ ...INITIAL_PLAYER_STATS });
-    setWeapons([{ id: 'arcane_wand', level: 1, lastFired: 0, statsMultiplier: 1.0 }]);
+    const charMaxHp = character.baseMaxHp;
+    const charSpeed = 165 * (character.speedMultiplier ?? 1.2);
+    setPlayer({
+      ...INITIAL_PLAYER_STATS,
+      maxHp: charMaxHp,
+      hp: charMaxHp,
+      speed: charSpeed,
+    });
+    setWeapons([{ id: character.startingWeaponId, level: 1, lastFired: 0, statsMultiplier: 1.0 }]);
     setStatItems([]);
     setSurvivalTime(0);
     setMaxWeapons(5);
@@ -400,11 +416,21 @@ export default function App() {
 
   const handleStartBossRush = () => {
     setIsBossRush(true);
-    handleItemUnlocked('WEAPON', 'arcane_wand');
+    handleItemUnlocked('WEAPON', selectedCharacter.startingWeaponId);
     setGameRunId((prev) => prev + 1);
     const initialHpRegen = isTrueWitchMode ? 0 : INITIAL_PLAYER_STATS.hpRegen;
-    setPlayer({ ...INITIAL_PLAYER_STATS, hpRegen: initialHpRegen, level: 1, exp: 0 });
-    setWeapons([{ id: 'arcane_wand', level: 1, lastFired: 0, statsMultiplier: 1.0 }]);
+    const charMaxHp = selectedCharacter.baseMaxHp;
+    const charSpeed = 165 * (selectedCharacter.speedMultiplier ?? 1.2);
+    setPlayer({
+      ...INITIAL_PLAYER_STATS,
+      maxHp: charMaxHp,
+      hp: charMaxHp,
+      speed: charSpeed,
+      hpRegen: initialHpRegen,
+      level: 1,
+      exp: 0,
+    });
+    setWeapons([{ id: selectedCharacter.startingWeaponId, level: 1, lastFired: 0, statsMultiplier: 1.0 }]);
     setStatItems([]);
     setSurvivalTime(0);
     setMaxWeapons(1);
@@ -867,7 +893,7 @@ export default function App() {
       {/* 1. MAIN MENU SCREEN */}
       {screen === 'MENU' && (
         <MainMenu
-          onStartGame={handleStartGame}
+          onStartGame={() => setScreen('CHARACTER_SELECT')}
           onOpenBossRush={() => setIsBossRushModalOpen(true)}
           onOpenCollection={() => setScreen('COLLECTION')}
           onOpenOptions={() => setIsOptionsOpen(true)}
@@ -877,7 +903,16 @@ export default function App() {
         />
       )}
 
-      {/* 2. COLLECTION MODAL (FROM MAIN MENU) */}
+      {/* 2. CHARACTER SELECT SCREEN */}
+      {screen === 'CHARACTER_SELECT' && (
+        <CharacterSelectModal
+          onStartRun={handleStartGame}
+          onClose={() => setScreen('MENU')}
+          mobileMode={options.mobileMode}
+        />
+      )}
+
+      {/* 3. COLLECTION MODAL (FROM MAIN MENU) */}
       {screen === 'COLLECTION' && (
         <CollectionModal
           unlockedWeapons={unlockedWeapons}
@@ -899,6 +934,7 @@ export default function App() {
             player={player}
             weapons={weapons}
             statItems={statItems}
+            character={selectedCharacter}
             survivalTime={survivalTime}
             gameSpeed={1}
             isBossRush={isBossRush}
@@ -952,6 +988,7 @@ export default function App() {
             player={player}
             weapons={weapons}
             statItems={statItems}
+            character={selectedCharacter}
             maxWeapons={maxWeapons}
             survivalTime={survivalTime}
             isHurt={isHurt}

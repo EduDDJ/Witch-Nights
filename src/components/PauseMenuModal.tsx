@@ -202,6 +202,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
                   if (!def) return null;
                   const IconComp = WEAPON_ICONS[def.icon] || Sparkles;
 
+                  const itemColor = def.iconColor || def.bulletColor;
                   return (
                     <div
                       key={owned.id}
@@ -210,7 +211,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
                           name: def.name,
                           tier: owned.level,
                           description: def.description,
-                          color: def.bulletColor,
+                          color: itemColor,
                           type: 'WEAPON',
                         })
                       }
@@ -220,11 +221,11 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
                       <div
                         className="w-full aspect-square rounded-xl flex items-center justify-center border-2 transition-all duration-150 hover:scale-110 shadow-sm"
                         style={{
-                          backgroundColor: `${def.bulletColor}22`,
-                          borderColor: def.bulletColor,
+                          backgroundColor: `${itemColor}22`,
+                          borderColor: itemColor,
                         }}
                       >
-                        <IconComp className="w-4 h-4" style={{ color: def.bulletColor }} />
+                        <IconComp className="w-4 h-4" style={{ color: itemColor }} />
                       </div>
                       {/* Tier dots */}
                       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5 pointer-events-none">
@@ -232,7 +233,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
                           <span
                             key={i}
                             className="w-1 h-1 rounded-full"
-                            style={{ backgroundColor: i < owned.level ? def.bulletColor : '#334155' }}
+                            style={{ backgroundColor: i < owned.level ? itemColor : '#334155' }}
                           />
                         ))}
                       </div>

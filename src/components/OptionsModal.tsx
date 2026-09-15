@@ -106,7 +106,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               </button>
             </div>
             <p className="text-[10px] sm:text-[11px] text-slate-400">
-              Adds an on-screen movement joystick above your items list, compacts menus for smaller screens, and adjusts top HUD positioning.
+              Adds on-screen movement and aiming joysticks, compacts menus for smaller screens, and adjusts HUD positioning.
             </p>
           </div>
 

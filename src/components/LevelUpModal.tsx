@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WeaponDefinition, StatItemDefinition } from '../types/game';
-import { Sparkles, Flame, Skull, BookOpen, Crosshair, Zap, Radio, Droplet, Maximize2, Shield, Wind, Footprints, Compass, Heart, ArrowUpCircle, PlusCircle, Clover, Eye, Sprout, RotateCcw, Sword } from 'lucide-react';
+import { Sparkles, Flame, Skull, BookOpen, Crosshair, Zap, Radio, Droplet, Maximize2, Shield, Wind, Footprints, Compass, Heart, ArrowUpCircle, PlusCircle, Clover, Eye, Sprout, RotateCcw, Sword, FlaskConical } from 'lucide-react';
 import { VampireFangsIcon } from './VampireFangsIcon';
 import { PentagramIcon } from './PentagramIcon';
 import { BroomIcon } from './BroomIcon';
@@ -50,6 +50,7 @@ const WEAPON_ICONS: Record<string, React.ElementType> = {
   Pentagram: PentagramIcon,
   Sprout,
   Sword,
+  FlaskConical,
 };
 
 const STAT_ICONS: Record<string, React.ElementType> = {
@@ -165,7 +166,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
               const tier1 = opt.definition.tiers[0];
               description = tier1 ? tier1.description : opt.definition.description;
               IconComp = WEAPON_ICONS[opt.definition.icon] || Sparkles;
-              iconColor = opt.definition.bulletColor;
+              iconColor = opt.definition.iconColor || opt.definition.bulletColor;
               typeBadge = getShootingTypeLabel(opt.definition.shootingType);
               tierTag = <span className="bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded-md flex items-center gap-1"><PlusCircle className="w-3 h-3" /> NEW</span>;
             } else if (opt.kind === 'WEAPON_UPGRADE') {
@@ -174,7 +175,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
               subtitle = nextTierObj ? nextTierObj.name : `Tier ${opt.nextTier}`;
               description = nextTierObj ? nextTierObj.description : 'Increases weapon prowess.';
               IconComp = WEAPON_ICONS[opt.definition.icon] || Sparkles;
-              iconColor = opt.definition.bulletColor;
+              iconColor = opt.definition.iconColor || opt.definition.bulletColor;
               typeBadge = getShootingTypeLabel(opt.definition.shootingType);
               tierTag = <span className="bg-amber-950/90 text-amber-300 border border-amber-500/50 text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded-md flex items-center gap-1"><ArrowUpCircle className="w-3 h-3" /> LVL {opt.currentTier} → {opt.nextTier}</span>;
             } else if (opt.kind === 'STAT_NEW') {

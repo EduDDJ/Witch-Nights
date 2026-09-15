@@ -1,7 +1,7 @@
 export type ShootingType = 'NEAREST_ENEMY' | 'MOUSE_DIRECTION' | 'AREA_OF_EFFECT';
 
 export interface BossAttack {
-  type: 'CARNIVORE_PLANT_AOE' | 'CARNIVORE_PLANT_VINES' | 'HAUNTED_EYE_PROJECTILE' | 'HAUNTED_EYE_TEAR';
+  type: 'CARNIVORE_PLANT_AOE' | 'CARNIVORE_PLANT_VINES' | 'HAUNTED_EYE_PROJECTILE' | 'HAUNTED_EYE_TEAR' | 'NIGHT_BEAR_BITE';
   x: number;
   y: number;
   vx?: number;
@@ -54,6 +54,9 @@ export interface BossInstance {
   burnDuration?: number;
   burnTickTimer?: number;
   burnDamagePerTick?: number;
+  acidDuration?: number;
+  acidTickTimer?: number;
+  acidDamagePerTick?: number;
   eyeState?: 'CLOSED' | 'WARNING' | 'OPEN';
   eyeTimer?: number;
   lastHitBy?: string;
@@ -86,6 +89,7 @@ export interface WeaponDefinition {
   unlockCondition?: string;
   isLegendary?: boolean;
   bulletColor: string;
+  iconColor?: string;
   tiers: WeaponTier[];
 }
 
@@ -157,6 +161,9 @@ export interface Enemy {
   burnDuration?: number;
   burnTickTimer?: number;
   burnDamagePerTick?: number;
+  acidDuration?: number;
+  acidTickTimer?: number;
+  acidDamagePerTick?: number;
   lastHitBy?: string;
   facingDir?: number; // 1 for facing right, -1 for facing left
   rockThrowTimer?: number;
@@ -189,6 +196,8 @@ export interface Projectile {
   vineRootDuration?: number;
   burnDuration?: number;
   burnDamagePerTick?: number;
+  acidDuration?: number;
+  acidDamagePerTick?: number;
   isExplosive?: boolean;
   explosionRadius?: number;
   explosionDamage?: number;
@@ -303,3 +312,19 @@ export interface GameOptions {
   mobileMode: boolean;
   brightness: number; // 50 to 150 (percentage)
 }
+
+export interface CharacterDefinition {
+  id: string;
+  name: string;
+  title: string;
+  startingWeaponId: string;
+  startingWeaponName: string;
+  baseMaxHp: number;
+  speedMultiplier: number;
+  speedLabel: string;
+  description: string;
+  spriteUrl: string;
+  fallbackSpriteUrl?: string;
+  color: string;
+}
+

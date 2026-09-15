@@ -169,6 +169,50 @@ class SoundEngine {
     }
   }
 
+  public playBite() {
+    if (!this.enabled || this.volume <= 0.01) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, t);
+      osc.frequency.exponentialRampToValueAtTime(35, t + 0.14);
+      gain.gain.setValueAtTime(0.16, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+      osc.connect(gain);
+      this.connectOut(gain);
+      osc.start(t);
+      osc.stop(t + 0.14);
+    } catch {
+      // safe ignore
+    }
+  }
+
+  public playRoar() {
+    if (!this.enabled || this.volume <= 0.01) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(120, t);
+      osc.frequency.linearRampToValueAtTime(65, t + 0.3);
+      gain.gain.setValueAtTime(0.14, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      osc.connect(gain);
+      this.connectOut(gain);
+      osc.start(t);
+      osc.stop(t + 0.3);
+    } catch {
+      // safe ignore
+    }
+  }
+
   public playEnemyDeath() {
     if (!this.enabled || this.volume <= 0.01) return;
     try {
