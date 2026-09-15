@@ -36,6 +36,7 @@ interface CollectionModalProps {
   unlockedCurses: string[];
   unlockedItemIds?: string[];
   unlockedEnemies?: string[];
+  enemyKills?: Record<string, number>;
   mobileMode?: boolean;
   onClose: () => void;
 }
@@ -220,7 +221,7 @@ const NightBearIcon: React.FC<any> = (props) => (
 
 const RockThrowerIcon: React.FC<any> = (props) => (
   <img
-    src="https://i.imgur.com/Bxl3FnO.png"
+    src="https://i.imgur.com/ST9LA1d.png"
     alt="Rock Thrower"
     crossOrigin="anonymous"
     onError={(e) => {
@@ -371,6 +372,7 @@ interface HoveredItemData {
       description: string;
     }[];
   };
+  kills?: number;
 }
 
 export const CollectionModal: React.FC<CollectionModalProps> = ({
@@ -379,6 +381,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
   unlockedCurses,
   unlockedItemIds = [],
   unlockedEnemies = [],
+  enemyKills = {},
   mobileMode = false,
   onClose,
 }) => {
@@ -786,6 +789,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                     speed: e.speed,
                     attacks: e.attacks,
                   },
+                  kills: enemyKills[e.id] || 0,
                 };
 
                 return (
@@ -920,11 +924,18 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                             : 'Collect this item in a run when leveling up to unlock it in the Collection!')
                         : selectedItem.unlockCondition || 'Defeat the Carnivore Plant Boss to unlock.'}
                     </p>
-                    {selectedItem.isDiscovered && selectedItem.category === 'ENEMY' && selectedItem.enemyStats && (
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-stone-400">
-                        <span>Damage: <span className="text-rose-400">{selectedItem.enemyStats.damage}</span></span>
-                        <span>Speed: <span className="text-sky-400">{selectedItem.enemyStats.speed}</span></span>
-                        <span>Base Max HP: <span className="text-emerald-400">{selectedItem.enemyStats.maxHp}</span></span>
+                    {selectedItem.category === 'ENEMY' && (
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-stone-400">
+                        <span className="text-amber-400 font-bold flex items-center gap-1">
+                          Killed: <span className="text-slate-100 font-mono font-bold">{selectedItem.kills ?? (enemyKills[selectedItem.id] || 0)}</span>
+                        </span>
+                        {selectedItem.isDiscovered && selectedItem.enemyStats && (
+                          <>
+                            <span>Damage: <span className="text-rose-400">{selectedItem.enemyStats.damage}</span></span>
+                            <span>Speed: <span className="text-sky-400">{selectedItem.enemyStats.speed}</span></span>
+                            <span>Base Max HP: <span className="text-emerald-400">{selectedItem.enemyStats.maxHp}</span></span>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1035,6 +1046,11 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                           : 'Collect this item in a run when leveling up to unlock it in the Collection!')
                       : selectedItem.unlockCondition || 'Complete a hidden achievement to unlock.'}
                   </p>
+                  {selectedItem.category === 'ENEMY' && (
+                    <div className="mt-2 text-xs font-semibold text-amber-400 flex items-center gap-1">
+                      Killed: <span className="text-slate-100 font-mono font-bold">{selectedItem.kills ?? (enemyKills[selectedItem.id] || 0)}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Stat Calculations Explanation Note */}
@@ -1079,7 +1095,14 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                                   statsList.push(`Velocity: ${baseWeapon.baseSpeed}px/s`);
                                 }
                               }
+                              if (baseWeapon.id === 'astral_sword') {
+                                statsList.push('Attack Cone: 90°');
+                              }
                             } else {
+                              if (baseWeapon.id === 'astral_sword') {
+                                const coneDeg = 90 + (t.tier - 1) * 18;
+                                statsList.push(`Attack Cone: ${coneDeg}° (+18°)`);
+                              }
                               // Rank > 1: Stats displayed as percentage of the previous rank (with projectile & pierce as exceptions)
                               const currentD = baseWeapon.baseDamage + (t.damageBonus || 0);
                               const prevD = baseWeapon.baseDamage + (prevT ? ((prevT as any).damageBonus || 0) : 0);
@@ -1095,7 +1118,17 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                                 const pctFR = Math.round(((prevFRFactor / currentFRFactor) - 1) * 100);
                                 if (pctFR > 0) {
                                   statsList.push(`Fire Rate: +${pctFR}%`);
+                                } else if (pctFR < 0) {
+                                  statsList.push(`Fire Rate: ${pctFR}%`);
                                 }
+                              }
+
+                              const currentSpeed = (baseWeapon.baseSpeed || 0) + ((t as any).speedBonus || 0);
+                              const prevSpeed = (baseWeapon.baseSpeed || 0) + (prevT ? (((prevT as any).speedBonus) || 0) : 0);
+                              const diffSpeed = currentSpeed - prevSpeed;
+                              if (diffSpeed > 0 && baseWeapon.baseSpeed) {
+                                const pctSpeed = Math.round((diffSpeed / baseWeapon.baseSpeed) * 100);
+                                statsList.push(`Velocity: +${pctSpeed}%`);
                               }
 
                               const currentSize = baseWeapon.baseSize + (t.sizeBonus || 0);
@@ -1119,6 +1152,13 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                               const diffPierce = currentPierce - prevPierce;
                               if (diffPierce > 0) {
                                 statsList.push(`Pierce: +${diffPierce}`);
+                              }
+
+                              if (baseWeapon.id === 'seeking_wisp' && t.tier === 4) {
+                                statsList.push('Special: Burn Effect (5s)');
+                              }
+                              if (baseWeapon.id === 'seeking_wisp' && t.tier === 6) {
+                                statsList.push('Special: Mega Blast Explosion');
                               }
                             }
                           }

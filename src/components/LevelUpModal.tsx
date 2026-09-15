@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WeaponDefinition, StatItemDefinition } from '../types/game';
-import { Sparkles, Flame, Skull, BookOpen, Crosshair, Zap, Radio, Droplet, Maximize2, Shield, Wind, Footprints, Compass, Heart, ArrowUpCircle, PlusCircle, Clover, Eye, Sprout, RotateCcw } from 'lucide-react';
+import { Sparkles, Flame, Skull, BookOpen, Crosshair, Zap, Radio, Droplet, Maximize2, Shield, Wind, Footprints, Compass, Heart, ArrowUpCircle, PlusCircle, Clover, Eye, Sprout, RotateCcw, Sword } from 'lucide-react';
 import { VampireFangsIcon } from './VampireFangsIcon';
 import { PentagramIcon } from './PentagramIcon';
 import { BroomIcon } from './BroomIcon';
@@ -49,6 +49,7 @@ const WEAPON_ICONS: Record<string, React.ElementType> = {
   Radio,
   Pentagram: PentagramIcon,
   Sprout,
+  Sword,
 };
 
 const STAT_ICONS: Record<string, React.ElementType> = {

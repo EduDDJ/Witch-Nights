@@ -35,6 +35,7 @@ interface WeaponSelectorModalProps {
   maxWeapons: number;
   mobileMode?: boolean;
   onSelect: (itemId: string, category: 'WEAPON' | 'PASSIVE') => void;
+  onModifyLevel: (itemId: string, category: 'WEAPON' | 'PASSIVE', delta: number) => void;
   onInstantLevelUp: () => void;
   onClose: () => void;
 }
@@ -73,6 +74,7 @@ export const WeaponSelectorModal: React.FC<WeaponSelectorModalProps> = ({
   maxWeapons,
   mobileMode = false,
   onSelect,
+  onModifyLevel,
   onInstantLevelUp,
   onClose,
 }) => {
@@ -253,6 +255,20 @@ export const WeaponSelectorModal: React.FC<WeaponSelectorModalProps> = ({
                   >
                     {isOwned ? (isMaxLevel ? 'MAX RANK' : 'UPGRADE') : (isFull ? 'FULL INV' : 'SELECT')}
                   </button>
+
+                  {isOwned && (
+                    <button
+                      onClick={() => onModifyLevel(selectedItem.id, activeTab === 'WEAPONS' ? 'WEAPON' : 'PASSIVE', -1)}
+                      className={`px-4 py-1.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer border shadow-md ${
+                        currentLevel === 1
+                          ? 'bg-rose-950/80 hover:bg-rose-900 border-rose-600 text-rose-200'
+                          : 'bg-amber-950/80 hover:bg-amber-900 border-amber-600 text-amber-200'
+                      }`}
+                    >
+                      {currentLevel === 1 ? 'Remove' : 'Downgrade'}
+                    </button>
+                  )}
+
                   <button 
                     onClick={() => setShowUpgradeInfo(!showUpgradeInfo)}
                     className="text-[10px] font-bold text-amber-400/60 hover:text-amber-400 flex items-center justify-center gap-1 transition-colors cursor-pointer"

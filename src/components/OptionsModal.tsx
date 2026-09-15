@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Wind, Crosshair, Sparkles, X, Sliders, Smartphone, RotateCcw, Check, BookOpen } from 'lucide-react';
+import { Volume2, VolumeX, Wind, Crosshair, Sparkles, X, Sliders, Smartphone, RotateCcw, Check, BookOpen, Image as ImageIcon } from 'lucide-react';
 import { GameOptions, DashMode } from '../types/game';
 import { soundEngine } from '../utils/audio';
 
@@ -275,6 +275,8 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               </div>
             </div>
           </div>
+
+
 
           {/* COLLECTION PROGRESS & DATA SECTION */}
           {triggerReset && (

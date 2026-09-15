@@ -36,6 +36,7 @@ import { WeaponSelectorModal } from './components/WeaponSelectorModal';
 import { TutorialModal } from './components/TutorialModal';
 import { BossSelectModal } from './components/BossSelectModal';
 import { BossRushModal } from './components/BossRushModal';
+import { BossIncomingModal } from './components/BossIncomingModal';
 import { soundEngine } from './utils/audio';
 
 type GameScreen = 'MENU' | 'PLAYING' | 'COLLECTION';
@@ -121,6 +122,7 @@ export default function App() {
   const [isCollectionFromPause, setIsCollectionFromPause] = useState<boolean>(false);
   const [instaKill, setInstaKill] = useState<boolean>(false);
   const [hasUsedRerollThisLevel, setHasUsedRerollThisLevel] = useState<boolean>(false);
+  const [incomingBoss, setIncomingBoss] = useState<BossDefinition | null>(null);
 
   // Sync options changes with localStorage and SoundEngine
   useEffect(() => {
@@ -220,7 +222,11 @@ export default function App() {
       const v = localStorage.getItem('witch_nights_default_undiscovered_v4');
       if (!v) return DEFAULT_UNLOCKED_ITEM_IDS;
       const saved = localStorage.getItem('witch_nights_unlocked_ids');
-      return saved ? JSON.parse(saved) : DEFAULT_UNLOCKED_ITEM_IDS;
+      if (!saved) return DEFAULT_UNLOCKED_ITEM_IDS;
+      const loaded: string[] = JSON.parse(saved);
+      // Ensure all DEFAULT_UNLOCKED_ITEM_IDS (such as astral_sword) are always present
+      // so newly added weapons start as Undiscovered in the item pool and collection, not Locked.
+      return Array.from(new Set([...DEFAULT_UNLOCKED_ITEM_IDS, ...loaded]));
     } catch {
       return DEFAULT_UNLOCKED_ITEM_IDS;
     }
@@ -234,6 +240,15 @@ export default function App() {
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
+    }
+  });
+
+  const [enemyKills, setEnemyKills] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('witch_nights_enemy_kills');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
     }
   });
 
@@ -277,10 +292,11 @@ export default function App() {
       localStorage.setItem('witch_nights_curses', JSON.stringify(unlockedCurses));
       localStorage.setItem('witch_nights_unlocked_ids', JSON.stringify(unlockedItemIds));
       localStorage.setItem('witch_nights_enemies', JSON.stringify(unlockedEnemies));
+      localStorage.setItem('witch_nights_enemy_kills', JSON.stringify(enemyKills));
     } catch {
       // safe ignore
     }
-  }, [unlockedWeapons, unlockedItems, unlockedCurses, unlockedItemIds, unlockedEnemies]);
+  }, [unlockedWeapons, unlockedItems, unlockedCurses, unlockedItemIds, unlockedEnemies, enemyKills]);
 
   // Recalculate player passives whenever statItems change
   const recalculatePassives = useCallback((currentStatItems: OwnedStatItem[], baseMaxHp = 100) => {
@@ -756,6 +772,26 @@ export default function App() {
     }));
   };
 
+  const handleModifyDevItemLevel = (itemId: string, category: 'WEAPON' | 'PASSIVE', delta: number) => {
+    if (category === 'WEAPON') {
+      setWeapons(prev => prev.map(w => w.id === itemId ? { ...w, level: w.level + delta } : w).filter(w => w.level > 0));
+    } else {
+      setStatItems(prev => {
+        const next = prev.map(s => s.id === itemId ? { ...s, level: s.level + delta } : s).filter(s => s.level > 0);
+        recalculatePassives(next);
+        return next;
+      });
+    }
+  };
+
+  const handleStartBossBattle = () => {
+    if (incomingBoss) {
+      const b = incomingBoss;
+      setIncomingBoss(null);
+      window.dispatchEvent(new CustomEvent('spawn-boss-fight', { detail: { bossId: b.id } }));
+    }
+  };
+
   // Trigger hurt animation on witch face
   const handleUpdatePlayer = useCallback((stats: Partial<PlayerStats>) => {
     setPlayer((prev) => {
@@ -802,6 +838,7 @@ export default function App() {
     setUnlockedItems([]);
     setUnlockedCurses([]);
     setUnlockedEnemies([]);
+    setEnemyKills({});
     setUnlockedItemIds(DEFAULT_UNLOCKED_ITEM_IDS);
     setBestBossRushTime(null);
     setIsTrueWitchUnlocked(false);
@@ -812,6 +849,7 @@ export default function App() {
       localStorage.setItem('witch_nights_items', JSON.stringify([]));
       localStorage.setItem('witch_nights_curses', JSON.stringify([]));
       localStorage.setItem('witch_nights_enemies', JSON.stringify([]));
+      localStorage.setItem('witch_nights_enemy_kills', JSON.stringify({}));
       localStorage.setItem('witch_nights_unlocked_ids', JSON.stringify(DEFAULT_UNLOCKED_ITEM_IDS));
       localStorage.removeItem('witch_nights_boss_rush_best_time');
       localStorage.removeItem('witch_nights_true_witch_unlocked');
@@ -847,6 +885,7 @@ export default function App() {
           unlockedCurses={unlockedCurses}
           unlockedItemIds={unlockedItemIds}
           unlockedEnemies={unlockedEnemies}
+          enemyKills={enemyKills}
           mobileMode={options.mobileMode}
           onClose={() => setScreen('MENU')}
         />
@@ -873,7 +912,8 @@ export default function App() {
               isPauseMenuOpen ||
               isDevToolsOpen ||
               isOptionsOpen ||
-              isCollectionFromPause
+              isCollectionFromPause ||
+              incomingBoss !== null
             }
             dashMode={options.dashMode}
             mobileMode={options.mobileMode}
@@ -886,12 +926,17 @@ export default function App() {
             onTriggerLevelUp={handleTriggerLevelUp}
             onTriggerWitchDeal={handleTriggerWitchDeal}
             onTriggerBossSelection={(bosses) => setBossSelectOptions(bosses)}
+            onBossIncoming={(boss) => setIncomingBoss(boss)}
             onGameOver={handleGameOver}
             onItemUnlocked={handleItemUnlocked}
             onEnemyDefeated={(enemyId) => {
               if (!isBossRush) {
                 setUnlockedEnemies((prev) => (prev.includes(enemyId) ? prev : [...prev, enemyId]));
               }
+              setEnemyKills((prev) => ({
+                ...prev,
+                [enemyId]: (prev[enemyId] || 0) + 1,
+              }));
             }}
             onUnlockItem={handleUnlockItem}
             onBossUpdate={(b, isFight, timer, hp) => {
@@ -968,6 +1013,7 @@ export default function App() {
               maxWeapons={maxWeapons}
               mobileMode={options.mobileMode}
               onSelect={handleSelectDevItem}
+              onModifyLevel={handleModifyDevItemLevel}
               onInstantLevelUp={handleDevInstantLevelUp}
               onClose={() => setIsWeaponSelectorOpen(false)}
             />
@@ -981,6 +1027,7 @@ export default function App() {
               unlockedCurses={unlockedCurses}
               unlockedItemIds={unlockedItemIds}
               unlockedEnemies={unlockedEnemies}
+              enemyKills={enemyKills}
               mobileMode={options.mobileMode}
               onClose={() => setIsCollectionFromPause(false)}
             />
@@ -1077,6 +1124,15 @@ export default function App() {
           onChangeOptions={handleUpdateOptions}
           onClose={() => setIsOptionsOpen(false)}
           onResetProgress={handleResetProgress}
+        />
+      )}
+
+      {/* Boss Incoming Modal */}
+      {incomingBoss && (
+        <BossIncomingModal
+          boss={incomingBoss}
+          mobileMode={options.mobileMode}
+          onStartBattle={handleStartBossBattle}
         />
       )}
 

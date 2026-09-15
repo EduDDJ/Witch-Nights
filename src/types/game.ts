@@ -51,6 +51,9 @@ export interface BossInstance {
   color: string;
   attacks: BossAttack[];
   vineRootedDuration?: number;
+  burnDuration?: number;
+  burnTickTimer?: number;
+  burnDamagePerTick?: number;
   eyeState?: 'CLOSED' | 'WARNING' | 'OPEN';
   eyeTimer?: number;
   lastHitBy?: string;
@@ -65,6 +68,7 @@ export interface WeaponTier {
   countBonus: number;
   sizeBonus: number;
   pierceBonus: number;
+  speedBonus?: number;
 }
 
 export interface WeaponDefinition {
@@ -150,6 +154,9 @@ export interface Enemy {
   attackCooldown: number;
   isRed?: boolean;
   vineRootedDuration?: number;
+  burnDuration?: number;
+  burnTickTimer?: number;
+  burnDamagePerTick?: number;
   lastHitBy?: string;
   facingDir?: number; // 1 for facing right, -1 for facing left
   rockThrowTimer?: number;
@@ -180,6 +187,11 @@ export interface Projectile {
   isBoomerang?: boolean;
   homingTargetId?: number | null;
   vineRootDuration?: number;
+  burnDuration?: number;
+  burnDamagePerTick?: number;
+  isExplosive?: boolean;
+  explosionRadius?: number;
+  explosionDamage?: number;
   isLaser?: boolean;
   hitEnemyIds?: Set<number>;
   hitBoss?: boolean;

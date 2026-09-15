@@ -75,6 +75,28 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     ]
   },
   {
+    id: 'astral_sword',
+    name: 'Astral Sword',
+    shootingType: 'MOUSE_DIRECTION',
+    icon: 'Sword',
+    description: 'Swings an ethereal blade in a sweeping cone towards the cursor, expanding from 90° to 180° with upgrades.',
+    baseDamage: 30,
+    baseInterval: 1.05,
+    baseSpeed: 0,
+    baseSize: 95,
+    basePierce: 999,
+    baseCount: 1,
+    bulletColor: '#a855f7',
+    tiers: [
+      { tier: 1, name: 'Astral Cleave', description: 'Swings an ethereal blade in a 90° cone towards cursor in short range.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: 'Widening Arc', description: 'Increases swing cone to 108° and deals +6 damage.', damageBonus: 6, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 5, pierceBonus: 0 },
+      { tier: 3, name: 'Cosmic Reach', description: 'Increases swing cone to 126° and deals +8 damage.', damageBonus: 14, fireRateBonus: 0.90, countBonus: 0, sizeBonus: 10, pierceBonus: 0 },
+      { tier: 4, name: 'Starlight Sweep', description: 'Increases swing cone to 144° and deals +10 damage.', damageBonus: 24, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 15, pierceBonus: 0 },
+      { tier: 5, name: 'Astral Horizon', description: 'Increases swing cone to 162° and deals +12 damage.', damageBonus: 36, fireRateBonus: 0.80, countBonus: 0, sizeBonus: 20, pierceBonus: 0 },
+      { tier: 6, name: 'Celestial Hemisphere', description: 'Increases swing cone to 180° (full frontal half-circle) and deals +15 damage.', damageBonus: 51, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
+    ]
+  },
+  {
     id: 'toxic_cauldron',
     name: 'Acid Pools',
     shootingType: 'AREA_OF_EFFECT',
@@ -125,7 +147,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     icon: 'Pentagram',
     description: 'Emits an expanding circular pulse and glowing pentagram around the witch, incinerating nearby enemies without projectiles.',
     baseDamage: 30,
-    baseInterval: 2.3,
+    baseInterval: 2.1,
     baseSpeed: 0,
     baseSize: 130,
     basePierce: 999,
@@ -133,33 +155,33 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     bulletColor: '#22c55e',
     tiers: [
       { tier: 1, name: 'Star Pulse', description: 'Emits a 130px circular pulse and inverted star around the witch.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Expanding Corona', description: 'Pulse radius expands (+25px) and deals +8 damage.', damageBonus: 8, fireRateBonus: 0.9, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
-      { tier: 3, name: 'Searing Wave', description: 'Pulse recharges 15% quicker and deals +12 damage.', damageBonus: 12, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
-      { tier: 4, name: 'Blazing Shockwave', description: 'Pulse radius expands (+30px) and deals +16 damage.', damageBonus: 16, fireRateBonus: 0.8, countBonus: 0, sizeBonus: 30, pierceBonus: 0 },
-      { tier: 5, name: 'Infernal Conflagration', description: 'Pulse blast knocks back foes strongly and deals +22 damage.', damageBonus: 22, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 35, pierceBonus: 0 },
-      { tier: 6, name: 'Supernova Incarnate', description: 'Unleashes an apocalyptic 290px circular pulse and pentagram incinerating all nearby foes.', damageBonus: 36, fireRateBonus: 0.65, countBonus: 0, sizeBonus: 50, pierceBonus: 0 },
+      { tier: 2, name: 'Expanding Corona', description: 'Pulse radius expands (+25px) and deals +8 damage.', damageBonus: 8, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
+      { tier: 3, name: 'Searing Wave', description: 'Pulse recharges quicker and deals +12 damage.', damageBonus: 12, fireRateBonus: 0.90, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
+      { tier: 4, name: 'Blazing Shockwave', description: 'Pulse radius expands (+30px) and deals +16 damage.', damageBonus: 16, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 30, pierceBonus: 0 },
+      { tier: 5, name: 'Infernal Conflagration', description: 'Pulse blast knocks back foes strongly and deals +22 damage.', damageBonus: 22, fireRateBonus: 0.80, countBonus: 0, sizeBonus: 35, pierceBonus: 0 },
+      { tier: 6, name: 'Supernova Incarnate', description: 'Unleashes an apocalyptic 290px circular pulse and pentagram incinerating all nearby foes.', damageBonus: 36, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 50, pierceBonus: 0 },
     ]
   },
   {
     id: 'seeking_wisp',
-    name: "Seeking Wisp",
+    name: "Fireball",
     shootingType: 'NEAREST_ENEMY',
     icon: 'Flame',
-    description: 'Summons eerie ghostly wisps that autonomously hunt the nearest enemy.',
-    baseDamage: 18,
-    baseInterval: 0.85,
+    description: 'Launches blazing fireballs that autonomously seek out the nearest enemy.',
+    baseDamage: 22,
+    baseInterval: 1.2,
     baseSpeed: 420,
-    baseSize: 9,
+    baseSize: 10,
     basePierce: 1,
     baseCount: 1,
     bulletColor: '#3b82f6',
     tiers: [
-      { tier: 1, name: 'Spirit Spark', description: 'Releases 1 homing spirit targeting closest monster.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Twin Phantoms', description: 'Releases +1 homing wisp per volley.', damageBonus: 4, fireRateBonus: 0.9, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
-      { tier: 3, name: 'Ethereal Agility', description: 'Wisps move faster and reload 15% quicker.', damageBonus: 6, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
-      { tier: 4, name: 'Ghost Flock', description: 'Releases +1 wisp and pierces +1 target.', damageBonus: 8, fireRateBonus: 0.8, countBonus: 1, sizeBonus: 3, pierceBonus: 1 },
-      { tier: 5, name: 'Wraith Claws', description: 'Deals +14 damage and gains sharp homing acceleration.', damageBonus: 14, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 3, pierceBonus: 0 },
-      { tier: 6, name: 'Banshee Swarm', description: 'Unleashes 5 relentless ethereal wisps that shred entire packs.', damageBonus: 22, fireRateBonus: 0.65, countBonus: 2, sizeBonus: 5, pierceBonus: 2 },
+      { tier: 1, name: 'Fire Spark', description: 'Launches 1 blazing homing fireball seeking the nearest monster.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: 'Twin Fireballs', description: 'Launches +1 homing fireball per volley (2 fireballs total) and deals +4 damage.', damageBonus: 4, fireRateBonus: 1.0, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
+      { tier: 3, name: 'Blazing Agility', description: 'Fireballs fly 30% faster and deal +6 damage.', damageBonus: 6, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
+      { tier: 4, name: 'Ignition Flare', description: 'Hit enemies receive Burn effect with a red aura, taking constant damage for 5 seconds.', damageBonus: 10, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 4, pierceBonus: 0 },
+      { tier: 5, name: 'Inferno Surge', description: 'Deals +15 damage and strengthens homing trajectory with continuous Burn.', damageBonus: 15, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 5, pierceBonus: 0 },
+      { tier: 6, name: 'Mega Fireball', description: 'Hurls a colossal Mega Fireball with slower fire rate that detonates on impact, dealing massive direct damage, splash damage, and Burn in an explosion.', damageBonus: 55, fireRateBonus: 1.45, speedBonus: 126, countBonus: 0, sizeBonus: 24, pierceBonus: 0 },
     ]
   },
   {
@@ -199,12 +221,12 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     isLegendary: true,
     color: '#d97706', // darkish orange for legendary
     tiers: [
-      { tier: 1, name: 'Stonelight Glare', description: 'Slows enemies near cursor by 25% (40px radius).', statValue: 0.25 },
-      { tier: 2, name: 'Petrifying Gaze', description: 'Slows enemies by 30% and increases radius to 60px.', statValue: 0.30 },
-      { tier: 3, name: 'Gorgon Aura', description: 'Slows enemies by 35% and increases radius to 80px.', statValue: 0.35 },
-      { tier: 4, name: 'Fossilizing Focus', description: 'Slows enemies by 40% and increases radius to 100px.', statValue: 0.40 },
-      { tier: 5, name: 'Medusa Domain', description: 'Slows enemies by 45% and increases radius to 120px.', statValue: 0.45 },
-      { tier: 6, name: 'Cursed Gorgon Crown', description: 'Devastating 55% slow in a 140px cursor radius!', statValue: 0.55 },
+      { tier: 1, name: 'Stonelight Glare', description: 'Slows enemies near cursor by 25% (32px radius).', statValue: 0.25 },
+      { tier: 2, name: 'Petrifying Gaze', description: 'Slows enemies by 30% and increases radius to 38px.', statValue: 0.30 },
+      { tier: 3, name: 'Gorgon Aura', description: 'Slows enemies by 35% and increases radius to 44px.', statValue: 0.35 },
+      { tier: 4, name: 'Fossilizing Focus', description: 'Slows enemies by 40% and increases radius to 50px.', statValue: 0.40 },
+      { tier: 5, name: 'Medusa Domain', description: 'Slows enemies by 45% and increases radius to 56px.', statValue: 0.45 },
+      { tier: 6, name: 'Cursed Gorgon Crown', description: 'Devastating 55% slow in a 64px cursor radius!', statValue: 0.55 },
     ]
   },
   {
@@ -379,7 +401,7 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     statType: 'DASH_DAMAGE',
     icon: 'Fangs',
     description: "Cursed obsidian claws that allow you to shred through enemies. Damages and knockbacks enemies that touch you while you Dash.",
-    unlockCondition: "Defeat NightBear to unlock.",
+    unlockCondition: "Defeat the NightBear Boss to unlock.",
     isLegendary: true,
     color: '#ea580c', // Artifact Orange
     tiers: [
@@ -444,6 +466,7 @@ export const WITCH_DEALS: CurseChoice[] = [
 export const DEFAULT_UNLOCKED_ITEM_IDS: string[] = [
   'arcane_wand',
   'brimstone_shotgun',
+  'astral_sword',
   'toxic_cauldron',
   'grimoire_orbit',
   'hellfire_nova',

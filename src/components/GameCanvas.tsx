@@ -165,6 +165,7 @@ interface GameCanvasProps {
   onUnlockItem?: (itemId: string) => void;
   onBossUpdate?: (boss: BossInstance | null, isFight: boolean, timer: number, hp: number) => void;
   onTriggerBossSelection?: (bosses: BossDefinition[]) => void;
+  onBossIncoming?: (boss: BossDefinition) => void;
 }
 
 export const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -193,6 +194,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   onUnlockItem,
   onBossUpdate,
   onTriggerBossSelection,
+  onBossIncoming,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const witchImageRef = useRef<HTMLImageElement | null>(null);
@@ -204,6 +206,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const nightBearImageRef = useRef<HTMLImageElement | null>(null);
   const nightBearDizzyImageRef = useRef<HTMLImageElement | null>(null);
   const rockThrowerImageRef = useRef<HTMLImageElement | null>(null);
+  const rockProjectileImageRef = useRef<HTMLImageElement | null>(null);
+  const grimoireImageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     const img = new Image();
@@ -341,7 +345,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     const rockThrowerImg = new Image();
     rockThrowerImg.crossOrigin = 'anonymous';
-    rockThrowerImg.src = 'https://i.imgur.com/Bxl3FnO.png';
+    rockThrowerImg.src = 'https://i.imgur.com/ST9LA1d.png';
     rockThrowerImg.onload = () => {
       rockThrowerImageRef.current = rockThrowerImg;
     };
@@ -350,6 +354,34 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/rock_thrower.png`;
       fallback.onload = () => {
         rockThrowerImageRef.current = fallback;
+      };
+    };
+
+    const rockProjectileImg = new Image();
+    rockProjectileImg.crossOrigin = 'anonymous';
+    rockProjectileImg.src = 'https://i.imgur.com/UTAWfui.png';
+    rockProjectileImg.onload = () => {
+      rockProjectileImageRef.current = rockProjectileImg;
+    };
+    rockProjectileImg.onerror = () => {
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/rock_projectile.png`;
+      fallback.onload = () => {
+        rockProjectileImageRef.current = fallback;
+      };
+    };
+
+    const grimoireImg = new Image();
+    grimoireImg.crossOrigin = 'anonymous';
+    grimoireImg.src = 'https://i.imgur.com/VqRnYzc.png';
+    grimoireImg.onload = () => {
+      grimoireImageRef.current = grimoireImg;
+    };
+    grimoireImg.onerror = () => {
+      const fallback = new Image();
+      fallback.src = `${import.meta.env.BASE_URL}assets/aistudio/grimoire.png`;
+      fallback.onload = () => {
+        grimoireImageRef.current = fallback;
       };
     };
   }, []);
@@ -378,6 +410,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const rockProjectilesRef = useRef<{ id: number; x: number; y: number; vx: number; vy: number; damage: number; radius: number; life: number; maxLife: number }[]>([]);
   const aoeZonesRef = useRef<AreaZone[]>([]);
   const novaPulsesRef = useRef<NovaPulse[]>([]);
+  const astralSlashesRef = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    angle: number;
+    halfArc: number;
+    range: number;
+    duration: number;
+    maxDuration: number;
+    color: string;
+  }[]>([]);
   const expGemsRef = useRef<ExpGem[]>([]);
   const pickupsRef = useRef<WorldPickup[]>([]);
   const floatingTextsRef = useRef<FloatingText[]>([]);
@@ -540,6 +583,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       rockProjectilesRef.current = [];
       aoeZonesRef.current = [];
       novaPulsesRef.current = [];
+      astralSlashesRef.current = [];
       expGemsRef.current = [];
       pickupsRef.current = [];
       floatingTextsRef.current = [];
@@ -589,6 +633,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       const customEvent = e as CustomEvent<{ bossId?: string }>;
       const bossId = customEvent?.detail?.bossId;
       lastBossEpochRef.current = Math.max(1, Math.floor(survivalTimeRef.current / 300));
+      const selectedBoss = (bossId ? BOSS_POOL.find((b) => b.id === bossId) : null) || BOSS_POOL[Math.floor(Math.random() * BOSS_POOL.length)];
+      if (onBossIncoming) {
+        onBossIncoming(selectedBoss);
+      } else {
+        spawnBossFight(bossId);
+      }
+    };
+    const handleSpawnBossFightEvent = (e?: Event) => {
+      const customEvent = e as CustomEvent<{ bossId?: string }>;
+      const bossId = customEvent?.detail?.bossId;
       spawnBossFight(bossId);
     };
     const handleTriggerTestDeal = () => {
@@ -605,14 +659,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     };
     window.addEventListener('trigger-test-boss', handleTriggerTestBoss);
+    window.addEventListener('spawn-boss-fight', handleSpawnBossFightEvent);
     window.addEventListener('trigger-test-deal', handleTriggerTestDeal);
     window.addEventListener('dev-instant-level-up', handleDevInstantLevelUp);
     return () => {
       window.removeEventListener('trigger-test-boss', handleTriggerTestBoss);
+      window.removeEventListener('spawn-boss-fight', handleSpawnBossFightEvent);
       window.removeEventListener('trigger-test-deal', handleTriggerTestDeal);
       window.removeEventListener('dev-instant-level-up', handleDevInstantLevelUp);
     };
-  }, [spawnBossFight, onUpdatePlayer]);
+  }, [spawnBossFight, onUpdatePlayer, onBossIncoming]);
 
   // Handle Déjà-Vu Curse: Reset enemies back to level 1
   useEffect(() => {
@@ -1116,7 +1172,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           if (bossRushPauseTimerRef.current <= 0) {
             if (bossRushIndexRef.current < bossRushQueueRef.current.length) {
               const bId = bossRushQueueRef.current[bossRushIndexRef.current];
-              spawnBossFight(bId);
+              const selectedBoss = BOSS_POOL.find(b => b.id === bId) || BOSS_POOL[0];
+              if (onBossIncoming) {
+                onBossIncoming(selectedBoss);
+              } else {
+                spawnBossFight(bId);
+              }
             } else {
               // Victory!
               onGameOver({
@@ -1144,7 +1205,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           const selection = shuffled.slice(0, count);
           onTriggerBossSelection(selection);
         } else {
-          spawnBossFight();
+          const selectedBoss = BOSS_POOL[Math.floor(Math.random() * BOSS_POOL.length)];
+          if (onBossIncoming) {
+            onBossIncoming(selectedBoss);
+          } else {
+            spawnBossFight(selectedBoss.id);
+          }
         }
       }
 
@@ -1160,6 +1226,31 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
         if (boss.vineRootedDuration && boss.vineRootedDuration > 0) {
           boss.vineRootedDuration -= dt;
+        }
+
+        // Boss Burn status effect
+        if (boss.burnDuration && boss.burnDuration > 0) {
+          boss.burnDuration -= dt;
+          boss.burnTickTimer = (boss.burnTickTimer || 0) - dt;
+          if (boss.burnTickTimer <= 0) {
+            boss.burnTickTimer = 0.5; // Tick twice per second for 5s
+            const tickDmg = boss.burnDamagePerTick || 8;
+            const actualTickDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : tickDmg;
+            boss.hp -= actualTickDmg;
+            boss.lastHitBy = 'seeking_wisp';
+            bossHitFlashRef.current = 0.08;
+
+            floatingTextsRef.current.push({
+              id: nextEntityId.current++,
+              x: boss.x + (Math.random() - 0.5) * 20,
+              y: boss.y - 25,
+              text: `${Math.round(actualTickDmg)}`,
+              color: '#ef4444',
+              life: 0,
+              maxLife: 0.6,
+              vy: -40,
+            });
+          }
         }
 
         if (onBossUpdate) {
@@ -1686,20 +1777,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             });
           }
 
-          // Massive celebration spark burst
-          for (let k = 0; k < 45; k++) {
-            const pAngle = Math.random() * Math.PI * 2;
-            const pSpeed = Math.random() * 180 + 40;
-            particlesRef.current.push({
-              x: boss.x,
-              y: boss.y,
-              vx: Math.cos(pAngle) * pSpeed,
-              vy: Math.sin(pAngle) * pSpeed,
-              size: Math.random() * 5 + 3,
-              color: k % 3 === 0 ? '#ef4444' : k % 3 === 1 ? '#a855f7' : '#fbbf24',
-              alpha: 1,
-              decay: 1.8,
-            });
+          // Massive celebration spark burst (suppressed for Astral Sword)
+          if (boss.lastHitBy !== 'astral_sword') {
+            for (let k = 0; k < 45; k++) {
+              const pAngle = Math.random() * Math.PI * 2;
+              const pSpeed = Math.random() * 180 + 40;
+              particlesRef.current.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(pAngle) * pSpeed,
+                vy: Math.sin(pAngle) * pSpeed,
+                size: Math.random() * 5 + 3,
+                color: k % 3 === 0 ? '#ef4444' : k % 3 === 1 ? '#a855f7' : '#fbbf24',
+                alpha: 1,
+                decay: 1.8,
+              });
+            }
           }
 
           killsCountRef.current += 1;
@@ -1773,9 +1866,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             }
           }
           if (!isBossRush) {
-            if (onEnemyDefeated) {
-              onEnemyDefeated(boss.id);
-            }
             if (onUnlockItem) {
               if (boss.id === 'carnivore_plant') {
                 onUnlockItem('vine_snare');
@@ -2075,67 +2165,173 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           // SHOOTING SYSTEM 1: MOUSE_DIRECTION
           if (def.shootingType === 'MOUSE_DIRECTION') {
             const baseAngle = Math.atan2(mouseWorldY - p.y, mouseWorldX - p.x);
-            const isArcaneWand = def.id === 'arcane_wand';
-            const spread = count > 1 ? (isArcaneWand ? 0.16 : 0.24) : 0;
 
-            if (def.id === 'brimstone_shotgun') {
-              soundEngine.playShoot('shotgun');
-            } else {
-              soundEngine.playShoot('wand');
-            }
+            if (def.id === 'astral_sword') {
+              soundEngine.playShoot('sword');
+              const slashRange = size; // short range based on baseSize (95px) * p.projectileSizeMult
+              // Cone area of attack: slowly increases from 90° (Rank 1) to 180° (Rank 6)
+              // Each rank adds 18°: 90° (Rank 1), 108° (Rank 2), 126° (Rank 3), 144° (Rank 4), 162° (Rank 5), 180° (Rank 6)
+              const weaponRank = owned?.level || 1;
+              const coneDegrees = Math.min(180, 90 + (Math.max(1, weaponRank) - 1) * 18);
+              const totalArc = (coneDegrees * Math.PI) / 180;
+              const halfArc = totalArc / 2;
 
-            const isLaser = isArcaneWand && owned.level >= 6;
+              // 1. Cleave normal enemies within cone arc and short range
+              enemiesRef.current.forEach((enemy) => {
+                if (enemy.hp <= 0) return;
+                const dx = enemy.x - p.x;
+                const dy = enemy.y - p.y;
+                const dist = Math.hypot(dx, dy);
 
-            if (isLaser) {
-              projectilesRef.current.push({
+                if (dist <= slashRange + enemy.radius) {
+                  const enemyAngle = Math.atan2(dy, dx);
+                  const angleDiff = Math.atan2(Math.sin(enemyAngle - baseAngle), Math.cos(enemyAngle - baseAngle));
+
+                  if (Math.abs(angleDiff) <= halfArc + 0.12) {
+                    const actualDmg = instaKillRef.current ? Math.max(enemy.hp + 10, 999999) : damage;
+                    enemy.hp -= actualDmg;
+                    enemy.lastHitBy = def.id;
+                    enemy.hitFlashTimer = 0.12;
+
+                    // Knockback away from player
+                    const kbAngle = Math.atan2(dy, dx);
+                    const kbForce = 24 * p.knockbackMult;
+                    enemy.x += Math.cos(kbAngle) * kbForce;
+                    enemy.y += Math.sin(kbAngle) * kbForce;
+
+                    if (p.vampirism > 0) {
+                      p.hp = Math.min(p.maxHp, p.hp + actualDmg * p.vampirism);
+                    }
+
+                    soundEngine.playHit();
+
+                    floatingTextsRef.current.push({
+                      id: nextEntityId.current++,
+                      x: enemy.x + (Math.random() - 0.5) * 12,
+                      y: enemy.y - 12,
+                      text: `${Math.round(actualDmg)}`,
+                      color: '#c084fc',
+                      life: 0,
+                      maxLife: 0.65,
+                      vy: -45,
+                    });
+                  }
+                }
+              });
+
+              // 2. Cleave Boss if active
+              const activeBoss = isBossFightRef.current && bossInstanceRef.current ? bossInstanceRef.current : null;
+              if (activeBoss && activeBoss.hp > 0) {
+                const bdx = activeBoss.x - p.x;
+                const bdy = activeBoss.y - p.y;
+                const bdist = Math.hypot(bdx, bdy);
+                const bossRadius = activeBoss.radius || 40;
+
+                if (bdist <= slashRange + bossRadius) {
+                  const bossAngle = Math.atan2(bdy, bdx);
+                  const angleDiff = Math.atan2(Math.sin(bossAngle - baseAngle), Math.cos(bossAngle - baseAngle));
+
+                  if (Math.abs(angleDiff) <= halfArc + 0.15) {
+                    const actualDmg = instaKillRef.current ? Math.max(activeBoss.hp + 10, 999999) : damage;
+                    activeBoss.hp -= actualDmg;
+                    activeBoss.lastHitBy = def.id;
+                    bossHitFlashRef.current = 0.12;
+
+                    if (p.vampirism > 0) {
+                      p.hp = Math.min(p.maxHp, p.hp + actualDmg * p.vampirism);
+                    }
+
+                    soundEngine.playHit();
+
+                    floatingTextsRef.current.push({
+                      id: nextEntityId.current++,
+                      x: activeBoss.x + (Math.random() - 0.5) * 20,
+                      y: activeBoss.y - 20,
+                      text: `${Math.round(actualDmg)}`,
+                      color: '#c084fc',
+                      life: 0,
+                      maxLife: 0.75,
+                      vy: -45,
+                    });
+                  }
+                }
+              }
+
+              // Push visual animated slash
+              astralSlashesRef.current.push({
                 id: nextEntityId.current++,
-                weaponId: def.id,
                 x: p.x,
                 y: p.y,
-                vx: Math.cos(baseAngle) * 3500, // Super fast for laser feel
-                vy: Math.sin(baseAngle) * 3500,
-                damage,
-                radius: size, // 60px wide from tier data
-                color: def.bulletColor,
-                pierce,
+                angle: baseAngle,
+                halfArc,
+                range: slashRange,
                 duration: 0,
-                maxDuration: 0.15, // Pulse duration
-                knockback: 18 * p.knockbackMult,
-                vampirismRatio: p.vampirism,
-                isLaser: true,
-                hitEnemyIds: new Set<number>(),
-                hitBoss: false,
+                maxDuration: 0.22,
+                color: def.bulletColor,
               });
             } else {
-              for (let i = 0; i < count; i++) {
-                const ang = baseAngle + (i - (count - 1) / 2) * spread;
-                let pDamage = damage;
-                let pRadius = size;
+              const isArcaneWand = def.id === 'arcane_wand';
+              const spread = count > 1 ? (isArcaneWand ? 0.16 : 0.24) : 0;
 
-                // Arcane Blast Rank 2-3 specific: side projectiles are smaller and weaker
-                if (isArcaneWand && owned.level >= 2 && owned.level < 4 && i !== Math.floor(count / 2)) {
-                  pDamage = 13 * p.damageMult * mult * levelBonusMult;
-                  pRadius = 10 * p.projectileSizeMult;
-                }
+              if (def.id === 'brimstone_shotgun') {
+                soundEngine.playShoot('shotgun');
+              } else {
+                soundEngine.playShoot('wand');
+              }
 
+              const isLaser = isArcaneWand && owned.level >= 6;
+
+              if (isLaser) {
                 projectilesRef.current.push({
                   id: nextEntityId.current++,
                   weaponId: def.id,
                   x: p.x,
                   y: p.y,
-                  vx: Math.cos(ang) * def.baseSpeed,
-                  vy: Math.sin(ang) * def.baseSpeed,
-                  damage: pDamage,
-                  radius: pRadius,
+                  vx: Math.cos(baseAngle) * 3500, // Super fast for laser feel
+                  vy: Math.sin(baseAngle) * 3500,
+                  damage,
+                  radius: size, // 60px wide from tier data
                   color: def.bulletColor,
                   pierce,
                   duration: 0,
-                  maxDuration: 1.8,
+                  maxDuration: 0.15, // Pulse duration
                   knockback: 18 * p.knockbackMult,
                   vampirismRatio: p.vampirism,
+                  isLaser: true,
                   hitEnemyIds: new Set<number>(),
                   hitBoss: false,
                 });
+              } else {
+                for (let i = 0; i < count; i++) {
+                  const ang = baseAngle + (i - (count - 1) / 2) * spread;
+                  let pDamage = damage;
+                  let pRadius = size;
+
+                  // Arcane Blast Rank 2-3 specific: side projectiles are smaller and weaker
+                  if (isArcaneWand && owned.level >= 2 && owned.level < 4 && i !== Math.floor(count / 2)) {
+                    pDamage = 13 * p.damageMult * mult * levelBonusMult;
+                    pRadius = 10 * p.projectileSizeMult;
+                  }
+
+                  projectilesRef.current.push({
+                    id: nextEntityId.current++,
+                    weaponId: def.id,
+                    x: p.x,
+                    y: p.y,
+                    vx: Math.cos(ang) * def.baseSpeed,
+                    vy: Math.sin(ang) * def.baseSpeed,
+                    damage: pDamage,
+                    radius: pRadius,
+                    color: def.bulletColor,
+                    pierce,
+                    duration: 0,
+                    maxDuration: 1.8,
+                    knockback: 18 * p.knockbackMult,
+                    vampirismRatio: p.vampirism,
+                    hitEnemyIds: new Set<number>(),
+                    hitBoss: false,
+                  });
+                }
               }
             }
           }
@@ -2143,20 +2339,24 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           // SHOOTING SYSTEM 2: NEAREST_ENEMY (Homing Seeking Wisp or Instant Vine Trap)
           else if (def.shootingType === 'NEAREST_ENEMY') {
             const activeBoss = isBossFightRef.current && bossInstanceRef.current ? bossInstanceRef.current : null;
+            const sortedEnemies = [...enemiesRef.current].filter(e => e.hp > 0).sort((a, b) => {
+              const distA = Math.hypot(a.x - p.x, a.y - p.y);
+              const distB = Math.hypot(b.x - p.x, b.y - p.y);
+              return distA - distB;
+            });
+
+            if (sortedEnemies.length === 0 && !activeBoss) {
+              return;
+            }
 
             if (def.id === 'vine_snare') {
-              if (enemiesRef.current.length > 0) {
-                // Instantly trap nearest enemies
-                const sortedEnemies = [...enemiesRef.current].sort((a, b) => {
-                  const distA = Math.hypot(a.x - p.x, a.y - p.y);
-                  const distB = Math.hypot(b.x - p.x, b.y - p.y);
-                  return distA - distB;
-                });
-
+              if (sortedEnemies.length > 0) {
+                // Instantly trap nearest enemies (1 per enemy, up to count)
                 soundEngine.playShoot('cauldron');
 
-                for (let i = 0; i < count; i++) {
-                  const target = sortedEnemies[i % sortedEnemies.length];
+                const targetCount = Math.min(count, sortedEnemies.length);
+                for (let i = 0; i < targetCount; i++) {
+                  const target = sortedEnemies[i];
                   const actualDmg = instaKillRef.current ? Math.max(target.hp + 10, 999999) : damage;
                   target.hp -= actualDmg;
                   target.lastHitBy = def.id;
@@ -2209,43 +2409,56 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 }
               }
             } else {
-              // Homing Seeking Wisp (spirit_spark)
-              if (enemiesRef.current.length > 0) {
-                // Find closest enemies
-                const sortedEnemies = [...enemiesRef.current].sort((a, b) => {
-                  const distA = Math.hypot(a.x - p.x, a.y - p.y);
-                  const distB = Math.hypot(b.x - p.x, b.y - p.y);
-                  return distA - distB;
-                });
+              // Homing Fireball
+              const isMegaFireball = owned.level === 6;
+              const hasBurn = owned.level >= 4;
+              const burnDuration = hasBurn ? 5.0 : undefined;
+              const burnDamagePerTick = hasBurn ? Math.max(5, Math.round(damage * 0.18)) : undefined;
+              const projSpeed = (def.baseSpeed + ((tier as any).speedBonus || 0));
 
-                // Homing Seeking Wisp
-                soundEngine.playShoot('wisp');
-                for (let i = 0; i < count; i++) {
-                  const target = sortedEnemies[i % sortedEnemies.length];
+              if (sortedEnemies.length > 0) {
+                if (isMegaFireball) {
+                  soundEngine.playShoot('nova');
+                } else {
+                  soundEngine.playShoot('wisp');
+                }
+
+                const targetCount = Math.min(count, sortedEnemies.length);
+                for (let i = 0; i < targetCount; i++) {
+                  const target = sortedEnemies[i];
                   const ang = Math.atan2(target.y - p.y, target.x - p.x);
                   projectilesRef.current.push({
                     id: nextEntityId.current++,
                     weaponId: def.id,
                     x: p.x + (Math.random() - 0.5) * 10,
                     y: p.y + (Math.random() - 0.5) * 10,
-                    vx: Math.cos(ang) * def.baseSpeed,
-                    vy: Math.sin(ang) * def.baseSpeed,
+                    vx: Math.cos(ang) * projSpeed,
+                    vy: Math.sin(ang) * projSpeed,
                     damage,
                     radius: size,
-                    color: def.bulletColor,
+                    color: '#ef4444',
                     pierce,
                     duration: 0,
-                    maxDuration: 2.2,
-                    knockback: 14 * p.knockbackMult,
+                    maxDuration: 2.5,
+                    knockback: (isMegaFireball ? 24 : 14) * p.knockbackMult,
                     vampirismRatio: p.vampirism,
                     homingTargetId: target.id,
+                    burnDuration,
+                    burnDamagePerTick,
+                    isExplosive: isMegaFireball,
+                    explosionRadius: isMegaFireball ? 100 : undefined,
+                    explosionDamage: isMegaFireball ? Math.round(damage * 0.65) : undefined,
                     hitEnemyIds: new Set<number>(),
                     hitBoss: false,
                   });
                 }
               } else if (activeBoss) {
-                // Target Boss directly with Seeking Wisp
-                soundEngine.playShoot('wisp');
+                // Target Boss directly with Fireball
+                if (isMegaFireball) {
+                  soundEngine.playShoot('nova');
+                } else {
+                  soundEngine.playShoot('wisp');
+                }
                 for (let i = 0; i < count; i++) {
                   const ang = Math.atan2(activeBoss.y - p.y, activeBoss.x - p.x);
                   projectilesRef.current.push({
@@ -2253,16 +2466,21 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     weaponId: def.id,
                     x: p.x + (Math.random() - 0.5) * 10,
                     y: p.y + (Math.random() - 0.5) * 10,
-                    vx: Math.cos(ang) * def.baseSpeed,
-                    vy: Math.sin(ang) * def.baseSpeed,
+                    vx: Math.cos(ang) * projSpeed,
+                    vy: Math.sin(ang) * projSpeed,
                     damage,
                     radius: size,
-                    color: def.bulletColor,
+                    color: '#ef4444',
                     pierce,
                     duration: 0,
-                    maxDuration: 2.2,
-                    knockback: 14 * p.knockbackMult,
+                    maxDuration: 2.5,
+                    knockback: (isMegaFireball ? 24 : 14) * p.knockbackMult,
                     vampirismRatio: p.vampirism,
+                    burnDuration,
+                    burnDamagePerTick,
+                    isExplosive: isMegaFireball,
+                    explosionRadius: isMegaFireball ? 100 : undefined,
+                    explosionDamage: isMegaFireball ? Math.round(damage * 0.65) : undefined,
                     hitEnemyIds: new Set<number>(),
                     hitBoss: false,
                   });
@@ -2342,7 +2560,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const mult = grimoireWeapon.statsMultiplier || 1.0;
         const levelBonusMult = 1 + (grimoireWeapon.level - 1) * 0.10;
         const damage = (def.baseDamage + tier.damageBonus) * p.damageMult * mult * levelBonusMult;
-        const orbitRadius = (42 + (tier.sizeBonus || 0) * 1.2) * p.projectileSizeMult;
+        const orbitRadius = (58 + (tier.sizeBonus || 0) * 1.5) * p.projectileSizeMult;
         const bookCount = Math.min(3, def.baseCount + tier.countBonus);
 
         for (let i = 0; i < bookCount; i++) {
@@ -2492,9 +2710,77 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               boss.vineRootedDuration = 2.0;
             }
 
+            if (proj.burnDuration) {
+              boss.burnDuration = proj.burnDuration;
+              boss.burnTickTimer = 0.05;
+              boss.burnDamagePerTick = proj.burnDamagePerTick || 7;
+            }
+
             if (proj.vampirismRatio > 0) {
               const healed = actualDmg * proj.vampirismRatio;
               p.hp = Math.min(p.maxHp, p.hp + healed);
+            }
+
+            // Mega Fireball explosion on Boss hit
+            if (proj.isExplosive) {
+              const expX = proj.x;
+              const expY = proj.y;
+              const expRadius = proj.explosionRadius || 100;
+              const splashDmg = proj.explosionDamage || Math.round(proj.damage * 0.65);
+
+              soundEngine.playExplosion();
+              if (screenShakeEnabledRef.current) {
+                screenShakeRef.current = Math.max(screenShakeRef.current, 7);
+              }
+
+              for (let k = 0; k < 24; k++) {
+                const pAng = Math.random() * Math.PI * 2;
+                const pSpd = Math.random() * 180 + 50;
+                particlesRef.current.push({
+                  x: expX,
+                  y: expY,
+                  vx: Math.cos(pAng) * pSpd,
+                  vy: Math.sin(pAng) * pSpd,
+                  size: Math.random() * 5 + 3,
+                  color: k % 3 === 0 ? '#ef4444' : k % 3 === 1 ? '#f97316' : '#facc15',
+                  alpha: 1.0,
+                  decay: 3.0,
+                });
+              }
+
+              // Splash surrounding normal enemies
+              for (let k = 0; k < enemiesRef.current.length; k++) {
+                const otherE = enemiesRef.current[k];
+                if (otherE.hp <= 0) continue;
+                const edist = Math.hypot(otherE.x - expX, otherE.y - expY);
+                if (edist <= expRadius + otherE.radius) {
+                  const actualSplash = instaKillRef.current ? Math.max(otherE.hp + 10, 999999) : splashDmg;
+                  otherE.hp -= actualSplash;
+                  otherE.lastHitBy = proj.weaponId;
+                  otherE.hitFlashTimer = 0.1;
+                  otherE.burnDuration = 5.0;
+                  otherE.burnTickTimer = 0.05;
+                  otherE.burnDamagePerTick = proj.burnDamagePerTick || 7;
+
+                  floatingTextsRef.current.push({
+                    id: nextEntityId.current++,
+                    x: otherE.x + (Math.random() - 0.5) * 10,
+                    y: otherE.y - 10,
+                    text: `${Math.round(actualSplash)}`,
+                    color: '#f97316',
+                    life: 0,
+                    maxLife: 0.65,
+                    vy: -40,
+                  });
+
+                  const kbAng = Math.atan2(otherE.y - expY, otherE.x - expX);
+                  otherE.x += Math.cos(kbAng) * (18 * p.knockbackMult);
+                  otherE.y += Math.sin(kbAng) * (18 * p.knockbackMult);
+                }
+              }
+
+              projectilesRef.current.splice(i, 1);
+              continue;
             }
 
             proj.pierce -= 1;
@@ -2559,6 +2845,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               enemy.vineRootedDuration = 2.0;
             }
 
+            if (proj.burnDuration) {
+              enemy.burnDuration = proj.burnDuration;
+              enemy.burnTickTimer = 0.05;
+              enemy.burnDamagePerTick = proj.burnDamagePerTick || 7;
+            }
+
             // Floating Damage Number
             floatingTextsRef.current.push({
               id: nextEntityId.current++,
@@ -2580,6 +2872,99 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             if (!isTrueWitchMode && proj.vampirismRatio > 0) {
               const healed = actualDmg * proj.vampirismRatio;
               p.hp = Math.min(p.maxHp, p.hp + healed);
+            }
+
+            // Mega Fireball explosion on Enemy hit
+            if (proj.isExplosive) {
+              const expX = proj.x;
+              const expY = proj.y;
+              const expRadius = proj.explosionRadius || 100;
+              const splashDmg = proj.explosionDamage || Math.round(proj.damage * 0.65);
+
+              soundEngine.playExplosion();
+              if (screenShakeEnabledRef.current) {
+                screenShakeRef.current = Math.max(screenShakeRef.current, 7);
+              }
+
+              // Visual explosion particles
+              for (let k = 0; k < 24; k++) {
+                const pAng = Math.random() * Math.PI * 2;
+                const pSpd = Math.random() * 180 + 50;
+                particlesRef.current.push({
+                  x: expX,
+                  y: expY,
+                  vx: Math.cos(pAng) * pSpd,
+                  vy: Math.sin(pAng) * pSpd,
+                  size: Math.random() * 5 + 3,
+                  color: k % 3 === 0 ? '#ef4444' : k % 3 === 1 ? '#f97316' : '#facc15',
+                  alpha: 1.0,
+                  decay: 3.0,
+                });
+              }
+
+              // Splash damage & Burn to other enemies in explosion area
+              for (let k = 0; k < enemiesRef.current.length; k++) {
+                const otherE = enemiesRef.current[k];
+                if (otherE.hp <= 0 || otherE.id === enemy.id) continue;
+                const edist = Math.hypot(otherE.x - expX, otherE.y - expY);
+                if (edist <= expRadius + otherE.radius) {
+                  if (!proj.hitEnemyIds) proj.hitEnemyIds = new Set<number>();
+                  proj.hitEnemyIds.add(otherE.id);
+
+                  const actualSplash = instaKillRef.current ? Math.max(otherE.hp + 10, 999999) : splashDmg;
+                  otherE.hp -= actualSplash;
+                  otherE.lastHitBy = proj.weaponId;
+                  otherE.hitFlashTimer = 0.1;
+                  otherE.burnDuration = 5.0;
+                  otherE.burnTickTimer = 0.05;
+                  otherE.burnDamagePerTick = proj.burnDamagePerTick || 7;
+
+                  floatingTextsRef.current.push({
+                    id: nextEntityId.current++,
+                    x: otherE.x + (Math.random() - 0.5) * 10,
+                    y: otherE.y - 10,
+                    text: `${Math.round(actualSplash)}`,
+                    color: '#f97316',
+                    life: 0,
+                    maxLife: 0.65,
+                    vy: -40,
+                  });
+
+                  const kbAng = Math.atan2(otherE.y - expY, otherE.x - expX);
+                  otherE.x += Math.cos(kbAng) * (18 * p.knockbackMult);
+                  otherE.y += Math.sin(kbAng) * (18 * p.knockbackMult);
+                }
+              }
+
+              // Boss caught in splash
+              if (isBossFightRef.current && bossInstanceRef.current && !proj.hitBoss) {
+                const b = bossInstanceRef.current;
+                const bdist = Math.hypot(b.x - expX, b.y - expY);
+                if (bdist <= expRadius + (b.radius || 40)) {
+                  proj.hitBoss = true;
+                  const actualSplash = instaKillRef.current ? Math.max(b.hp + 10, 999999) : splashDmg;
+                  b.hp -= actualSplash;
+                  b.lastHitBy = proj.weaponId;
+                  bossHitFlashRef.current = 0.12;
+                  b.burnDuration = 5.0;
+                  b.burnTickTimer = 0.05;
+                  b.burnDamagePerTick = proj.burnDamagePerTick || 7;
+
+                  floatingTextsRef.current.push({
+                    id: nextEntityId.current++,
+                    x: b.x + (Math.random() - 0.5) * 20,
+                    y: b.y - 20,
+                    text: `${Math.round(actualSplash)}`,
+                    color: '#f97316',
+                    life: 0,
+                    maxLife: 0.65,
+                    vy: -40,
+                  });
+                }
+              }
+
+              projectilesRef.current.splice(i, 1);
+              break;
             }
 
             // Pierce check
@@ -2771,6 +3156,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
       }
 
+      // Update Astral Slashes
+      for (let i = astralSlashesRef.current.length - 1; i >= 0; i--) {
+        const slash = astralSlashesRef.current[i];
+        slash.duration += dt;
+        slash.x = p.x;
+        slash.y = p.y;
+        if (slash.duration >= slash.maxDuration) {
+          astralSlashesRef.current.splice(i, 1);
+        }
+      }
+
       // Update Rock Thrower Projectiles
       for (let i = rockProjectilesRef.current.length - 1; i >= 0; i--) {
         const rock = rockProjectilesRef.current[i];
@@ -2827,7 +3223,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
       // Update Enemies & Check Player Hurt
       const medusaItem = statItemsRef.current.find((s) => s.id === 'medusas_eye');
-      const medusaRadius = medusaItem ? 20 + medusaItem.level * 20 : 0;
+      const medusaRadius = medusaItem ? 26 + medusaItem.level * 6 : 0;
       const medusaSlowMult = medusaItem ? Math.max(0.3, 1.0 - (0.2 + medusaItem.level * 0.05)) : 1.0;
 
       // 1. Advance enemies towards player and update timers / knockbacks
@@ -2847,6 +3243,44 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         // Vine root duration timer
         if (enemy.vineRootedDuration && enemy.vineRootedDuration > 0) {
           enemy.vineRootedDuration -= dt;
+        }
+
+        // Burn status effect: constant damage for 5 seconds with ember particles
+        if (enemy.burnDuration && enemy.burnDuration > 0) {
+          enemy.burnDuration -= dt;
+          enemy.burnTickTimer = (enemy.burnTickTimer || 0) - dt;
+          if (enemy.burnTickTimer <= 0) {
+            enemy.burnTickTimer = 0.5; // Tick twice per second for 5s (10 ticks)
+            const tickDmg = enemy.burnDamagePerTick || 6;
+            const actualTickDmg = instaKillRef.current ? Math.max(enemy.hp + 10, 999999) : tickDmg;
+            enemy.hp -= actualTickDmg;
+            enemy.lastHitBy = 'seeking_wisp';
+            enemy.hitFlashTimer = 0.08;
+
+            floatingTextsRef.current.push({
+              id: nextEntityId.current++,
+              x: enemy.x + (Math.random() - 0.5) * 8,
+              y: enemy.y - 12,
+              text: `${Math.round(actualTickDmg)}`,
+              color: '#ef4444',
+              life: 0,
+              maxLife: 0.55,
+              vy: -35,
+            });
+
+            if (particlesRef.current.length < 200) {
+              particlesRef.current.push({
+                x: enemy.x + (Math.random() - 0.5) * (enemy.radius * 0.8),
+                y: enemy.y + (Math.random() - 0.5) * (enemy.radius * 0.8),
+                vx: (Math.random() - 0.5) * 15,
+                vy: -25 - Math.random() * 25,
+                size: 2.5,
+                color: Math.random() > 0.4 ? '#ef4444' : '#f97316',
+                alpha: 0.9,
+                decay: 3.5,
+              });
+            }
+          }
         }
 
         // Rock Thrower AI & Attack logic
@@ -3129,7 +3563,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             }
           }
           soundEngine.playEnemyDeath();
-          if (!isBossRush && onEnemyDefeated) {
+          if (onEnemyDefeated) {
             onEnemyDefeated(
               enemy.type === 'BAT' ? 'bat' :
               enemy.type === 'GHOUL' ? 'ghoul' : 
@@ -3138,18 +3572,20 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             );
           }
 
-          // Death burst particles
-          for (let k = 0; k < 8; k++) {
-            particlesRef.current.push({
-              x: enemy.x,
-              y: enemy.y,
-              vx: (Math.random() - 0.5) * 120,
-              vy: (Math.random() - 0.5) * 120,
-              size: Math.random() * 4 + 2,
-              color: enemy.color,
-              alpha: 1,
-              decay: 3.5,
-            });
+          // Death burst particles (suppressed for Astral Sword)
+          if (enemy.lastHitBy !== 'astral_sword') {
+            for (let k = 0; k < 8; k++) {
+              particlesRef.current.push({
+                x: enemy.x,
+                y: enemy.y,
+                vx: (Math.random() - 0.5) * 120,
+                vy: (Math.random() - 0.5) * 120,
+                size: Math.random() * 4 + 2,
+                color: enemy.color,
+                alpha: 1,
+                decay: 3.5,
+              });
+            }
           }
 
           // Mini Eye has no drops
@@ -3556,7 +3992,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       if (medusaItemRender) {
         const mouseScreenX = mouseScreenRef.current.x;
         const mouseScreenY = mouseScreenRef.current.y;
-        const medusaRadius = 20 + medusaItemRender.level * 20;
+        const medusaRadius = 26 + medusaItemRender.level * 6;
 
         ctx.save();
         ctx.strokeStyle = 'rgba(74, 222, 128, 0.16)'; // faint glowing green
@@ -3730,6 +4166,103 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.strokeStyle = `rgba(254, 240, 138, ${alpha * 0.85})`;
         ctx.stroke();
 
+        ctx.restore();
+      });
+
+      // 2b-2. Render Astral Sword Slashes (expanding cone area swing towards cursor)
+      astralSlashesRef.current.forEach((slash) => {
+        const sx = slash.x - cameraX;
+        const sy = slash.y - cameraY;
+        const progress = Math.min(1, slash.duration / slash.maxDuration);
+        const alpha = Math.max(0, 1 - progress);
+        const easeProgress = 1 - Math.pow(1 - progress, 2);
+
+        // Cone swing centered on slash.angle (towards cursor)
+        const halfArc = slash.halfArc ?? Math.PI / 4;
+        const startAngle = slash.angle - halfArc;
+        const endAngle = slash.angle + halfArc;
+        const currentAngle = startAngle + (endAngle - startAngle) * easeProgress;
+
+        ctx.save();
+
+        // 1. Ethereal Astral cleave sector zone
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.arc(sx, sy, slash.range, startAngle, endAngle);
+        ctx.closePath();
+        const sectorGrad = ctx.createRadialGradient(sx, sy, 5, sx, sy, slash.range);
+        sectorGrad.addColorStop(0, `rgba(168, 85, 247, ${0.30 * alpha})`);
+        sectorGrad.addColorStop(0.65, `rgba(147, 51, 234, ${0.14 * alpha})`);
+        sectorGrad.addColorStop(1, `rgba(168, 85, 247, 0)`);
+        ctx.fillStyle = sectorGrad;
+        ctx.fill();
+
+        // 2. Outer crescent sweep trail
+        const trailEnd = currentAngle;
+        ctx.beginPath();
+        ctx.arc(sx, sy, slash.range, startAngle, trailEnd);
+        ctx.strokeStyle = `rgba(192, 132, 252, ${alpha * 0.9})`;
+        ctx.lineWidth = Math.max(1.5, 4.5 * (1 - progress * 0.4));
+        ctx.stroke();
+
+        // Luminous inner crescent blade edge
+        ctx.beginPath();
+        ctx.arc(sx, sy, slash.range * 0.96, Math.max(startAngle, currentAngle - 0.45), trailEnd);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.95})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 3. The Astral Sword Blade itself swinging along currentAngle
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(currentAngle);
+
+        const bladeLen = slash.range;
+        const hiltDist = 12;
+        const guardW = 9;
+        const bladeW = 7;
+
+        // Glowing sword blade body
+        ctx.beginPath();
+        ctx.moveTo(hiltDist, 0);
+        ctx.lineTo(hiltDist + 14, -bladeW);
+        ctx.lineTo(bladeLen - 12, -bladeW * 0.65);
+        ctx.lineTo(bladeLen, 0); // blade tip
+        ctx.lineTo(bladeLen - 12, bladeW * 0.65);
+        ctx.lineTo(hiltDist + 14, bladeW);
+        ctx.closePath();
+
+        const bladeGrad = ctx.createLinearGradient(hiltDist, 0, bladeLen, 0);
+        bladeGrad.addColorStop(0, `rgba(126, 34, 206, ${alpha * 0.9})`);
+        bladeGrad.addColorStop(0.45, `rgba(192, 132, 252, ${alpha * 0.95})`);
+        bladeGrad.addColorStop(1, `rgba(250, 245, 255, ${alpha})`);
+        ctx.fillStyle = bladeGrad;
+        ctx.fill();
+
+        // White-hot central sword spine / fuller
+        ctx.beginPath();
+        ctx.moveTo(hiltDist + 6, 0);
+        ctx.lineTo(bladeLen - 4, 0);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.95})`;
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        // Astral Crossguard
+        ctx.beginPath();
+        ctx.moveTo(hiltDist, -guardW);
+        ctx.lineTo(hiltDist + 4, 0);
+        ctx.lineTo(hiltDist, guardW);
+        ctx.strokeStyle = `rgba(233, 213, 255, ${alpha * 0.9})`;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Tip astral star sparkle
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(bladeLen, 0, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
         ctx.restore();
       });
 
@@ -4132,6 +4665,48 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.fillStyle = '#ffffff';
           ctx.globalAlpha = 0.9 * alpha;
           ctx.fillRect(-20, -beamWidth / 8, beamLength, beamWidth / 4);
+        } else if (proj.weaponId === 'seeking_wisp') {
+          // Fireball & Mega Fireball rendering
+          const isMega = Boolean(proj.isExplosive || proj.radius >= 22);
+          
+          ctx.save();
+          ctx.shadowColor = '#ef4444';
+          ctx.shadowBlur = isMega ? 28 : 14;
+
+          // Outer fiery corona
+          const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, proj.radius * 1.25);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.25, '#fef08a');
+          grad.addColorStop(0.55, '#f97316');
+          grad.addColorStop(1, '#dc2626');
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(sx, sy, proj.radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Swirling flame rim for Mega Fireball
+          if (isMega) {
+            ctx.strokeStyle = '#fef08a';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(sx, sy, proj.radius * 0.85, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Inner intense white-hot core
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(sx, sy, proj.radius * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            // White core highlight
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(sx, sy, proj.radius * 0.38, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.restore();
         } else {
           ctx.shadowColor = proj.color;
           ctx.shadowBlur = 10;
@@ -4158,26 +4733,34 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.translate(sx, sy);
         ctx.rotate(rock.life * 9);
 
-        // Shadow beneath rock
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.beginPath();
-        ctx.ellipse(0, 6, rock.radius, rock.radius * 0.5, 0, 0, Math.PI * 2);
-        ctx.fill();
+        const rockImg = rockProjectileImageRef.current;
+        const rockSize = rock.radius * 2.5;
 
-        // Jagged boulder body
-        ctx.fillStyle = '#78716c';
-        ctx.strokeStyle = '#292524';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(0, 0, rock.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+        if (rockImg && rockImg.complete && rockImg.naturalWidth > 0) {
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(rockImg, -rockSize / 2, -rockSize / 2, rockSize, rockSize);
+        } else {
+          // Shadow beneath rock
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+          ctx.beginPath();
+          ctx.ellipse(0, 6, rock.radius, rock.radius * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
 
-        // Highlight
-        ctx.fillStyle = '#d6d3d1';
-        ctx.beginPath();
-        ctx.arc(-2, -2, rock.radius * 0.35, 0, Math.PI * 2);
-        ctx.fill();
+          // Jagged boulder body fallback
+          ctx.fillStyle = '#78716c';
+          ctx.strokeStyle = '#292524';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, rock.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          // Highlight
+          ctx.fillStyle = '#d6d3d1';
+          ctx.beginPath();
+          ctx.arc(-2, -2, rock.radius * 0.35, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
         ctx.restore();
       });
@@ -4187,11 +4770,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const def = ALL_WEAPONS.find((w) => w.id === 'grimoire_orbit')!;
         const tier = def.tiers.find((t) => t.tier === grimoireWeapon.level) || def.tiers[0];
         const bookCount = Math.min(3, def.baseCount + tier.countBonus);
-        const orbitRadius = (42 + (tier.sizeBonus || 0) * 1.2) * p.projectileSizeMult;
+        const orbitRadius = (58 + (tier.sizeBonus || 0) * 1.5) * p.projectileSizeMult;
         const playerScreenX = p.x - cameraX;
         const playerScreenY = p.y - cameraY;
-        const bw = (6.5 + (tier.sizeBonus || 0) * 0.3) * p.projectileSizeMult;
-        const bh = (9.5 + (tier.sizeBonus || 0) * 0.4) * p.projectileSizeMult;
+        const bookSize = (20 + (tier.sizeBonus || 0) * 0.8) * p.projectileSizeMult;
+        const grimoireImg = grimoireImageRef.current;
 
         for (let i = 0; i < bookCount; i++) {
           const bAngle = orbitAngleRef.current + (i / bookCount) * Math.PI * 2;
@@ -4202,16 +4785,24 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.translate(bx, by);
           ctx.rotate(bAngle + Math.PI / 2);
 
-          // Glowing Book
+          // Glowing Arcane Aura
           ctx.shadowColor = '#f59e0b';
-          ctx.shadowBlur = 12;
-          ctx.fillStyle = '#78350f';
-          ctx.fillRect(-bw, -bh, bw * 2, bh * 2);
-          ctx.fillStyle = '#fbbf24';
-          ctx.fillRect(-(bw - 2), -(bh - 2), (bw - 2) * 2, (bh - 2) * 2);
-          ctx.strokeStyle = '#fef08a';
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(-(bw - 2), -(bh - 2), (bw - 2) * 2, (bh - 2) * 2);
+          ctx.shadowBlur = 10;
+
+          if (grimoireImg && grimoireImg.complete && grimoireImg.naturalWidth > 0) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(grimoireImg, -bookSize / 2, -bookSize / 2, bookSize, bookSize);
+          } else {
+            const bw = (6.5 + (tier.sizeBonus || 0) * 0.3) * p.projectileSizeMult;
+            const bh = (9.5 + (tier.sizeBonus || 0) * 0.4) * p.projectileSizeMult;
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(-bw, -bh, bw * 2, bh * 2);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(-(bw - 2), -(bh - 2), (bw - 2) * 2, (bh - 2) * 2);
+            ctx.strokeStyle = '#fef08a';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(-(bw - 2), -(bh - 2), (bw - 2) * 2, (bh - 2) * 2);
+          }
           ctx.restore();
         }
       }
@@ -4241,7 +4832,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const mouseScreenY = mouseScreenRef.current.y;
         const distFromCursor = Math.hypot(sx - mouseScreenX, sy - mouseScreenY);
         const hasMedusa = medusaItemRender !== undefined;
-        const medusaRad = medusaItemRender ? 20 + medusaItemRender.level * 20 : 0;
+        const medusaRad = medusaItemRender ? 26 + medusaItemRender.level * 6 : 0;
         const isMedusaSlowed = hasMedusa && distFromCursor <= medusaRad;
 
         if (isMedusaSlowed && enemy.hitFlashTimer <= 0) {
@@ -4324,9 +4915,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.save();
 
           // If telegraphing, render dashed line & warning target towards player
-          const isTelegraphing = enemy.rockTelegraphTimer !== undefined && enemy.rockTelegraphTimer > 0;
+          const isTelegraphing = enemy.rockTelegraphTimer && enemy.rockTelegraphTimer > 0;
           if (isTelegraphing) {
-            const progress = 1 - (enemy.rockTelegraphTimer! / 1.0);
+            const progress = 1 - ((enemy.rockTelegraphTimer || 0) / 1.0);
             const targetAng = enemy.targetAngle !== undefined ? enemy.targetAngle : Math.atan2(p.y - enemy.y, p.x - enemy.x);
             const lineLen = 240;
             const endX = sx + Math.cos(targetAng) * lineLen;
@@ -4350,44 +4941,28 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           }
 
           const rockImg = rockThrowerImageRef.current;
-          if (rockImg && rockImg.complete && rockImg.naturalWidth > 0) {
-            const width = enemy.radius * 2 * 1.5;
-            const height = width * (rockImg.naturalHeight / rockImg.naturalWidth || 1.0);
+          const spriteSize = enemy.radius * 2.5;
 
+          if (rockImg && rockImg.complete && rockImg.naturalWidth > 0) {
             ctx.save();
             ctx.translate(sx, sy);
+            ctx.imageSmoothingEnabled = false;
 
-            const facing = enemy.facingDir !== undefined ? enemy.facingDir : (p.x - enemy.x < 0 ? -1 : 1);
-            if (facing < 0) {
+            const facingLeft = (isTelegraphing && enemy.targetAngle !== undefined)
+              ? Math.cos(enemy.targetAngle) < 0
+              : p.x < enemy.x;
+            if (facingLeft) {
               ctx.scale(-1, 1);
             }
 
-            ctx.imageSmoothingEnabled = false;
             if (enemy.hitFlashTimer > 0) {
               ctx.filter = 'brightness(300%)';
+            } else if (isTelegraphing) {
+              ctx.filter = 'drop-shadow(0 0 6px #f59e0b)';
             }
-            ctx.drawImage(rockImg, -width / 2, -height / 2, width, height);
+
+            ctx.drawImage(rockImg, -spriteSize / 2, -spriteSize / 2, spriteSize, spriteSize);
             ctx.restore();
-
-            // If telegraphing, render charged rock glowing in hand
-            if (isTelegraphing) {
-              const rockOffsetAngle = enemy.targetAngle !== undefined ? enemy.targetAngle : (p.x - enemy.x < 0 ? Math.PI : 0);
-              const rx = sx + Math.cos(rockOffsetAngle) * (enemy.radius + 6);
-              const ry = sy + Math.sin(rockOffsetAngle) * (enemy.radius + 6);
-
-              ctx.fillStyle = '#f59e0b';
-              ctx.shadowColor = '#ef4444';
-              ctx.shadowBlur = 10;
-              ctx.beginPath();
-              ctx.arc(rx, ry, 6.5, 0, Math.PI * 2);
-              ctx.fill();
-
-              ctx.strokeStyle = '#ef4444';
-              ctx.lineWidth = 1.5;
-              ctx.beginPath();
-              ctx.arc(rx, ry, 9 + Math.sin(performance.now() * 0.02) * 2, 0, Math.PI * 2);
-              ctx.stroke();
-            }
           } else {
             if (enemy.hitFlashTimer > 0) {
               ctx.fillStyle = '#ffffff';
@@ -4477,6 +5052,37 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.arc(sx - enemy.radius - 2, sy, 2.5, 0, Math.PI * 2);
           ctx.arc(sx + enemy.radius + 2, sy, 2.5, 0, Math.PI * 2);
           ctx.fill();
+        }
+
+        // Visible Burn effect overlay: glowing red aura with rising flame embers
+        if (enemy.burnDuration && enemy.burnDuration > 0) {
+          ctx.save();
+          const auraPulse = Math.sin(survivalTimeRef.current * 8) * 2.5;
+          ctx.shadowColor = '#ef4444';
+          ctx.shadowBlur = 14 + auraPulse;
+          ctx.strokeStyle = `rgba(239, 68, 68, ${0.75 + Math.sin(survivalTimeRef.current * 10) * 0.2})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(sx, sy, enemy.radius + 4 + auraPulse * 0.4, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Inner fiery red glow
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.18)';
+          ctx.beginPath();
+          ctx.arc(sx, sy, enemy.radius + 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Rising flame embers
+          for (let f = 0; f < 2; f++) {
+            const emberAngle = (survivalTimeRef.current * 4 + f * Math.PI) % (Math.PI * 2);
+            const emberX = sx + Math.cos(emberAngle) * (enemy.radius * 0.6);
+            const emberY = sy - enemy.radius * 0.4 - ((survivalTimeRef.current * 30 + f * 14) % (enemy.radius + 8));
+            ctx.fillStyle = f % 2 === 0 ? '#f97316' : '#facc15';
+            ctx.beginPath();
+            ctx.arc(emberX, emberY, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
         }
 
         // Mini health bar above enemy
@@ -4911,6 +5517,25 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             }
             ctx.restore();
           }
+        }
+
+        // Visible Burn effect on Boss
+        if (boss.burnDuration && boss.burnDuration > 0) {
+          ctx.save();
+          const bPulse = Math.sin(survivalTimeRef.current * 8) * 3;
+          ctx.shadowColor = '#ef4444';
+          ctx.shadowBlur = 20 + bPulse;
+          ctx.strokeStyle = `rgba(239, 68, 68, ${0.8 + Math.sin(survivalTimeRef.current * 10) * 0.2})`;
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.arc(bx, by, (boss.radius || 45) + 6 + bPulse * 0.5, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.14)';
+          ctx.beginPath();
+          ctx.arc(bx, by, (boss.radius || 45) + 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
         }
 
         ctx.restore();
