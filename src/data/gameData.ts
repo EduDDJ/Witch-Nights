@@ -59,7 +59,7 @@ export const CHARACTERS: CharacterDefinition[] = [
     speedMultiplier: 1.1,
     speedLabel: '1.1x',
     description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
-    spriteUrl: 'assets/aistudio/geraldo.png',
+    spriteUrl: 'https://i.imgur.com/XfPpV8k.png',
     fallbackSpriteUrl: 'assets/aistudio/geraldo.png',
     color: '#ef4444',
   },
