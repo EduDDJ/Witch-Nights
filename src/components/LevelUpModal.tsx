@@ -177,7 +177,11 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
               IconComp = WEAPON_ICONS[opt.definition.icon] || Sparkles;
               iconColor = opt.definition.iconColor || opt.definition.bulletColor;
               typeBadge = getShootingTypeLabel(opt.definition.shootingType);
-              tierTag = <span className="bg-amber-950/90 text-amber-300 border border-amber-500/50 text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded-md flex items-center gap-1"><ArrowUpCircle className="w-3 h-3" /> LVL {opt.currentTier} → {opt.nextTier}</span>;
+              if (opt.nextTier === 7) {
+                tierTag = <span className="bg-amber-950/90 text-amber-300 border border-amber-500/80 text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded-md flex items-center gap-1 shadow-sm"><Sparkles className="w-3 h-3 text-amber-400" /> MEGA EVOLUTION</span>;
+              } else {
+                tierTag = <span className="bg-amber-950/90 text-amber-300 border border-amber-500/50 text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded-md flex items-center gap-1"><ArrowUpCircle className="w-3 h-3" /> LVL {opt.currentTier} → {opt.nextTier}</span>;
+              }
             } else if (opt.kind === 'STAT_NEW') {
               title = opt.definition.name;
               subtitle = 'NEW STAT ARTIFACT';
@@ -198,7 +202,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
               tierTag = <span className="bg-amber-950/90 text-amber-300 border border-amber-500/50 text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded-md flex items-center gap-1"><ArrowUpCircle className="w-3 h-3" /> LVL {opt.currentTier} → {opt.nextTier}</span>;
             }
 
-            const isLegendary = Boolean(opt.definition.isLegendary || opt.definition.unlockCondition);
+            const isLegendary = Boolean(opt.definition.isLegendary || opt.definition.unlockCondition || ('nextTier' in opt && opt.nextTier === 7));
 
             return (
               <button
@@ -270,9 +274,11 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
                     )}
                   </div>
 
-                  <div className={`font-semibold text-purple-400 ${mobileMode ? 'text-[10px] sm:text-xs mb-0.5' : 'text-xs mb-1'}`}>
-                    {subtitle}
-                  </div>
+                  {subtitle ? (
+                    <div className={`font-semibold text-purple-400 ${mobileMode ? 'text-[10px] sm:text-xs mb-0.5' : 'text-xs mb-1'}`}>
+                      {subtitle}
+                    </div>
+                  ) : null}
 
                   <p className={`text-slate-300 ${mobileMode ? 'text-[10px] sm:text-xs leading-snug' : 'text-xs leading-relaxed'}`}>
                     {description}

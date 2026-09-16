@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Play, Settings, HelpCircle, Skull } from 'lucide-react';
+import { BookOpen, Play, Settings, HelpCircle, Skull, Trophy } from 'lucide-react';
 
 interface MainMenuProps {
   onStartGame: () => void;
@@ -7,6 +7,8 @@ interface MainMenuProps {
   onOpenCollection: () => void;
   onOpenOptions: () => void;
   onOpenTutorial: () => void;
+  onOpenAchievements: () => void;
+  hasTrueWitchTrophy?: boolean;
   unlockedCount: number;
   totalCount: number;
 }
@@ -17,6 +19,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onOpenCollection,
   onOpenOptions,
   onOpenTutorial,
+  onOpenAchievements,
+  hasTrueWitchTrophy = false,
   unlockedCount,
   totalCount,
 }) => {
@@ -67,10 +71,18 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               >
                 <Skull className="w-6 h-6 text-purple-400 group-hover:scale-110 transition-transform" />
                 <span>Boss Rush</span>
+                {hasTrueWitchTrophy && (
+                  <div
+                    className="absolute right-4 flex items-center justify-center"
+                    title="Diamond Trophy - True Witch Mode Mastered!"
+                  >
+                    <Trophy className="w-6 h-6 text-cyan-300 fill-cyan-400/40 drop-shadow-[0_0_10px_rgba(6,182,212,0.95)] animate-pulse" />
+                  </div>
+                )}
               </button>
             </div>
 
-            {/* Column with "Collection" button and Tutorial/Options row under it */}
+            {/* Column with "Collection" button and Tutorial/Achievements/Options under it */}
             <div className="flex-1 w-full flex flex-col items-center gap-2">
               <button
                 id="collection-button"
@@ -84,34 +96,48 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 </span>
               </button>
 
-              {/* Tutorial and Options side-by-side */}
+              {/* Sub-row under Collection */}
               <div className="flex w-full gap-2">
-                <button
-                  id="tutorial-button"
-                  onClick={onOpenTutorial}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
-                  title="Learn how to play"
-                >
-                  <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Tutorial</span>
-                </button>
+                {/* Left column: Tutorial on top, Achievements directly under it with exact same size */}
+                <div className="flex-1 flex flex-col gap-2">
+                  <button
+                    id="tutorial-button"
+                    onClick={onOpenTutorial}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
+                    title="Learn how to play"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Tutorial</span>
+                  </button>
 
-                <button
-                  id="options-button"
-                  onClick={onOpenOptions}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
-                  title="Game Options"
-                >
-                  <Settings className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Options</span>
-                </button>
+                  <button
+                    id="achievements-button"
+                    onClick={onOpenAchievements}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
+                    title="View Achievements"
+                  >
+                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Achievements</span>
+                  </button>
+                </div>
+
+                {/* Right column: Options spanning the same height */}
+                <div className="flex-1 flex flex-col">
+                  <button
+                    id="options-button"
+                    onClick={onOpenOptions}
+                    className="w-full h-full inline-flex flex-col items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
+                    title="Game Options"
+                  >
+                    <Settings className="w-4 h-4 text-purple-400" />
+                    <span>Options</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </main>
       </div>
-
-
     </div>
   );
 };

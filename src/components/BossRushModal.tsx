@@ -1,29 +1,39 @@
 import React, { useState } from 'react';
-import { Play, X, Trophy, Info, Lock, Flame } from 'lucide-react';
+import { Play, X, Trophy, Info, Lock, Flame, User } from 'lucide-react';
+import { CharacterDefinition } from '../types/game';
 
 interface BossRushModalProps {
   bestTime: number | null;
+  characterBestTime: number | null;
+  selectedCharacter: CharacterDefinition;
   isTrueWitchUnlocked: boolean;
   isTrueWitchMode: boolean;
   onToggleTrueWitchMode: (enabled: boolean) => void;
   onStartBossRush: () => void;
+  onOpenCharacterSelect: () => void;
   onClose: () => void;
 }
 
 export const BossRushModal: React.FC<BossRushModalProps> = ({
   bestTime,
+  characterBestTime,
+  selectedCharacter,
   isTrueWitchUnlocked,
   isTrueWitchMode,
   onToggleTrueWitchMode,
   onStartBossRush,
+  onOpenCharacterSelect,
   onClose,
 }) => {
   const [showInfo, setShowInfo] = useState<boolean>(false);
 
-  const formattedBestTime =
-    bestTime !== null
-      ? `${String(Math.floor(bestTime / 60)).padStart(2, '0')}:${String(Math.floor(bestTime % 60)).padStart(2, '0')}`
+  const formatSecs = (sec: number | null) =>
+    sec !== null
+      ? `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(Math.floor(sec % 60)).padStart(2, '0')}`
       : '-';
+
+  const formattedBestTime = formatSecs(bestTime);
+  const formattedCharacterBestTime = formatSecs(characterBestTime);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -105,6 +115,7 @@ export const BossRushModal: React.FC<BossRushModalProps> = ({
           )}
         </div>
 
+        {/* Start Boss Rush Button */}
         <button
           id="start-boss-rush-modal-button"
           onClick={onStartBossRush}
@@ -114,12 +125,45 @@ export const BossRushModal: React.FC<BossRushModalProps> = ({
           <span>Start Boss Rush</span>
         </button>
 
-        <div className="mt-4 flex items-center justify-center gap-1.5 text-stone-400 text-sm font-medium">
-          <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>Best Time:</span>
-          <span className={`font-mono font-bold ${bestTime !== null ? 'text-amber-300' : 'text-stone-400'}`}>
-            {formattedBestTime}
-          </span>
+        {/* Select Character Section under Start Boss Rush */}
+        <div className="mt-3.5 flex flex-col items-center gap-2 bg-stone-900/80 p-3.5 rounded-2xl border border-stone-800">
+          <button
+            id="boss-rush-select-character-btn"
+            onClick={onOpenCharacterSelect}
+            className="w-full py-2.5 px-4 rounded-xl bg-purple-900/80 hover:bg-purple-800 border border-purple-500/60 text-purple-200 hover:text-white font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95"
+          >
+            <User className="w-4 h-4 text-purple-300" />
+            <span>Select Character</span>
+          </button>
+          
+          <div className="text-xs text-stone-300 flex items-center justify-center gap-1.5 font-medium flex-wrap">
+            <span className="text-stone-400">Current Character:</span>
+            <span className="text-amber-300 font-bold font-serif">
+              {selectedCharacter.name}
+              {selectedCharacter.title ? ` – ${selectedCharacter.title}` : ''}
+            </span>
+          </div>
+        </div>
+
+        {/* Best Times Section */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-stone-300 text-xs sm:text-sm font-medium bg-stone-900/60 p-3 rounded-2xl border border-stone-800/80">
+          <div className="flex items-center gap-1.5">
+            <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="text-stone-400">Best Time:</span>
+            <span className={`font-mono font-bold ${bestTime !== null ? 'text-amber-300' : 'text-stone-400'}`}>
+              {formattedBestTime}
+            </span>
+          </div>
+
+          <span className="text-stone-700 hidden sm:inline">•</span>
+
+          <div className="flex items-center gap-1.5">
+            <User className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+            <span className="text-stone-400">{selectedCharacter.name}&apos;s Best Time:</span>
+            <span className={`font-mono font-bold ${characterBestTime !== null ? 'text-amber-300' : 'text-stone-400'}`}>
+              {formattedCharacterBestTime}
+            </span>
+          </div>
         </div>
       </div>
     </div>

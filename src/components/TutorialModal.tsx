@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Compass, Wind, Sparkles, Skull, X, Check, Swords, Crown, Navigation, Heart } from 'lucide-react';
+import { Compass, Wind, Sparkles, Skull, X, Check, Swords, Crown, Navigation, Heart, User } from 'lucide-react';
 
 interface TutorialModalProps {
   onClose: () => void;
@@ -67,7 +67,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
               <span className="text-stone-400 font-sans text-xs self-center">or Arrow keys</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Navigate seamlessly across the cursed realm. Aim with your <strong>mouse cursor</strong> to guide directional projectiles and targeted spells like Arcana Blast!
+              Navigate seamlessly across the cursed realm. Aim with your <strong>mouse cursor</strong> to guide directional projectiles and targeted spells like Stellar Beam!
             </p>
           </div>
 
@@ -137,7 +137,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
               <span>EXP Orbs & Enemy Drops</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Defeat foes to harvest EXP: standard cyan gems, elite <strong>Village Knight</strong> red orbs (<strong>10 EXP</strong>), and colossal Boss yellow orbs (<strong>75 EXP</strong>). Enemies also have a 10% chance to drop special items like <strong>Healing Food (+25 HP)</strong>, upgraded orbs, or rare EXP Magnets (~1%).
+              Defeat foes to harvest EXP: standard cyan gems, elite <strong>Village Knight</strong> red orbs (<strong>10 EXP</strong>), and colossal Boss yellow orbs (<strong>75 EXP + 25 HP Healing Food</strong>). Enemies also have a 10% chance to drop special items like <strong>Healing Food (heals half of the enemy&apos;s damage)</strong>, upgraded orbs, or rare EXP Magnets (~1%).
             </p>
           </div>
 
@@ -150,7 +150,23 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
               <span>The Witch's Deal</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              When the clock strikes 07:30, a Witch offers 2 forbidden Midnight Curses. Choose a dark bargain for transcendent power at a dangerous cost.
+              When the clock strikes 07:30, a Witch offers a forbidden Witch's Deal. Choose to Accept for transcendent power at a dangerous cost, or Deny the bargain.
+            </p>
+          </div>
+
+          {/* 8. Characters & Mega Evolution */}
+          <div className="p-4 rounded-2xl bg-stone-900/85 border border-indigo-800/40 flex flex-col gap-2 sm:col-span-2">
+            <div className="flex items-center gap-2 text-indigo-300 font-bold text-sm">
+              <div className="w-6 h-6 rounded-lg bg-indigo-950 flex items-center justify-center border border-indigo-700/50">
+                <User className="w-3.5 h-3.5 text-indigo-300" />
+              </div>
+              <span>Characters & Mega Evolution</span>
+            </div>
+            <p className="text-xs text-stone-300 leading-relaxed">
+              Each character comes with distinct attributes: <strong>Max HP</strong> dictates total health, <strong>Speed</strong> determines movement swiftness across the map, and a signature <strong>Starting Weapon</strong> sets your initial combat style.
+            </p>
+            <p className="text-xs text-stone-300 leading-relaxed">
+              <strong>Mega Evolution (Rank 7)</strong>: Every character can unlock a supreme <strong>Rank 7 Mega Evolution</strong> for their signature Starting Weapon (such as Ruby&apos;s <em>Stellar Laser</em> or GlOwOb&apos;s <em>Acidic Wave</em>). Rank 7 upgrades appear in level-up choices exclusively when playing as that specific character!
             </p>
           </div>
         </div>

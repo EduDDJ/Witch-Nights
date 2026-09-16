@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ALL_WEAPONS, ALL_STAT_ITEMS } from '../data/gameData';
-import { OwnedWeapon, OwnedStatItem } from '../types/game';
+import { OwnedWeapon, OwnedStatItem, CharacterDefinition } from '../types/game';
 import {
   Sparkles,
   Flame,
@@ -34,6 +34,7 @@ interface WeaponSelectorModalProps {
   weapons: OwnedWeapon[];
   statItems: OwnedStatItem[];
   maxWeapons: number;
+  character?: CharacterDefinition;
   mobileMode?: boolean;
   onSelect: (itemId: string, category: 'WEAPON' | 'PASSIVE') => void;
   onModifyLevel: (itemId: string, category: 'WEAPON' | 'PASSIVE', delta: number) => void;
@@ -74,6 +75,7 @@ export const WeaponSelectorModal: React.FC<WeaponSelectorModalProps> = ({
   weapons,
   statItems,
   maxWeapons,
+  character,
   mobileMode = false,
   onSelect,
   onModifyLevel,
@@ -111,7 +113,12 @@ export const WeaponSelectorModal: React.FC<WeaponSelectorModalProps> = ({
   const isOwned = !!(ownedWeapon || ownedStat);
   
   const currentLevel = ownedWeapon?.level || ownedStat?.level || 0;
-  const maxLevel = selectedItem?.tiers.length || 6;
+
+  const rawMaxLevel = selectedItem?.tiers.length || 6;
+  const isRespectiveCharacter = isWeapon && character && character.startingWeaponId === selectedItem?.id;
+  // Lock Rank 7 Mega Evolution if the player isn't playing as that weapon's respective character
+  const maxLevel = (isWeapon && rawMaxLevel >= 7 && !isRespectiveCharacter) ? 6 : rawMaxLevel;
+
   const isMaxLevel = currentLevel >= maxLevel;
   
   const isFull = isWeapon 
@@ -236,7 +243,7 @@ export const WeaponSelectorModal: React.FC<WeaponSelectorModalProps> = ({
                     <h3 className="text-lg font-bold text-slate-100 font-serif">{selectedItem.name}</h3>
                     {isOwned && (
                       <span className="text-[10px] font-black bg-amber-600 text-white px-2 py-0.5 rounded-full border border-amber-400 uppercase tracking-tighter">
-                        RANK {currentLevel}
+                        {currentLevel >= 7 ? 'MEGA EVOLVED' : `RANK ${currentLevel}`}
                       </span>
                     )}
                   </div>
@@ -255,7 +262,7 @@ export const WeaponSelectorModal: React.FC<WeaponSelectorModalProps> = ({
                         : 'bg-slate-800 text-slate-500 border-b-4 border-slate-950 opacity-50 cursor-not-allowed'
                     }`}
                   >
-                    {isOwned ? (isMaxLevel ? 'MAX RANK' : 'UPGRADE') : (isFull ? 'FULL INV' : 'SELECT')}
+                    {isOwned ? (isMaxLevel ? 'MAX RANK' : (currentLevel === 6 ? 'MEGA EVOLVE' : 'UPGRADE')) : (isFull ? 'FULL INV' : 'SELECT')}
                   </button>
 
                   {isOwned && (
@@ -294,21 +301,25 @@ export const WeaponSelectorModal: React.FC<WeaponSelectorModalProps> = ({
                   <Sparkles className="w-3.5 h-3.5" /> Rank Progression
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {selectedItem.tiers.map((t: any) => (
-                    <div key={t.tier} className={`p-2.5 rounded-lg border flex items-center justify-between gap-3 ${
-                      t.tier === currentLevel 
-                        ? 'bg-amber-600/20 border-amber-500/50' 
-                        : t.tier < currentLevel 
-                        ? 'bg-slate-900/40 border-slate-800 opacity-60' 
-                        : 'bg-slate-900/60 border-slate-800'
-                    }`}>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono font-bold bg-slate-950 px-1.5 py-0.5 rounded text-amber-400">R{t.tier}</span>
-                        <span className="text-xs font-bold text-slate-200">{t.name}</span>
+                  {selectedItem.tiers
+                    .filter((t: any) => t.tier <= maxLevel)
+                    .map((t: any) => (
+                      <div key={t.tier} className={`p-2.5 rounded-lg border flex items-center justify-between gap-3 ${
+                        t.tier === currentLevel 
+                          ? 'bg-amber-600/20 border-amber-500/50' 
+                          : t.tier < currentLevel 
+                          ? 'bg-slate-900/40 border-slate-800 opacity-60' 
+                          : 'bg-slate-900/60 border-slate-800'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono font-bold bg-slate-950 px-1.5 py-0.5 rounded text-amber-400">
+                            {t.tier === 7 ? 'Mega Evolved' : `R${t.tier}`}
+                          </span>
+                          {t.name && <span className="text-xs font-bold text-slate-200">{t.name}</span>}
+                        </div>
+                        <span className="text-[9px] text-slate-400 text-right leading-tight max-w-[120px]">{t.description}</span>
                       </div>
-                      <span className="text-[9px] text-slate-400 text-right leading-tight max-w-[120px]">{t.description}</span>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             </div>

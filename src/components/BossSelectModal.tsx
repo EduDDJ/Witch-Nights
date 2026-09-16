@@ -201,7 +201,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                         </div>
                         <div className="flex items-start gap-1.5 text-amber-300 font-medium pt-1">
                           <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                          <span>Defeating it unlocks the legendary Vine Attack!</span>
+                          <span>Defeating it unlocks the legendary Vine Snare!</span>
                         </div>
                       </>
                     ) : isEye ? (

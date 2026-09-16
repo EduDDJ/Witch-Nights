@@ -250,7 +250,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               <div className="w-full p-2.5 rounded-xl bg-black/80 border border-purple-500/50 text-left animate-in fade-in duration-150">
                 <div className="flex items-center justify-between font-bold text-xs text-slate-200 mb-0.5">
                   <span style={{ color: hoveredItem.color }}>{hoveredItem.name}</span>
-                  <span className="text-[10px] text-amber-400 font-mono">Tier {hoveredItem.tier}/6</span>
+                  <span className="text-[10px] text-amber-400 font-mono">{hoveredItem.tier >= 7 ? 'Mega Evolved' : `Rank ${hoveredItem.tier}`}</span>
                 </div>
                 <p className="text-[11px] text-stone-300 leading-tight">{hoveredItem.description}</p>
               </div>
@@ -276,7 +276,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               GAME PAUSED
             </h2>
             <div className="text-xs text-slate-400 flex items-center gap-1.5">
-              <span>Survival Time:</span>
+              <span>Total Time:</span>
               <span className="font-mono font-bold text-amber-300">{formattedTime}</span>
             </div>
           </div>

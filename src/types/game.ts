@@ -103,7 +103,7 @@ export interface StatItemTier {
 export interface StatItemDefinition {
   id: string;
   name: string;
-  statType: 'VAMPIRISM' | 'PROJECTILE_SIZE' | 'KNOCKBACK' | 'DASH_COOLDOWN' | 'MOVE_SPEED' | 'DAMAGE_BOOST' | 'MAGNET_RADIUS' | 'MAX_HEALTH' | 'EXTRA_CHOICES' | 'DESTINY_CONTROL' | 'MEDUSA_SLOW' | 'DASH_DAMAGE';
+  statType: 'VAMPIRISM' | 'PROJECTILE_SIZE' | 'KNOCKBACK' | 'DASH_COOLDOWN' | 'MOVE_SPEED' | 'DAMAGE_BOOST' | 'MAGNET_RADIUS' | 'MAX_HEALTH' | 'EXTRA_CHOICES' | 'DESTINY_CONTROL' | 'MEDUSA_SLOW' | 'DASH_DAMAGE' | 'DAMAGE_REDUCTION';
   icon: string;
   description: string;
   unlockCondition?: string;
@@ -121,7 +121,7 @@ export interface CurseChoice {
   isLegendary?: boolean;
   icon: string;
   color: string;
-  effect: 'RESET_GUNS_MAX_PASSIVES' | 'TRIPLE_ONE_GUN' | 'DIVIDE_HP_DOUBLE_DMG' | 'SWARM_TRIPLE_EXP' | 'PHANTOM_DASH' | 'DEJA_VU';
+  effect: 'RESET_GUNS_MAX_PASSIVES' | 'TRIPLE_ONE_GUN' | 'DIVIDE_HP_DOUBLE_DMG' | 'SWARM_TRIPLE_EXP' | 'PHANTOM_DASH' | 'DEJA_VU' | 'VAMPIRES_BITE';
 }
 
 export interface OwnedWeapon {
@@ -297,11 +297,15 @@ export interface PlayerStats {
   damageMult: number; // 1.0 default
   magnetRadius: number; // base 90
   hpRegen: number; // hp per second
+  damageReduction?: number; // decimal reduction e.g. 0.05 = 5% less damage taken (up to 0.25)
   expMultiplier?: number; // default 1.0
   dashDamage?: number; // damage dealt to enemies during dash
+  isGlassTank?: boolean;
+  isVampireBite?: boolean;
 }
 
 export type DashMode = 'MOVEMENT' | 'CURSOR';
+export type MobileAimMode = 'JOYSTICK' | 'TOUCH';
 
 export interface GameOptions {
   soundEnabled: boolean;
@@ -310,6 +314,7 @@ export interface GameOptions {
   screenShake: boolean;
   damageNumbers: boolean;
   mobileMode: boolean;
+  mobileAimMode?: MobileAimMode; // 'JOYSTICK' (default) | 'TOUCH'
   brightness: number; // 50 to 150 (percentage)
 }
 
@@ -319,6 +324,9 @@ export interface CharacterDefinition {
   title: string;
   startingWeaponId: string;
   startingWeaponName: string;
+  startingStatItemId?: string;
+  startingStatItemName?: string;
+  megaEvolutionName?: string;
   baseMaxHp: number;
   speedMultiplier: number;
   speedLabel: string;

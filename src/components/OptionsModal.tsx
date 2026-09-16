@@ -106,8 +106,55 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               </button>
             </div>
             <p className="text-[10px] sm:text-[11px] text-slate-400">
-              Adds on-screen movement and aiming joysticks, compacts menus for smaller screens, and adjusts HUD positioning.
+              Adds on-screen movement and controls, compacts menus for smaller screens, and adjusts HUD positioning.
             </p>
+
+            {/* Sub-option: Mobile Aiming Mode */}
+            {options.mobileMode && (
+              <div className="mt-1 pt-2 border-t border-purple-800/30 flex flex-col gap-1.5 animate-in fade-in duration-150">
+                <span className="text-[11px] sm:text-xs font-semibold text-purple-300 flex items-center gap-1.5">
+                  <Crosshair className="w-3.5 h-3.5 text-rose-400" />
+                  Mobile Aiming Mode
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    id="mobile-aim-joystick-btn"
+                    onClick={() => onChangeOptions({ mobileAimMode: 'JOYSTICK' })}
+                    className={`p-2 rounded-xl text-left border flex flex-col gap-0.5 transition-all cursor-pointer ${
+                      (options.mobileAimMode || 'JOYSTICK') === 'JOYSTICK'
+                        ? 'bg-rose-950/70 border-rose-500 text-white shadow-md shadow-rose-950/50'
+                        : 'bg-slate-900/80 border-slate-700/60 text-slate-400 hover:bg-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <Crosshair className="w-3.5 h-3.5 text-rose-400" />
+                      Joystick Aim
+                    </div>
+                    <span className="text-[10px] text-slate-400 leading-tight">
+                      Use right-side virtual joystick to aim weapons.
+                    </span>
+                  </button>
+
+                  <button
+                    id="mobile-aim-touch-btn"
+                    onClick={() => onChangeOptions({ mobileAimMode: 'TOUCH' })}
+                    className={`p-2 rounded-xl text-left border flex flex-col gap-0.5 transition-all cursor-pointer ${
+                      options.mobileAimMode === 'TOUCH'
+                        ? 'bg-sky-950/70 border-sky-500 text-white shadow-md shadow-sky-950/50'
+                        : 'bg-slate-900/80 border-slate-700/60 text-slate-400 hover:bg-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <Smartphone className="w-3.5 h-3.5 text-sky-400" />
+                      Touch to Aim
+                    </div>
+                    <span className="text-[10px] text-slate-400 leading-tight">
+                      Tap/click anywhere to aim directly (removes aim joystick).
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* AUDIO SECTION */}

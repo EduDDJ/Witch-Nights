@@ -28,7 +28,9 @@ import { GameCanvas } from './components/GameCanvas';
 import { GameHUD } from './components/GameHUD';
 import { LevelUpModal, LevelUpOption } from './components/LevelUpModal';
 import { WitchDealModal } from './components/WitchDealModal';
-import { UnlockModal } from './components/UnlockModal';
+import { AchievementsModal } from './components/AchievementsModal';
+import { AchievementBanner, AchievementNotificationData } from './components/AchievementBanner';
+import { ACHIEVEMENTS } from './data/achievements';
 import { CollectionModal, ENEMIES_DATA } from './components/CollectionModal';
 import { CharacterSelectModal } from './components/CharacterSelectModal';
 import { GameOverModal } from './components/GameOverModal';
@@ -74,6 +76,7 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   damageMult: 1.0,
   magnetRadius: 100,
   hpRegen: 0.5,
+  damageReduction: 0.0,
   expMultiplier: 1.0,
   dashDamage: 0,
 };
@@ -89,6 +92,7 @@ export default function App() {
   ]);
   const [statItems, setStatItems] = useState<OwnedStatItem[]>([]);
   const [survivalTime, setSurvivalTime] = useState<number>(0);
+  const [bossCountdown, setBossCountdown] = useState<number>(300);
   const [maxWeapons, setMaxWeapons] = useState<number>(5);
   const [isHurt, setIsHurt] = useState<boolean>(false);
   const [gameRunId, setGameRunId] = useState<number>(1);
@@ -119,6 +123,8 @@ export default function App() {
   });
   const [isOptionsOpen, setIsOptionsOpen] = useState<boolean>(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState<boolean>(false);
+  const [achievementNotification, setAchievementNotification] = useState<AchievementNotificationData | null>(null);
   const [isPauseMenuOpen, setIsPauseMenuOpen] = useState<boolean>(false);
   const [isDevToolsOpen, setIsDevToolsOpen] = useState<boolean>(false);
   const [isLevelUpFromDevTools, setIsLevelUpFromDevTools] = useState<boolean>(false);
@@ -265,6 +271,17 @@ export default function App() {
     }
   });
 
+  const [bossRushCharBestTimes, setBossRushCharBestTimes] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('witch_nights_boss_rush_char_best_times');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [isBossRushCharSelectOpen, setIsBossRushCharSelectOpen] = useState<boolean>(false);
+
   const [isTrueWitchUnlocked, setIsTrueWitchUnlocked] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('witch_nights_true_witch_unlocked');
@@ -286,7 +303,115 @@ export default function App() {
     }
   });
 
-  const [unlockModalItem, setUnlockModalItem] = useState<string | null>(null);
+  const [hasTrueWitchTrophy, setHasTrueWitchTrophy] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('witch_nights_true_witch_conquered') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [completedAchievementIds, setCompletedAchievementIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('witch_nights_completed_achievements');
+      const ids: string[] = saved ? JSON.parse(saved) : [];
+      // Sync retroactively with unlocked items / existing wins
+      const savedItemIdsRaw = localStorage.getItem('witch_nights_unlocked_ids');
+      const itemIds: string[] = savedItemIdsRaw ? JSON.parse(savedItemIdsRaw) : DEFAULT_UNLOCKED_ITEM_IDS;
+      if (itemIds.includes('vine_snare') && !ids.includes('plants_vs_witches')) {
+        ids.push('plants_vs_witches');
+      }
+      if (itemIds.includes('medusas_eye') && !ids.includes('eye_see_you')) {
+        ids.push('eye_see_you');
+      }
+      if (itemIds.includes('nightbears_claws') && !ids.includes('bearely_any_trouble')) {
+        ids.push('bearely_any_trouble');
+      }
+      if (
+        (localStorage.getItem('witch_nights_true_witch_unlocked') === 'true' ||
+          localStorage.getItem('witch_nights_boss_rush_best_time') !== null) &&
+        !ids.includes('youre_a_witch_ruby')
+      ) {
+        ids.push('youre_a_witch_ruby');
+      }
+      if (
+        localStorage.getItem('witch_nights_true_witch_conquered') === 'true' &&
+        !ids.includes('being_a_witch_isnt_a_job')
+      ) {
+        ids.push('being_a_witch_isnt_a_job');
+      }
+      return ids;
+    } catch {
+      return [];
+    }
+  });
+
+  // Complete achievement logic
+  const completeAchievement = useCallback((achievementId: string) => {
+    const ach = ACHIEVEMENTS.find((a) => a.id === achievementId);
+    if (!ach) return;
+
+    setCompletedAchievementIds((prev) => {
+      if (prev.includes(achievementId)) return prev;
+      const next = [...prev, achievementId];
+      try {
+        localStorage.setItem('witch_nights_completed_achievements', JSON.stringify(next));
+      } catch {
+        // safe ignore
+      }
+      return next;
+    });
+
+    if (ach.unlockedItemId) {
+      setUnlockedItemIds((prev) => {
+        if (prev.includes(ach.unlockedItemId!)) return prev;
+        const next = [...prev, ach.unlockedItemId!];
+        try {
+          localStorage.setItem('witch_nights_unlocked_ids', JSON.stringify(next));
+        } catch {
+          // safe ignore
+        }
+        return next;
+      });
+    }
+
+    if (achievementId === 'youre_a_witch_ruby') {
+      setIsTrueWitchUnlocked(true);
+      try {
+        localStorage.setItem('witch_nights_true_witch_unlocked', 'true');
+      } catch {
+        // safe ignore
+      }
+    }
+
+    if (achievementId === 'being_a_witch_isnt_a_job') {
+      setHasTrueWitchTrophy(true);
+      try {
+        localStorage.setItem('witch_nights_true_witch_conquered', 'true');
+      } catch {
+        // safe ignore
+      }
+    }
+
+    soundEngine.playLevelUp();
+
+    setAchievementNotification({
+      id: `${ach.id}-${Date.now()}`,
+      achievementTitle: ach.title,
+      unlockText: ach.unlockText,
+    });
+  }, []);
+
+  const handleBossDefeated = useCallback((bossId: string) => {
+    if (isBossRush) return;
+    if (bossId === 'carnivore_plant') {
+      completeAchievement('plants_vs_witches');
+    } else if (bossId === 'haunted_eye') {
+      completeAchievement('eye_see_you');
+    } else if (bossId === 'night_bear') {
+      completeAchievement('bearely_any_trouble');
+    }
+  }, [completeAchievement, isBossRush]);
 
   // Save collections to localStorage
   useEffect(() => {
@@ -314,6 +439,7 @@ export default function App() {
     let bonusHp = 0;
     let regen = 0.5;
     let dDamage = 0;
+    let dmgRed = 0.0;
 
     currentStatItems.forEach((owned) => {
       const def = ALL_STAT_ITEMS.find((item) => item.id === owned.id);
@@ -349,19 +475,26 @@ export default function App() {
         case 'DASH_DAMAGE':
           dDamage = tier.statValue;
           break;
+        case 'DAMAGE_REDUCTION':
+          dmgRed = tier.statValue;
+          break;
         case 'EXTRA_CHOICES':
           break;
       }
     });
 
     setPlayer((prev) => {
-      const baseMaxHp = customMaxHp ?? selectedCharacter?.baseMaxHp ?? 100;
+      const isGlassTank = prev.isGlassTank ?? false;
+      const isVampireBite = prev.isVampireBite ?? false;
+      const rawBaseHp = customMaxHp ?? selectedCharacter?.baseMaxHp ?? 100;
+      const baseMaxHp = isGlassTank ? Math.round(rawBaseHp / 2) : rawBaseHp;
       const baseDashCd = INITIAL_PLAYER_STATS.dashCooldown;
       const calculatedDashCd = Math.max(0.5, baseDashCd * (1 - dashCdReduction));
-      const baseSpeed = 165 * (selectedCharacter?.speedMultiplier ?? 1.2);
+      const baseSpeed = 165 * (selectedCharacter?.speedMultiplier ?? 1.1);
       const newMaxHp = baseMaxHp + bonusHp;
       const hpGain = Math.max(0, newMaxHp - prev.maxHp);
       const newHp = Math.min(newMaxHp, prev.hp + hpGain);
+      const finalHpRegen = (isVampireBite || isTrueWitchMode) ? 0 : regen;
       return {
         ...prev,
         vampirism: vamp,
@@ -369,24 +502,32 @@ export default function App() {
         knockbackMult: kb,
         dashCooldown: calculatedDashCd,
         speed: baseSpeed * speedMult,
-        damageMult: dmgMult,
+        damageMult: dmgMult * (isGlassTank ? 2.0 : 1.0),
         magnetRadius: 100 * magnetMult,
         maxHp: newMaxHp,
         hp: newHp,
-        hpRegen: regen,
+        hpRegen: finalHpRegen,
         dashDamage: dDamage,
+        damageReduction: dmgRed,
+        isVampireBite,
       };
     });
-  }, [selectedCharacter]);
+  }, [selectedCharacter, isTrueWitchMode]);
 
   // Start a new run (Normal Game) with selected character
   const handleStartGame = (character: CharacterDefinition = selectedCharacter) => {
     setSelectedCharacter(character);
     setIsBossRush(false);
     handleItemUnlocked('WEAPON', character.startingWeaponId);
+    if (character.startingStatItemId) {
+      handleItemUnlocked('STAT', character.startingStatItemId);
+    }
     setGameRunId((prev) => prev + 1);
     const charMaxHp = character.baseMaxHp;
-    const charSpeed = 165 * (character.speedMultiplier ?? 1.2);
+    const charSpeed = 165 * (character.speedMultiplier ?? 1.1);
+    const initialStatItems = character.startingStatItemId
+      ? [{ id: character.startingStatItemId, level: 1 }]
+      : [];
     setPlayer({
       ...INITIAL_PLAYER_STATS,
       maxHp: charMaxHp,
@@ -394,8 +535,10 @@ export default function App() {
       speed: charSpeed,
     });
     setWeapons([{ id: character.startingWeaponId, level: 1, lastFired: 0, statsMultiplier: 1.0 }]);
-    setStatItems([]);
+    setStatItems(initialStatItems);
+    recalculatePassives(initialStatItems, charMaxHp, character);
     setSurvivalTime(0);
+    setBossCountdown(300);
     setMaxWeapons(5);
     setLevelUpOptions(null);
     setPendingLevelUps(0);
@@ -417,10 +560,16 @@ export default function App() {
   const handleStartBossRush = () => {
     setIsBossRush(true);
     handleItemUnlocked('WEAPON', selectedCharacter.startingWeaponId);
+    if (selectedCharacter.startingStatItemId) {
+      handleItemUnlocked('STAT', selectedCharacter.startingStatItemId);
+    }
     setGameRunId((prev) => prev + 1);
     const initialHpRegen = isTrueWitchMode ? 0 : INITIAL_PLAYER_STATS.hpRegen;
     const charMaxHp = selectedCharacter.baseMaxHp;
-    const charSpeed = 165 * (selectedCharacter.speedMultiplier ?? 1.2);
+    const charSpeed = 165 * (selectedCharacter.speedMultiplier ?? 1.1);
+    const initialStatItems = selectedCharacter.startingStatItemId
+      ? [{ id: selectedCharacter.startingStatItemId, level: 1 }]
+      : [];
     setPlayer({
       ...INITIAL_PLAYER_STATS,
       maxHp: charMaxHp,
@@ -431,8 +580,10 @@ export default function App() {
       exp: 0,
     });
     setWeapons([{ id: selectedCharacter.startingWeaponId, level: 1, lastFired: 0, statsMultiplier: 1.0 }]);
-    setStatItems([]);
+    setStatItems(initialStatItems);
+    recalculatePassives(initialStatItems, charMaxHp, selectedCharacter);
     setSurvivalTime(0);
+    setBossCountdown(300);
     setMaxWeapons(1);
     setLevelUpOptions(null);
     setPendingLevelUps(0);
@@ -489,6 +640,7 @@ export default function App() {
     setIsDevToolsOpen(false);
     setIsPauseMenuOpen(false);
     setSurvivalTime(300);
+    setBossCountdown(0);
     // Open boss selection screen allowing player to choose which boss to fight (shows all bosses)
     setBossSelectOptions(BOSS_POOL);
   };
@@ -501,7 +653,7 @@ export default function App() {
     setLevelUpOptions(null);
     window.dispatchEvent(new CustomEvent('trigger-test-deal'));
     const destinyItem = statItems.find((s) => s.id === 'destiny_control');
-    const dealCount = destinyItem && destinyItem.level >= 3 ? 3 : 2;
+    const dealCount = destinyItem && destinyItem.level >= 3 ? 2 : 1;
     const shuffled = [...WITCH_DEALS].sort(() => 0.5 - Math.random());
     soundEngine.playWitchDeal();
     setWitchDealCurses(shuffled.slice(0, dealCount));
@@ -558,11 +710,13 @@ export default function App() {
         }
       });
     } else {
-      // 1. Upgrades for already owned weapons (if level < 6)
+      // 1. Upgrades for already owned weapons (Rank 7 Mega Evolution is exclusive to respective character)
       currentWeapons.forEach((owned) => {
-        if (owned.level < 6) {
-          const def = ALL_WEAPONS.find((w) => w.id === owned.id);
-          if (def) {
+        const def = ALL_WEAPONS.find((w) => w.id === owned.id);
+        if (def) {
+          const isRespectiveCharacter = selectedCharacter && selectedCharacter.startingWeaponId === owned.id;
+          const maxLevel = isRespectiveCharacter ? def.tiers.length : Math.min(6, def.tiers.length);
+          if (owned.level < maxLevel) {
             choices.push({
               kind: 'WEAPON_UPGRADE',
               definition: def,
@@ -683,10 +837,11 @@ export default function App() {
   };
 
   // Apply chosen Witch Deal (Minute 7:30 Curse)
-  const handleSelectCurse = (curse: CurseChoice) => {
-    handleItemUnlocked('CURSE', curse.id);
+  const handleSelectCurse = (curse: CurseChoice | null) => {
+    if (curse) {
+      handleItemUnlocked('CURSE', curse.id);
 
-    switch (curse.effect) {
+      switch (curse.effect) {
       case 'RESET_GUNS_MAX_PASSIVES':
         // Ascendant Arcana: Pick a random owned weapon, increase its rank by 3 (capped at 6), and decrease all other weapons to base level 1
         setWeapons((prev) => {
@@ -714,7 +869,7 @@ export default function App() {
         break;
 
       case 'DEJA_VU':
-        // Déjà-Vu: Reset player and enemies to level 1, remove all weapons and artifacts except Arcana Blast at Level 1, triple all earned EXP
+        // Déjà-Vu: Reset player and enemies to level 1, remove all weapons and artifacts except Stellar Beam at Level 1, triple all earned EXP
         setMaxWeapons(5);
         setWeapons([
           { id: 'arcane_wand', level: 1, lastFired: 0, statsMultiplier: 1.0 },
@@ -732,16 +887,35 @@ export default function App() {
         break;
 
       case 'DIVIDE_HP_DOUBLE_DMG':
-        // Divide max health by 4, double damage
+        // Halve Base Max HP, double damage
         setPlayer((prev) => {
-          const newMax = Math.max(15, Math.round(prev.maxHp / 4));
+          const rawBaseHp = selectedCharacter?.baseMaxHp ?? 100;
+          const newBaseHp = Math.round(rawBaseHp / 2);
+          let bonusHp = 0;
+          statItems.forEach((owned) => {
+            const def = ALL_STAT_ITEMS.find((item) => item.id === owned.id);
+            if (def && def.statType === 'MAX_HEALTH') {
+              const tier = def.tiers.find((t) => t.tier === owned.level) || def.tiers[0];
+              bonusHp += tier.statValue;
+            }
+          });
+          const newMax = newBaseHp + bonusHp;
           return {
             ...prev,
+            isGlassTank: true,
             maxHp: newMax,
             hp: Math.min(newMax, prev.hp),
             damageMult: prev.damageMult * 2.0,
           };
         });
+        break;
+
+      case 'VAMPIRES_BITE':
+        setPlayer((prev) => ({
+          ...prev,
+          isVampireBite: true,
+          hpRegen: 0,
+        }));
         break;
 
       case 'SWARM_TRIPLE_EXP':
@@ -760,6 +934,7 @@ export default function App() {
           dashCooldown: 1.2,
         }));
         break;
+      }
     }
 
     setWitchDealCurses(null);
@@ -770,8 +945,13 @@ export default function App() {
   const handleSelectDevItem = (itemId: string, category: 'WEAPON' | 'PASSIVE') => {
     if (category === 'WEAPON') {
       const owned = weapons.find(w => w.id === itemId);
+      const def = ALL_WEAPONS.find(w => w.id === itemId);
+      const isRespective = selectedCharacter && selectedCharacter.startingWeaponId === itemId;
+      const maxAllowed = (def && def.tiers.length >= 7 && !isRespective) ? 6 : (def?.tiers.length || 6);
+
       if (owned) {
-        setWeapons(prev => prev.map(w => w.id === itemId ? { ...w, level: w.level + 1 } : w));
+        if (owned.level >= maxAllowed) return; // Prevent exceeding allowed rank
+        setWeapons(prev => prev.map(w => w.id === itemId ? { ...w, level: Math.min(maxAllowed, w.level + 1) } : w));
       } else if (weapons.length < maxWeapons) {
         setWeapons(prev => [...prev, { id: itemId, level: 1, lastFired: 0, statsMultiplier: 1.0 }]);
         handleItemUnlocked('WEAPON', itemId);
@@ -832,6 +1012,10 @@ export default function App() {
   const handleGameOver = useCallback((stats: any) => {
     setGameOverStats(stats);
     if (isBossRush && stats.isVictory) {
+      completeAchievement('youre_a_witch_ruby');
+      if (isTrueWitchMode) {
+        completeAchievement('being_a_witch_isnt_a_job');
+      }
       setIsTrueWitchUnlocked(true);
       try {
         localStorage.setItem('witch_nights_true_witch_unlocked', 'true');
@@ -847,16 +1031,23 @@ export default function App() {
         }
         return newBest;
       });
+
+      if (selectedCharacter) {
+        setBossRushCharBestTimes((prev) => {
+          const charId = selectedCharacter.id;
+          const currentBest = prev[charId];
+          const newCharBest = currentBest === undefined ? stats.time : Math.min(currentBest, stats.time);
+          const updated = { ...prev, [charId]: newCharBest };
+          try {
+            localStorage.setItem('witch_nights_boss_rush_char_best_times', JSON.stringify(updated));
+          } catch {
+            // safe ignore
+          }
+          return updated;
+        });
+      }
     }
-  }, [isBossRush]);
-  const handleUnlockItem = useCallback((itemId: string) => {
-    if (isBossRush) return;
-    setUnlockedItemIds((prev) => {
-      if (prev.includes(itemId)) return prev;
-      setUnlockModalItem(itemId);
-      return [...prev, itemId];
-    });
-  }, [isBossRush]);
+  }, [isBossRush, isTrueWitchMode, selectedCharacter, completeAchievement]);
 
   // Reset discovered collection & progress
   const handleResetProgress = () => {
@@ -866,6 +1057,8 @@ export default function App() {
     setUnlockedEnemies([]);
     setEnemyKills({});
     setUnlockedItemIds(DEFAULT_UNLOCKED_ITEM_IDS);
+    setCompletedAchievementIds([]);
+    setHasTrueWitchTrophy(false);
     setBestBossRushTime(null);
     setIsTrueWitchUnlocked(false);
     setIsTrueWitchMode(false);
@@ -877,6 +1070,8 @@ export default function App() {
       localStorage.setItem('witch_nights_enemies', JSON.stringify([]));
       localStorage.setItem('witch_nights_enemy_kills', JSON.stringify({}));
       localStorage.setItem('witch_nights_unlocked_ids', JSON.stringify(DEFAULT_UNLOCKED_ITEM_IDS));
+      localStorage.removeItem('witch_nights_completed_achievements');
+      localStorage.removeItem('witch_nights_true_witch_conquered');
       localStorage.removeItem('witch_nights_boss_rush_best_time');
       localStorage.removeItem('witch_nights_true_witch_unlocked');
       localStorage.removeItem('witch_nights_true_witch_enabled');
@@ -898,6 +1093,8 @@ export default function App() {
           onOpenCollection={() => setScreen('COLLECTION')}
           onOpenOptions={() => setIsOptionsOpen(true)}
           onOpenTutorial={() => setIsTutorialOpen(true)}
+          onOpenAchievements={() => setIsAchievementsOpen(true)}
+          hasTrueWitchTrophy={hasTrueWitchTrophy}
           unlockedCount={unlockedWeapons.length + unlockedItems.length + unlockedCurses.length + unlockedEnemies.filter(id => ENEMIES_DATA.some(e => e.id === id)).length}
           totalCount={ALL_WEAPONS.length + ALL_STAT_ITEMS.length + WITCH_DEALS.length + ENEMIES_DATA.length}
         />
@@ -936,6 +1133,7 @@ export default function App() {
             statItems={statItems}
             character={selectedCharacter}
             survivalTime={survivalTime}
+            bossCountdown={bossCountdown}
             gameSpeed={1}
             isBossRush={isBossRush}
             isTrueWitchMode={isBossRush && isTrueWitchMode}
@@ -943,7 +1141,6 @@ export default function App() {
               levelUpOptions !== null ||
               witchDealCurses !== null ||
               bossSelectOptions !== null ||
-              unlockModalItem !== null ||
               gameOverStats !== null ||
               isPauseMenuOpen ||
               isDevToolsOpen ||
@@ -953,12 +1150,14 @@ export default function App() {
             }
             dashMode={options.dashMode}
             mobileMode={options.mobileMode}
+            mobileAimMode={options.mobileAimMode}
             screenShakeEnabled={options.screenShake}
             damageNumbersEnabled={options.damageNumbers}
             instaKill={instaKill}
             onTogglePause={() => setIsPauseMenuOpen((prev) => !prev)}
             onUpdatePlayer={handleUpdatePlayer}
             onUpdateSurvivalTime={setSurvivalTime}
+            onUpdateBossCountdown={setBossCountdown}
             onTriggerLevelUp={handleTriggerLevelUp}
             onTriggerWitchDeal={handleTriggerWitchDeal}
             onTriggerBossSelection={(bosses) => setBossSelectOptions(bosses)}
@@ -974,7 +1173,7 @@ export default function App() {
                 [enemyId]: (prev[enemyId] || 0) + 1,
               }));
             }}
-            onUnlockItem={handleUnlockItem}
+            onBossDefeated={handleBossDefeated}
             onBossUpdate={(b, isFight, timer, hp) => {
               setBoss(b);
               setIsBossFight(isFight);
@@ -991,6 +1190,7 @@ export default function App() {
             character={selectedCharacter}
             maxWeapons={maxWeapons}
             survivalTime={survivalTime}
+            bossCountdown={bossCountdown}
             isHurt={isHurt}
             soundEnabled={options.soundEnabled}
             onToggleSound={handleToggleSound}
@@ -999,6 +1199,7 @@ export default function App() {
             isBossFight={isBossFight}
             bossTimer={bossTimer}
             mobileMode={options.mobileMode}
+            mobileAimMode={options.mobileAimMode}
             instaKill={instaKill}
             isBossRush={isBossRush}
             isTrueWitchMode={isBossRush && isTrueWitchMode}
@@ -1048,6 +1249,7 @@ export default function App() {
               weapons={weapons}
               statItems={statItems}
               maxWeapons={maxWeapons}
+              character={selectedCharacter}
               mobileMode={options.mobileMode}
               onSelect={handleSelectDevItem}
               onModifyLevel={handleModifyDevItemLevel}
@@ -1067,15 +1269,6 @@ export default function App() {
               enemyKills={enemyKills}
               mobileMode={options.mobileMode}
               onClose={() => setIsCollectionFromPause(false)}
-            />
-          )}
-
-          {/* Unlock Notification Popup */}
-          {unlockModalItem && (
-            <UnlockModal
-              itemId={unlockModalItem}
-              mobileMode={options.mobileMode}
-              onContinue={() => setUnlockModalItem(null)}
             />
           )}
 
@@ -1136,6 +1329,8 @@ export default function App() {
       {isBossRushModalOpen && (
         <BossRushModal
           bestTime={bestBossRushTime}
+          characterBestTime={selectedCharacter ? (bossRushCharBestTimes[selectedCharacter.id] ?? null) : null}
+          selectedCharacter={selectedCharacter}
           isTrueWitchUnlocked={isTrueWitchUnlocked}
           isTrueWitchMode={isTrueWitchMode}
           onToggleTrueWitchMode={(enabled) => {
@@ -1150,7 +1345,22 @@ export default function App() {
             setIsBossRushModalOpen(false);
             handleStartBossRush();
           }}
+          onOpenCharacterSelect={() => setIsBossRushCharSelectOpen(true)}
           onClose={() => setIsBossRushModalOpen(false)}
+        />
+      )}
+
+      {/* Character Select Modal when opened from Boss Rush */}
+      {isBossRushCharSelectOpen && (
+        <CharacterSelectModal
+          initialCharacter={selectedCharacter}
+          actionLabel="Confirm Character"
+          onStartRun={(char) => {
+            setSelectedCharacter(char);
+            setIsBossRushCharSelectOpen(false);
+          }}
+          onClose={() => setIsBossRushCharSelectOpen(false)}
+          mobileMode={options.mobileMode}
         />
       )}
 
@@ -1177,6 +1387,21 @@ export default function App() {
       {isTutorialOpen && (
         <TutorialModal onClose={() => setIsTutorialOpen(false)} />
       )}
+
+      {/* 7. ACHIEVEMENTS MODAL */}
+      {isAchievementsOpen && (
+        <AchievementsModal
+          completedAchievementIds={completedAchievementIds}
+          onClose={() => setIsAchievementsOpen(false)}
+          mobileMode={options.mobileMode}
+        />
+      )}
+
+      {/* 8. TOP ACHIEVEMENT NOTIFICATION BANNER */}
+      <AchievementBanner
+        notification={achievementNotification}
+        onDismiss={() => setAchievementNotification(null)}
+      />
     </div>
   );
 }

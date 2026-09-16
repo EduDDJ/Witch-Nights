@@ -116,7 +116,7 @@ const ItemIcon: React.FC<{
             <div className="flex flex-col gap-1.5 text-[10px] uppercase font-bold tracking-wider">
               <div className="flex items-center gap-2 text-sky-400">
                 <Sparkles className="w-3 h-3" />
-                <span>Rank {owned.level}</span>
+                <span>{owned.level >= 7 ? 'Mega Evolved' : `Rank ${owned.level}`}</span>
               </div>
               {isWeapon && (
                 <div className="flex items-center gap-2 text-rose-400">
@@ -165,7 +165,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         {/* Stats Grid */}
         <div className={`grid ${isBossRush ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'} gap-3 mb-6 bg-stone-900/80 p-3.5 rounded-2xl border border-stone-800`}>
           <div className="flex flex-col p-1">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-rose-400">SURVIVED</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-rose-400">TOTAL TIME</span>
             <span className="text-lg sm:text-xl font-mono font-bold text-amber-300 mt-0.5">{formattedTime}</span>
           </div>
           <div className="flex flex-col p-1 border-l border-stone-800">

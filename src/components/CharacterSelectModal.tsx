@@ -7,21 +7,26 @@ import {
   Heart, 
   Wand2, 
   Footprints,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 
 interface CharacterSelectModalProps {
   onStartRun: (character: CharacterDefinition) => void;
   onClose: () => void;
+  initialCharacter?: CharacterDefinition;
+  actionLabel?: string;
   mobileMode?: boolean;
 }
 
 export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
   onStartRun,
   onClose,
+  initialCharacter,
+  actionLabel = 'Start Run',
   mobileMode = false,
 }) => {
-  const [selectedCharacter, setSelectedCharacter] = useState<CharacterDefinition>(CHARACTERS[0]);
+  const [selectedCharacter, setSelectedCharacter] = useState<CharacterDefinition>(initialCharacter || CHARACTERS[0]);
 
   return (
     <div 
@@ -39,14 +44,9 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
 
         {/* TOP HEADER */}
         <div className="flex items-center justify-between border-b border-purple-900/40 px-5 py-4 flex-shrink-0 relative z-10 bg-slate-950/40">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-950/80 border border-purple-500/50 flex items-center justify-center shadow-md shadow-purple-950/50">
-              <Wand2 className="w-4 h-4 text-purple-300" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold font-serif tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-purple-100 via-purple-200 to-indigo-300">
-              Character Select
-            </h2>
-          </div>
+          <h2 className="text-xl sm:text-2xl font-bold font-serif tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-purple-100 via-purple-200 to-indigo-300">
+            Character Select
+          </h2>
 
           <button
             id="close-character-select-btn"
@@ -93,7 +93,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                   </div>
 
                   {/* Character Name Label */}
-                  <span className={`text-xs font-bold font-serif transition-colors ${
+                  <span className={`w-full text-center text-[11px] sm:text-xs font-bold font-serif leading-tight transition-colors break-words px-0.5 ${
                     isSelected ? 'text-purple-200' : 'text-stone-300 group-hover:text-purple-200'
                   }`}>
                     {char.name}
@@ -152,17 +152,33 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                   })}
                 </p>
 
-                {/* Stat Badges Row: Starting Item, Base Max HP, Speed */}
+                {/* Stat Badges Row: Starting Item, Base Max HP, Speed, Mega Evolution */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  {/* Starting Item */}
+                  {/* Starting Item(s) */}
                   <div 
                     id="char-starting-item"
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-950/70 border border-indigo-700/50 text-[11px] font-semibold text-indigo-200 shadow-sm"
                   >
                     <Wand2 className="w-3 h-3 text-indigo-400" />
-                    <span>Starting Item:</span>
-                    <span className="text-amber-300 font-bold">{selectedCharacter.startingWeaponName}</span>
+                    <span>{selectedCharacter.startingStatItemName ? 'Starting Items:' : 'Starting Item:'}</span>
+                    <span className="text-amber-300 font-bold">
+                      {selectedCharacter.startingStatItemName
+                        ? `${selectedCharacter.startingWeaponName} & ${selectedCharacter.startingStatItemName}`
+                        : selectedCharacter.startingWeaponName}
+                    </span>
                   </div>
+
+                  {/* Mega Evolution Badge */}
+                  {selectedCharacter.megaEvolutionName && (
+                    <div 
+                      id="char-mega-evolution-badge"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-950/80 border border-amber-500/60 text-[11px] font-semibold text-amber-200 shadow-sm"
+                    >
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      <span>Mega Evolution:</span>
+                      <span className="text-amber-300 font-bold">{selectedCharacter.megaEvolutionName}</span>
+                    </div>
+                  )}
 
                   {/* Base Max HP */}
                   <div 
@@ -195,7 +211,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                 className="group relative w-full md:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm sm:text-base shadow-xl shadow-purple-900/50 hover:shadow-purple-700/70 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-purple-400/50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-white text-white group-hover:scale-110 transition-transform" />
-                <span>Start Run</span>
+                <span>{actionLabel}</span>
                 <ChevronRight className="w-3.5 h-3.5 text-purple-200 group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>

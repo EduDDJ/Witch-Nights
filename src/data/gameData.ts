@@ -6,10 +6,11 @@ export const CHARACTERS: CharacterDefinition[] = [
     name: 'Ruby',
     title: 'Misunderstood Witch',
     startingWeaponId: 'arcane_wand',
-    startingWeaponName: 'Arcana Blast',
+    startingWeaponName: 'Stellar Beam',
+    megaEvolutionName: 'Stellar Laser',
     baseMaxHp: 100,
-    speedMultiplier: 1.2,
-    speedLabel: '1.2x',
+    speedMultiplier: 1.1,
+    speedLabel: '1.1x',
     description: 'A good hearted woman born as a witch, fending herself because of that. And they call *her* the monster.',
     spriteUrl: 'https://i.imgur.com/uvH316Y.png',
     fallbackSpriteUrl: 'assets/aistudio/witch.png',
@@ -21,13 +22,46 @@ export const CHARACTERS: CharacterDefinition[] = [
     title: 'Just a Goo',
     startingWeaponId: 'brimstone_shotgun',
     startingWeaponName: 'Acid Pellets',
+    megaEvolutionName: 'Acidic Wave',
     baseMaxHp: 75,
-    speedMultiplier: 1.5,
-    speedLabel: '1.5x',
+    speedMultiplier: 1.25,
+    speedLabel: '1.25x',
     description: "Just a goo. People treat them like a monster, when all they want to do is... to be honest, I'm not entirely sure I know what they do.",
     spriteUrl: 'https://i.imgur.com/xNWJ044.png',
     fallbackSpriteUrl: 'assets/aistudio/glowob.png',
     color: '#22c55e',
+  },
+  {
+    id: 'odalia',
+    name: 'Odalia',
+    title: 'Chosen Protector',
+    startingWeaponId: 'astral_sword',
+    startingWeaponName: 'Astral Blade',
+    startingStatItemId: 'shield_of_protection',
+    startingStatItemName: 'Shield of Protection',
+    megaEvolutionName: 'Astral Transformation',
+    baseMaxHp: 120,
+    speedMultiplier: 1.05,
+    speedLabel: '1.05x',
+    description: "A former villain, chosen and converted by a higher organization to protect the injusticed. That's why she's here.",
+    spriteUrl: 'https://i.imgur.com/VAvCvjR.png',
+    fallbackSpriteUrl: 'assets/aistudio/odalia.png',
+    color: '#38bdf8',
+  },
+  {
+    id: 'geraldo',
+    name: 'Geraldo The Red',
+    title: 'RGB Archmage',
+    startingWeaponId: 'seeking_wisp',
+    startingWeaponName: 'Fire Wisp',
+    megaEvolutionName: 'Fireball!!!',
+    baseMaxHp: 100,
+    speedMultiplier: 1.1,
+    speedLabel: '1.1x',
+    description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
+    spriteUrl: 'assets/aistudio/geraldo.png',
+    fallbackSpriteUrl: 'assets/aistudio/geraldo.png',
+    color: '#ef4444',
   },
 ];
 
@@ -64,7 +98,7 @@ export const BOSS_POOL: BossDefinition[] = [
 export const ALL_WEAPONS: WeaponDefinition[] = [
   {
     id: 'arcane_wand',
-    name: 'Arcana Blast',
+    name: 'Stellar Beam',
     shootingType: 'MOUSE_DIRECTION',
     icon: 'Sparkles',
     description: 'Direct fire magical arcane shards toward your mouse cursor.',
@@ -76,12 +110,13 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     baseCount: 1,
     bulletColor: '#a855f7',
     tiers: [
-      { tier: 1, name: 'Arcana Blast', description: 'Fires 1 arcane shard toward cursor.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Split Shard', description: 'Fires 2 additional smaller shards on the sides and deals 30% more damage.', damageBonus: 6, fireRateBonus: 1.0, countBonus: 2, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 3, name: 'Piercing Echo', description: 'All shards pierce +1 enemy. +30% fire rate and +10% damage.', damageBonus: 8, fireRateBonus: 0.7, countBonus: 2, sizeBonus: 0, pierceBonus: 1 },
-      { tier: 4, name: 'Convergence', description: 'Side shards grow to full size. Projectiles are 33% larger and +10% damage.', damageBonus: 10, fireRateBonus: 0.7, countBonus: 2, sizeBonus: 5, pierceBonus: 1 },
-      { tier: 5, name: 'Spectral Force', description: 'All shards pierce through +1 more enemy. +10% damage.', damageBonus: 12, fireRateBonus: 0.7, countBonus: 2, sizeBonus: 5, pierceBonus: 2 },
-      { tier: 6, name: 'Astra-Laser', description: 'Transforms into a devastating laser beam that pierces infinitely.', damageBonus: 12, fireRateBonus: 0.7, countBonus: 0, sizeBonus: 10, pierceBonus: 998 },
+      { tier: 1, name: 'Stellar Beam', description: 'Fires 1 arcane shard toward cursor.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: 'Fires 2 additional smaller shards on the sides and deals 30% more damage.', damageBonus: 6, fireRateBonus: 1.0, countBonus: 2, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'All shards pierce +1 enemy. +30% fire rate and +10% damage.', damageBonus: 8, fireRateBonus: 0.7, countBonus: 2, sizeBonus: 0, pierceBonus: 1 },
+      { tier: 4, name: '', description: 'Side shards grow to full size and +10% damage.', damageBonus: 10, fireRateBonus: 0.7, countBonus: 2, sizeBonus: 0, pierceBonus: 1 },
+      { tier: 5, name: '', description: 'All shards pierce through +1 more enemy. +10% damage.', damageBonus: 12, fireRateBonus: 0.7, countBonus: 2, sizeBonus: 0, pierceBonus: 2 },
+      { tier: 6, name: '', description: '+25% Fire Rate and +10% damage.', damageBonus: 14, fireRateBonus: 0.525, countBonus: 2, sizeBonus: 0, pierceBonus: 2 },
+      { tier: 7, name: 'Stellar Laser', description: 'Transforms into a devastating laser beam that pierces infinitely.', damageBonus: 14, fireRateBonus: 0.525, countBonus: 0, sizeBonus: 10, pierceBonus: 998 },
     ]
   },
   {
@@ -99,17 +134,18 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     bulletColor: '#22c55e',
     iconColor: '#a855f7',
     tiers: [
-      { tier: 1, name: 'Corrosive Salvo', description: 'Fires 3 acid pellets, with the middle pellet aiming directly at your cursor.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Double Volley', description: 'Every shot fires another 3 pellets right after the first 3 in quick succession.', damageBonus: 4, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 1, pierceBonus: 0 },
-      { tier: 3, name: 'Acidic Vapors', description: 'Pellets apply corrosive Acid (7s duration, 1 hit/s dealing 10% attack damage) with a toxic green aura.', damageBonus: 6, fireRateBonus: 0.9, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
-      { tier: 4, name: 'Caustic Storm', description: 'Fires 2 more pellets in the first volley and 2 more in the second (10 pellets total per shot).', damageBonus: 9, fireRateBonus: 0.85, countBonus: 4, sizeBonus: 3, pierceBonus: 0 },
-      { tier: 5, name: 'Blight Infusion', description: 'Raises Acid duration from 7s to 10s.', damageBonus: 13, fireRateBonus: 0.8, countBonus: 0, sizeBonus: 4, pierceBonus: 0 },
-      { tier: 6, name: 'Dissolving Core', description: 'Every pellet gains +2 penetration, melting through hordes of foes.', damageBonus: 18, fireRateBonus: 0.7, countBonus: 0, sizeBonus: 5, pierceBonus: 2 },
+      { tier: 1, name: 'Acid Pellets', description: 'Fires 3 acid pellets, with the middle pellet aiming directly at your cursor.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: 'Every shot fires another 3 pellets right after the first 3 in quick succession.', damageBonus: 4, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 1, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'Pellets apply corrosive Acid (7s duration, 1 hit/s dealing 10% attack damage) with a toxic green aura.', damageBonus: 6, fireRateBonus: 0.9, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
+      { tier: 4, name: '', description: 'Fires 2 more pellets in the first volley and 2 more in the second (10 pellets total per shot).', damageBonus: 9, fireRateBonus: 0.85, countBonus: 4, sizeBonus: 3, pierceBonus: 0 },
+      { tier: 5, name: '', description: 'Raises Acid duration from 7s to 10s.', damageBonus: 13, fireRateBonus: 0.8, countBonus: 0, sizeBonus: 4, pierceBonus: 0 },
+      { tier: 6, name: '', description: 'Every pellet gains +2 penetration, melting through hordes of foes.', damageBonus: 18, fireRateBonus: 0.7, countBonus: 0, sizeBonus: 5, pierceBonus: 2 },
+      { tier: 7, name: 'Acidic Wave', description: 'Converts pellet shots into a wide acidic wave dealing double damage, knockbacking foes, and applying Acid for 15s.', damageBonus: 20, fireRateBonus: 0.7, countBonus: 0, sizeBonus: 12, pierceBonus: 998 },
     ]
   },
   {
     id: 'astral_sword',
-    name: 'Astral Sword',
+    name: 'Astral Blade',
     shootingType: 'MOUSE_DIRECTION',
     icon: 'Sword',
     description: 'Swings an ethereal blade in a sweeping cone towards the cursor, expanding from 90° to 180° with upgrades.',
@@ -121,12 +157,13 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     baseCount: 1,
     bulletColor: '#a855f7',
     tiers: [
-      { tier: 1, name: 'Astral Cleave', description: 'Swings an ethereal blade in a 90° cone towards cursor in short range.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Widening Arc', description: 'Increases swing cone to 108° and deals +6 damage.', damageBonus: 6, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 5, pierceBonus: 0 },
-      { tier: 3, name: 'Cosmic Reach', description: 'Increases swing cone to 126° and deals +8 damage.', damageBonus: 14, fireRateBonus: 0.90, countBonus: 0, sizeBonus: 10, pierceBonus: 0 },
-      { tier: 4, name: 'Starlight Sweep', description: 'Increases swing cone to 144° and deals +10 damage.', damageBonus: 24, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 15, pierceBonus: 0 },
-      { tier: 5, name: 'Astral Horizon', description: 'Increases swing cone to 162° and deals +12 damage.', damageBonus: 36, fireRateBonus: 0.80, countBonus: 0, sizeBonus: 20, pierceBonus: 0 },
-      { tier: 6, name: 'Celestial Hemisphere', description: 'Increases swing cone to 180° (full frontal half-circle) and deals +15 damage.', damageBonus: 51, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
+      { tier: 1, name: 'Astral Blade', description: 'Swings an ethereal blade in a 90° cone towards cursor in short range.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: 'Increases swing cone to 108° and deals +6 damage.', damageBonus: 6, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 5, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'Increases swing cone to 126° and deals +8 damage.', damageBonus: 14, fireRateBonus: 0.90, countBonus: 0, sizeBonus: 10, pierceBonus: 0 },
+      { tier: 4, name: '', description: 'Increases swing cone to 144° and deals +10 damage.', damageBonus: 24, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 15, pierceBonus: 0 },
+      { tier: 5, name: '', description: 'Increases swing cone to 162° and deals +12 damage.', damageBonus: 36, fireRateBonus: 0.80, countBonus: 0, sizeBonus: 20, pierceBonus: 0 },
+      { tier: 6, name: '', description: 'Increases swing cone to 180° (full frontal half-circle) and deals +15 damage.', damageBonus: 51, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
+      { tier: 7, name: 'Astral Transformation', description: 'Blade is always on screen aiming at cursor. Fast movement slashes foes with big damage & knockback, with 50% chance for Burn or Acid.', damageBonus: 65, fireRateBonus: 0.70, countBonus: 0, sizeBonus: 30, pierceBonus: 998 },
     ]
   },
   {
@@ -143,12 +180,12 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     baseCount: 1,
     bulletColor: '#22c55e',
     tiers: [
-      { tier: 1, name: 'Miasma Splash', description: 'Splashes 1 small corrosive acid pool at nearby ground.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Corrosive Brew', description: 'Pools deal +2 damage and expand +10 radius.', damageBonus: 2, fireRateBonus: 0.9, countBonus: 0, sizeBonus: 10, pierceBonus: 0 },
-      { tier: 3, name: 'Twin Flasks', description: 'Throws +1 acid pool per attack (2 pools total).', damageBonus: 4, fireRateBonus: 0.85, countBonus: 1, sizeBonus: 10, pierceBonus: 0 },
-      { tier: 4, name: 'Virulent Slime', description: 'Pools deal +4 damage and recharge 25% faster.', damageBonus: 7, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 15, pierceBonus: 0 },
-      { tier: 5, name: 'Caustic Deluge', description: 'Throws +1 more pool (3 pools total) with wider area.', damageBonus: 11, fireRateBonus: 0.65, countBonus: 1, sizeBonus: 20, pierceBonus: 0 },
-      { tier: 6, name: 'Plague Cataclysm', description: 'Creates 4 massive bubbling acid lakes that dissolve whole hordes.', damageBonus: 18, fireRateBonus: 0.50, countBonus: 2, sizeBonus: 30, pierceBonus: 0 },
+      { tier: 1, name: 'Acid Pools', description: 'Splashes 1 small corrosive acid pool at nearby ground.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: 'Pools deal +2 damage and expand +10 radius.', damageBonus: 2, fireRateBonus: 0.9, countBonus: 0, sizeBonus: 10, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'Throws +1 acid pool per attack (2 pools total).', damageBonus: 4, fireRateBonus: 0.85, countBonus: 1, sizeBonus: 10, pierceBonus: 0 },
+      { tier: 4, name: '', description: 'Pools deal +4 damage and recharge 25% faster.', damageBonus: 7, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 15, pierceBonus: 0 },
+      { tier: 5, name: '', description: 'Throws +1 more pool (3 pools total) with wider area.', damageBonus: 11, fireRateBonus: 0.65, countBonus: 1, sizeBonus: 20, pierceBonus: 0 },
+      { tier: 6, name: '', description: 'Creates 4 massive bubbling acid lakes that dissolve whole hordes.', damageBonus: 18, fireRateBonus: 0.50, countBonus: 2, sizeBonus: 30, pierceBonus: 0 },
     ]
   },
   {
@@ -165,12 +202,12 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     baseCount: 1,
     bulletColor: '#22c55e',
     tiers: [
-      { tier: 1, name: 'Lone Folio', description: '1 cursed grimoire spins around the witch at steady speed.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Hasty Pages', description: 'Grimoire rotation speed (r.p.m.) increases by 35%.', damageBonus: 4, fireRateBonus: 0.74, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
-      { tier: 3, name: 'Twin Lexicons', description: 'Adds +1 orbiting grimoire (2 grimoires total).', damageBonus: 7, fireRateBonus: 0.74, countBonus: 1, sizeBonus: 4, pierceBonus: 0 },
-      { tier: 4, name: 'Accelerated Vortex', description: 'Grimoires rotate 35% faster (r.p.m.) around the witch.', damageBonus: 11, fireRateBonus: 0.55, countBonus: 1, sizeBonus: 6, pierceBonus: 0 },
-      { tier: 5, name: 'Tri-Tome Barrier', description: 'Adds +1 orbiting grimoire (3 grimoires total, max books reached).', damageBonus: 16, fireRateBonus: 0.55, countBonus: 2, sizeBonus: 8, pierceBonus: 0 },
-      { tier: 6, name: 'Celestial Archive', description: '3 cosmic tomes rotate in a blazing hyper-velocity vortex (+35% r.p.m.).', damageBonus: 24, fireRateBonus: 0.40, countBonus: 2, sizeBonus: 10, pierceBonus: 0 },
+      { tier: 1, name: 'Orbiting Grimoire', description: '1 cursed grimoire spins around the witch at steady speed.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: 'Grimoire rotation speed (r.p.m.) increases by 35%.', damageBonus: 4, fireRateBonus: 0.74, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'Adds +1 orbiting grimoire (2 grimoires total).', damageBonus: 7, fireRateBonus: 0.74, countBonus: 1, sizeBonus: 4, pierceBonus: 0 },
+      { tier: 4, name: '', description: 'Grimoires rotate 35% faster (r.p.m.) around the witch.', damageBonus: 11, fireRateBonus: 0.55, countBonus: 1, sizeBonus: 6, pierceBonus: 0 },
+      { tier: 5, name: '', description: 'Adds +1 orbiting grimoire (3 grimoires total, max books reached).', damageBonus: 16, fireRateBonus: 0.55, countBonus: 2, sizeBonus: 8, pierceBonus: 0 },
+      { tier: 6, name: '', description: '3 cosmic tomes rotate in a blazing hyper-velocity vortex (+35% r.p.m.).', damageBonus: 24, fireRateBonus: 0.40, countBonus: 2, sizeBonus: 10, pierceBonus: 0 },
     ]
   },
   {
@@ -187,20 +224,20 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     baseCount: 1,
     bulletColor: '#22c55e',
     tiers: [
-      { tier: 1, name: 'Star Pulse', description: 'Emits a 130px circular pulse and inverted star around the witch.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Expanding Corona', description: 'Pulse radius expands (+25px) and deals +8 damage.', damageBonus: 8, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
-      { tier: 3, name: 'Searing Wave', description: 'Pulse recharges quicker and deals +12 damage.', damageBonus: 12, fireRateBonus: 0.90, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
-      { tier: 4, name: 'Blazing Shockwave', description: 'Pulse radius expands (+30px) and deals +16 damage.', damageBonus: 16, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 30, pierceBonus: 0 },
-      { tier: 5, name: 'Infernal Conflagration', description: 'Pulse blast knocks back foes strongly and deals +22 damage.', damageBonus: 22, fireRateBonus: 0.80, countBonus: 0, sizeBonus: 35, pierceBonus: 0 },
-      { tier: 6, name: 'Supernova Incarnate', description: 'Unleashes an apocalyptic 290px circular pulse and pentagram incinerating all nearby foes.', damageBonus: 36, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 50, pierceBonus: 0 },
+      { tier: 1, name: 'Pentagram', description: 'Emits a 130px circular pulse and inverted star around the witch.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: 'Pulse radius expands (+25px) and deals +8 damage.', damageBonus: 8, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'Pulse recharges quicker and deals +12 damage.', damageBonus: 12, fireRateBonus: 0.90, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
+      { tier: 4, name: '', description: 'Pulse radius expands (+30px) and deals +16 damage.', damageBonus: 16, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 30, pierceBonus: 0 },
+      { tier: 5, name: '', description: 'Pulse blast knocks back foes strongly and deals +22 damage.', damageBonus: 22, fireRateBonus: 0.80, countBonus: 0, sizeBonus: 35, pierceBonus: 0 },
+      { tier: 6, name: '', description: 'Unleashes an apocalyptic 290px circular pulse and pentagram incinerating all nearby foes.', damageBonus: 36, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 50, pierceBonus: 0 },
     ]
   },
   {
     id: 'seeking_wisp',
-    name: "Fireball",
+    name: 'Fire Wisp',
     shootingType: 'NEAREST_ENEMY',
     icon: 'Flame',
-    description: 'Launches blazing fireballs that autonomously seek out the nearest enemy.',
+    description: 'Launches blazing fire wisps that autonomously seek out the nearest enemy.',
     baseDamage: 22,
     baseInterval: 1.2,
     baseSpeed: 420,
@@ -209,17 +246,18 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     baseCount: 1,
     bulletColor: '#3b82f6',
     tiers: [
-      { tier: 1, name: 'Fire Spark', description: 'Launches 1 blazing homing fireball seeking the nearest monster.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Twin Fireballs', description: 'Launches +1 homing fireball per volley (2 fireballs total) and deals +4 damage.', damageBonus: 4, fireRateBonus: 1.0, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
-      { tier: 3, name: 'Blazing Agility', description: 'Fireballs fly 30% faster and deal +6 damage.', damageBonus: 6, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
-      { tier: 4, name: 'Ignition Flare', description: 'Hit enemies receive Burn effect with a red aura, dealing 10% attack damage per tick for 5 seconds.', damageBonus: 10, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 4, pierceBonus: 0 },
-      { tier: 5, name: 'Inferno Surge', description: 'Deals +15 damage and strengthens homing trajectory with continuous Burn.', damageBonus: 15, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 5, pierceBonus: 0 },
-      { tier: 6, name: 'Mega Fireball', description: 'Hurls a colossal Mega Fireball with slower fire rate that detonates on impact, dealing massive direct damage, splash damage, and Burn in an explosion.', damageBonus: 55, fireRateBonus: 1.45, speedBonus: 126, countBonus: 0, sizeBonus: 24, pierceBonus: 0 },
+      { tier: 1, name: 'Fire Wisp', description: 'Launches 1 blazing homing fire wisp seeking the nearest monster.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: 'Launches +1 homing fire wisp per volley (2 wisps total) and deals +4 damage.', damageBonus: 4, fireRateBonus: 1.0, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'Fire wisps fly 30% faster and deal +6 damage.', damageBonus: 6, fireRateBonus: 1.0, speedBonus: 126, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
+      { tier: 4, name: '', description: 'Deals +10 damage and launches +1 homing fire wisp (3 wisps total).', damageBonus: 10, fireRateBonus: 1.0, speedBonus: 126, countBonus: 2, sizeBonus: 4, pierceBonus: 0 },
+      { tier: 5, name: '', description: 'Deals +15 damage and strengthens homing trajectory.', damageBonus: 15, fireRateBonus: 1.0, speedBonus: 126, countBonus: 2, sizeBonus: 5, pierceBonus: 0 },
+      { tier: 6, name: '', description: 'Detonates a small explosion on impact, dealing direct damage and area splash damage to nearby enemies.', damageBonus: 25, fireRateBonus: 1.0, speedBonus: 126, countBonus: 2, sizeBonus: 8, pierceBonus: 0 },
+      { tier: 7, name: 'Fireball!!!', description: "Hurls a colossal Mega Fireball that detonates into a massive explosion on impact, dealing enormous splash damage and igniting all enemies caught within with continuous Burn.", damageBonus: 65, fireRateBonus: 1.45, speedBonus: 126, countBonus: 0, sizeBonus: 26, pierceBonus: 0 },
     ]
   },
   {
     id: 'vine_snare',
-    name: 'Vine Attack',
+    name: 'Vine Snare',
     shootingType: 'NEAREST_ENEMY',
     icon: 'Sprout',
     description: 'Attacks the nearest enemy, dealing damage and trapping them in a visible vine for a few seconds.',
@@ -233,12 +271,12 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     baseCount: 1,
     bulletColor: '#3b82f6',
     tiers: [
-      { tier: 1, name: 'Entangling Vines', description: 'Traps 1 nearest enemy in thorny vines for 2.0s. High cooldown.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
-      { tier: 2, name: 'Fast Sprout', description: 'Decreases vine cooldown by 22%.', damageBonus: 4, fireRateBonus: 0.78, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
-      { tier: 3, name: 'Twin Tendrils', description: 'Targets +1 additional enemy (2 enemies total).', damageBonus: 7, fireRateBonus: 0.78, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
-      { tier: 4, name: 'Rapid Roots', description: 'Decreases vine cooldown by 38%.', damageBonus: 11, fireRateBonus: 0.62, countBonus: 0, sizeBonus: 4, pierceBonus: 0 },
-      { tier: 5, name: 'Thicket Lash', description: 'Targets +1 additional enemy (3 enemies total).', damageBonus: 15, fireRateBonus: 0.62, countBonus: 1, sizeBonus: 4, pierceBonus: 0 },
-      { tier: 6, name: 'Forest Domain', description: 'Rapidly traps 4 nearest enemies in thick thorny vines.', damageBonus: 22, fireRateBonus: 0.44, countBonus: 2, sizeBonus: 6, pierceBonus: 0 },
+      { tier: 1, name: 'Vine Snare', description: 'Traps 1 nearest enemy in thorny vines for 2.0s. High cooldown.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: 'Decreases vine cooldown by 22%.', damageBonus: 4, fireRateBonus: 0.78, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'Targets +1 additional enemy (2 enemies total).', damageBonus: 7, fireRateBonus: 0.78, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
+      { tier: 4, name: '', description: 'Decreases vine cooldown by 38%.', damageBonus: 11, fireRateBonus: 0.62, countBonus: 0, sizeBonus: 4, pierceBonus: 0 },
+      { tier: 5, name: '', description: 'Targets +1 additional enemy (3 enemies total).', damageBonus: 15, fireRateBonus: 0.62, countBonus: 1, sizeBonus: 4, pierceBonus: 0 },
+      { tier: 6, name: '', description: 'Rapidly traps 4 nearest enemies in thick thorny vines.', damageBonus: 22, fireRateBonus: 0.44, countBonus: 2, sizeBonus: 6, pierceBonus: 0 },
     ]
   }
 ];
@@ -254,28 +292,12 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     isLegendary: true,
     color: '#d97706', // darkish orange for legendary
     tiers: [
-      { tier: 1, name: 'Stonelight Glare', description: 'Slows enemies near cursor by 25% (32px radius).', statValue: 0.25 },
-      { tier: 2, name: 'Petrifying Gaze', description: 'Slows enemies by 30% and increases radius to 38px.', statValue: 0.30 },
-      { tier: 3, name: 'Gorgon Aura', description: 'Slows enemies by 35% and increases radius to 44px.', statValue: 0.35 },
-      { tier: 4, name: 'Fossilizing Focus', description: 'Slows enemies by 40% and increases radius to 50px.', statValue: 0.40 },
-      { tier: 5, name: 'Medusa Domain', description: 'Slows enemies by 45% and increases radius to 56px.', statValue: 0.45 },
-      { tier: 6, name: 'Cursed Gorgon Crown', description: 'Devastating 55% slow in a 64px cursor radius!', statValue: 0.55 },
-    ]
-  },
-  {
-    id: 'vampiric_chalice',
-    name: 'Vampiric Fangs',
-    statType: 'VAMPIRISM',
-    icon: 'Fangs',
-    description: 'Leeches vitality from struck enemies, restoring health in combat.',
-    color: '#ea580c',
-    tiers: [
-      { tier: 1, name: 'Sip of Blood', description: 'Gain 0.8% Vampirism (~0.5 HP/s in combat).', statValue: 0.008 },
-      { tier: 2, name: 'Crimson Sip', description: 'Gain +0.6% Vampirism (1.4% total, ~1.0 HP/s).', statValue: 0.014 },
-      { tier: 3, name: 'Deep Quench', description: 'Gain +0.6% Vampirism (2.0% total, ~1.5 HP/s).', statValue: 0.020 },
-      { tier: 4, name: 'Sanguine Thirst', description: 'Gain +0.8% Vampirism (2.8% total, ~2.2 HP/s).', statValue: 0.028 },
-      { tier: 5, name: 'Heart Drinker', description: 'Gain +0.8% Vampirism (3.6% total, ~3.0 HP/s).', statValue: 0.036 },
-      { tier: 6, name: 'Eternal Vampire', description: 'Gain +1.4% Vampirism (5.0% total, ~4.5 HP/s). Siphons steady vitality during battle.', statValue: 0.050 },
+      { tier: 1, name: "Medusa's Eye", description: 'Slows enemies near cursor by 25% (32px radius).', statValue: 0.25 },
+      { tier: 2, name: '', description: 'Slows enemies by 30% and increases radius to 38px.', statValue: 0.30 },
+      { tier: 3, name: '', description: 'Slows enemies by 35% and increases radius to 44px.', statValue: 0.35 },
+      { tier: 4, name: '', description: 'Slows enemies by 40% and increases radius to 50px.', statValue: 0.40 },
+      { tier: 5, name: '', description: 'Slows enemies by 45% and increases radius to 56px.', statValue: 0.45 },
+      { tier: 6, name: '', description: 'Devastating 55% slow in a 64px cursor radius!', statValue: 0.55 },
     ]
   },
   {
@@ -286,12 +308,12 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     description: 'Magnifies all magical projectiles, beams, and Area-of-Effect zones.',
     color: '#ea580c',
     tiers: [
-      { tier: 1, name: 'Minor Magnifier', description: 'Increase all projectile & AoE sizes by +18%.', statValue: 1.18 },
-      { tier: 2, name: 'Astral Focus', description: 'Increase sizes by +15% (1.33x total).', statValue: 1.33 },
-      { tier: 3, name: 'Occult Prism', description: 'Increase sizes by +15% (1.48x total).', statValue: 1.48 },
-      { tier: 4, name: 'Cosmic Eye', description: 'Increase sizes by +17% (1.65x total).', statValue: 1.65 },
-      { tier: 5, name: 'Starlight Spire', description: 'Increase sizes by +20% (1.85x total).', statValue: 1.85 },
-      { tier: 6, name: 'Infinite Cosmos', description: 'Sizes doubled (+115% total / 2.15x!). Giant devastating spells.', statValue: 2.15 },
+      { tier: 1, name: 'Astral Lens', description: 'Increase all projectile & AoE sizes by +18%.', statValue: 1.18 },
+      { tier: 2, name: '', description: 'Increase sizes by +15% (1.33x total).', statValue: 1.33 },
+      { tier: 3, name: '', description: 'Increase sizes by +15% (1.48x total).', statValue: 1.48 },
+      { tier: 4, name: '', description: 'Increase sizes by +17% (1.65x total).', statValue: 1.65 },
+      { tier: 5, name: '', description: 'Increase sizes by +20% (1.85x total).', statValue: 1.85 },
+      { tier: 6, name: '', description: 'Sizes doubled (+115% total / 2.15x!). Giant devastating spells.', statValue: 2.15 },
     ]
   },
   {
@@ -302,12 +324,12 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     description: 'Imbues your attacks with kinetic force that violently repels charging enemies.',
     color: '#ea580c',
     tiers: [
-      { tier: 1, name: 'Force Ward', description: 'Adds knockback to all attacks (+20% force).', statValue: 1.2 },
-      { tier: 2, name: 'Kinetic Seal', description: 'Increases knockback by +25% (1.45x total).', statValue: 1.45 },
-      { tier: 3, name: 'Gale Charm', description: 'Increases knockback by +25% (1.7x total).', statValue: 1.7 },
-      { tier: 4, name: 'Banishment Rune', description: 'Increases knockback by +30% (2.0x total).', statValue: 2.0 },
-      { tier: 5, name: 'Titan Force', description: 'Increases knockback by +35% (2.35x total).', statValue: 2.35 },
-      { tier: 6, name: 'Untouchable Aura', description: 'Tremendous 2.75x knockback force! Enemies cannot get close.', statValue: 2.75 },
+      { tier: 1, name: 'Repulsion Talisman', description: 'Adds knockback to all attacks (+20% force).', statValue: 1.2 },
+      { tier: 2, name: '', description: 'Increases knockback by +25% (1.45x total).', statValue: 1.45 },
+      { tier: 3, name: '', description: 'Increases knockback by +25% (1.7x total).', statValue: 1.7 },
+      { tier: 4, name: '', description: 'Increases knockback by +30% (2.0x total).', statValue: 2.0 },
+      { tier: 5, name: '', description: 'Increases knockback by +35% (2.35x total).', statValue: 2.35 },
+      { tier: 6, name: '', description: 'Tremendous 2.75x knockback force! Enemies cannot get close.', statValue: 2.75 },
     ]
   },
   {
@@ -318,11 +340,11 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     description: 'Witchcraft broom enchantment that reduces Shift-dash cooldown by 10% of base time per rank.',
     color: '#ea580c',
     tiers: [
-      { tier: 1, name: 'Light Bristles', description: 'Reduces dash cooldown by 10% of base time.', statValue: 0.10 },
-      { tier: 2, name: 'Wind Weaver', description: 'Reduces dash cooldown by 10% of base time (-20% total).', statValue: 0.20 },
-      { tier: 3, name: 'Gale Rider', description: 'Reduces dash cooldown by 10% of base time (-30% total).', statValue: 0.30 },
-      { tier: 4, name: 'Zephyr Flight', description: 'Reduces dash cooldown by 10% of base time (-40% total).', statValue: 0.40 },
-      { tier: 5, name: 'Sonic Broom', description: 'Reduces dash cooldown by 10% of base time (-50% total)! Max rank 5.', statValue: 0.50 },
+      { tier: 1, name: 'Broom of Haste', description: 'Reduces dash cooldown by 10% of base time.', statValue: 0.10 },
+      { tier: 2, name: '', description: 'Reduces dash cooldown by 10% of base time (-20% total).', statValue: 0.20 },
+      { tier: 3, name: '', description: 'Reduces dash cooldown by 10% of base time (-30% total).', statValue: 0.30 },
+      { tier: 4, name: '', description: 'Reduces dash cooldown by 10% of base time (-40% total).', statValue: 0.40 },
+      { tier: 5, name: '', description: 'Reduces dash cooldown by 10% of base time (-50% total)! Max rank 5.', statValue: 0.50 },
     ]
   },
 
@@ -334,12 +356,12 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     description: 'Pulls scattered EXP crystals, food, and EXP magnets from great distances automatically.',
     color: '#ea580c',
     tiers: [
-      { tier: 1, name: 'Faint Pull', description: '+25% EXP, food & magnet collection radius (1.25x total).', statValue: 1.25 },
-      { tier: 2, name: 'Magnetic Core', description: '+25% collection radius (1.50x total).', statValue: 1.50 },
-      { tier: 3, name: 'Grave Magnet', description: '+25% collection radius (1.75x total).', statValue: 1.75 },
-      { tier: 4, name: 'Soul Siphon', description: '+25% collection radius (2.00x total).', statValue: 2.00 },
-      { tier: 5, name: 'Void Beacon', description: '+25% collection radius (2.25x total).', statValue: 2.25 },
-      { tier: 6, name: 'Black Hole Relic', description: '+25% collection radius (2.50x total). Pulls everything instantly.', statValue: 2.50 },
+      { tier: 1, name: 'Attractor Amulet', description: '+25% EXP, food & magnet collection radius (1.25x total).', statValue: 1.25 },
+      { tier: 2, name: '', description: '+25% collection radius (1.50x total).', statValue: 1.50 },
+      { tier: 3, name: '', description: '+25% collection radius (1.75x total).', statValue: 1.75 },
+      { tier: 4, name: '', description: '+25% collection radius (2.00x total).', statValue: 2.00 },
+      { tier: 5, name: '', description: '+25% collection radius (2.25x total).', statValue: 2.25 },
+      { tier: 6, name: '', description: '+25% collection radius (2.50x total). Pulls everything instantly.', statValue: 2.50 },
     ]
   },
   {
@@ -350,11 +372,11 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     description: 'Infuses witch vitality with ancient bloodstone, increasing Max HP and passive HP regen.',
     color: '#ea580c',
     tiers: [
-      { tier: 1, name: 'Heartstone', description: '+20 Max HP and +0.1 HP/s passive regeneration.', statValue: 20 },
-      { tier: 2, name: 'Vigor Bead', description: '+20 Max HP and +0.1 HP/s regen (+40 Max HP total).', statValue: 40 },
-      { tier: 3, name: 'Vital Vein', description: '+20 Max HP and +0.1 HP/s regen (+60 Max HP total).', statValue: 60 },
-      { tier: 4, name: 'Gore Gem', description: '+20 Max HP and +0.1 HP/s regen (+80 Max HP total).', statValue: 80 },
-      { tier: 5, name: 'Blood Core', description: '+20 Max HP and +0.1 HP/s regen (+100 Max HP total).', statValue: 100 },
+      { tier: 1, name: 'Bloodstone', description: '+20 Max HP and +0.1 HP/s passive regeneration.', statValue: 20 },
+      { tier: 2, name: '', description: '+20 Max HP and +0.1 HP/s regen (+40 Max HP total).', statValue: 40 },
+      { tier: 3, name: '', description: '+20 Max HP and +0.1 HP/s regen (+60 Max HP total).', statValue: 60 },
+      { tier: 4, name: '', description: '+20 Max HP and +0.1 HP/s regen (+80 Max HP total).', statValue: 80 },
+      { tier: 5, name: '', description: '+20 Max HP and +0.1 HP/s regen (+100 Max HP total).', statValue: 100 },
     ]
   },
   {
@@ -367,31 +389,31 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     tiers: [
       {
         tier: 1,
-        name: 'Lucky Paw',
+        name: 'Destiny Control',
         description: 'Opens a 4th option for every level up.',
         statValue: 1,
       },
       {
         tier: 2,
-        name: 'Thread of Fate',
+        name: '',
         description: 'Choose from a pool of 2 random bosses at every 5-minute interval.',
         statValue: 2,
       },
       {
         tier: 3,
-        name: "Rabbit's Grace",
-        description: "Enables a 3rd Witch's Deal option when striking bargains.",
+        name: '',
+        description: "Adds a secondary Witch's Deal option when striking bargains.",
         statValue: 3,
       },
       {
         tier: 4,
-        name: 'Tapestry of Destiny',
+        name: '',
         description: 'Adds a 3rd boss option to the selection pool at every 5-minute interval.',
         statValue: 4,
       },
       {
         tier: 5,
-        name: 'Fate Reroll',
+        name: '',
         description: 'Enables 1 Reroll per level up screen, refreshing all 4 options.',
         statValue: 5,
       },
@@ -407,12 +429,27 @@ export const ALL_STAT_ITEMS: StatItemDefinition[] = [
     isLegendary: true,
     color: '#ea580c', // Artifact Orange
     tiers: [
-      { tier: 1, name: 'Razor Claws', description: 'Deals 20 damage and applies strong knockback to enemies you dash through.', statValue: 20 },
-      { tier: 2, name: 'Serrated Edge', description: 'Damage and knockback increased to 140%.', statValue: 28 },
-      { tier: 3, name: 'Obsidian Talons', description: 'Damage and knockback increased to 180%.', statValue: 36 },
-      { tier: 4, name: 'Nightmare Shredder', description: 'Damage and knockback increased to 220%.', statValue: 44 },
-      { tier: 5, name: 'Gore Ripper', description: 'Damage and knockback increased to 260%.', statValue: 52 },
-      { tier: 6, name: 'The Eternal Hunt', description: 'Max Rank! Damage and knockback increased to 300%. Shred through the darkness.', statValue: 60 },
+      { tier: 1, name: "Nightbear's Claws", description: 'Deals 20 damage and applies strong knockback to enemies you dash through.', statValue: 20 },
+      { tier: 2, name: '', description: 'Damage and knockback increased to 140%.', statValue: 28 },
+      { tier: 3, name: '', description: 'Damage and knockback increased to 180%.', statValue: 36 },
+      { tier: 4, name: '', description: 'Damage and knockback increased to 220%.', statValue: 44 },
+      { tier: 5, name: '', description: 'Damage and knockback increased to 260%.', statValue: 52 },
+      { tier: 6, name: '', description: 'Max Rank! Damage and knockback increased to 300%. Shred through the darkness.', statValue: 60 },
+    ]
+  },
+  {
+    id: 'shield_of_protection',
+    name: 'Shield of Protection',
+    statType: 'DAMAGE_REDUCTION',
+    icon: 'Shield',
+    description: 'Enchanted protective shield that lowers all incoming damage taken by 5% per rank.',
+    color: '#ea580c',
+    tiers: [
+      { tier: 1, name: 'Shield of Protection', description: 'Lowers damage taken by 5%.', statValue: 0.05 },
+      { tier: 2, name: '', description: 'Lowers damage taken by 10% (-5% additional).', statValue: 0.10 },
+      { tier: 3, name: '', description: 'Lowers damage taken by 15% (-5% additional).', statValue: 0.15 },
+      { tier: 4, name: '', description: 'Lowers damage taken by 20% (-5% additional).', statValue: 0.20 },
+      { tier: 5, name: '', description: 'Max Rank! Lowers damage taken by 25%.', statValue: 0.25 },
     ]
   }
 ];
@@ -438,27 +475,27 @@ export const WITCH_DEALS: CurseChoice[] = [
   },
   {
     id: 'curse_divide_hp_double_dmg',
-    title: 'Glass Empress Covenant',
-    subtitle: 'Fragile as Stained Glass, Lethal as the Void',
-    description: 'Divide your maximum health by 4 (your witch becomes extremely fragile), but DOUBLES (2x) all your damage output permanently!',
+    title: 'Glass Tank',
+    subtitle: '',
+    description: 'Halves your Base Max HP by 2, but DOUBLES all your damage output permanently!',
     icon: 'Skull',
     color: '#ef4444',
     effect: 'DIVIDE_HP_DOUBLE_DMG'
   },
   {
-    id: 'curse_swarm_triple_exp',
-    title: 'Blood-Tide Apocalypse',
-    subtitle: 'A Horde Beyond Reckoning with Boundless Sanguine Rewards',
-    description: 'Double enemy spawn rate and monster health, but all monsters drop TRIPLE EXP and you gain an extra +3% Vampirism!',
-    icon: 'Flame',
+    id: 'curse_vampires_bite',
+    title: "Vampire's Bite",
+    subtitle: '',
+    description: 'Removes ALL passive healing (Natural 0.5 HP/s & Bloodstone), but every enemy hit heals you for 2 HP.',
+    icon: 'Fangs',
     color: '#ef4444',
-    effect: 'SWARM_TRIPLE_EXP'
+    effect: 'VAMPIRES_BITE'
   },
   {
     id: 'curse_deja_vu',
     title: 'Déjà-Vu',
     subtitle: 'Time Rewinds to the Dawn, Bearing Infinite Enlightenment',
-    description: 'Brings the player and all enemies back to Level 1. Removes all Weapons and Artifacts except Arcana Blast (reverted to Level 1). In return, all EXP earned is permanently TRIPLED (3x)!',
+    description: 'Brings the player and all enemies back to Level 1. Removes all Weapons and Artifacts except Stellar Beam (reverted to Level 1). In return, all EXP earned is permanently TRIPLED (3x)!',
     icon: 'RotateCcw',
     color: '#ef4444',
     effect: 'DEJA_VU'
@@ -473,7 +510,7 @@ export const DEFAULT_UNLOCKED_ITEM_IDS: string[] = [
   'grimoire_orbit',
   'hellfire_nova',
   'seeking_wisp',
-  'vampiric_chalice',
+  'shield_of_protection',
   'astral_lens',
   'repulsion_talisman',
   'broom_of_haste',
@@ -545,4 +582,22 @@ export function getEnemyBaseHp(level: number): number {
     hp += step;
   }
   return Math.round(hp);
+}
+
+/**
+ * Food items heal the player equivalent to half of enemy's damage.
+ * - Always rounded so the number ends in 0 or 5 (multiples of 5).
+ * - If exactly in between (ending in 2.5 and 7.5), round down (to 0 and 5, respectively).
+ */
+export function calculateFoodHealAmount(enemyDamage: number): number {
+  const halfDamage = enemyDamage / 2;
+  const step = halfDamage / 5;
+  const frac = step - Math.floor(step);
+  let roundedStep: number;
+  if (Math.abs(frac - 0.5) < 1e-6) {
+    roundedStep = Math.floor(step);
+  } else {
+    roundedStep = Math.round(step);
+  }
+  return Math.max(0, roundedStep * 5);
 }

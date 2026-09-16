@@ -29,7 +29,7 @@ import {
   FlaskConical,
 } from 'lucide-react';
 
-import { BossInstance, CharacterDefinition } from '../types/game';
+import { BossInstance, CharacterDefinition, MobileAimMode } from '../types/game';
 
 interface GameHUDProps {
   player: PlayerStats;
@@ -38,6 +38,7 @@ interface GameHUDProps {
   character?: CharacterDefinition;
   maxWeapons?: number;
   survivalTime: number; // in seconds
+  bossCountdown?: number; // in seconds (5min countdown for normal mode)
   isHurt: boolean;
   gameSpeed?: number;
   onToggleSpeed?: () => void;
@@ -51,6 +52,7 @@ interface GameHUDProps {
   isBossFight?: boolean;
   bossTimer?: number;
   mobileMode?: boolean;
+  mobileAimMode?: MobileAimMode;
   instaKill?: boolean;
   isBossRush?: boolean;
   isTrueWitchMode?: boolean;
@@ -91,6 +93,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   character,
   maxWeapons,
   survivalTime,
+  bossCountdown,
   isHurt,
   gameSpeed,
   onToggleSpeed,
@@ -104,13 +107,18 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   isBossFight,
   bossTimer,
   mobileMode = false,
+  mobileAimMode = 'JOYSTICK',
   instaKill = false,
   isBossRush = false,
   isTrueWitchMode = false,
 }) => {
-  // Format survival time MM:SS
-  const minutes = Math.floor(survivalTime / 60);
-  const seconds = Math.floor(survivalTime % 60);
+  // Clock display logic:
+  // In Boss Rush Mode, display standard count-up survival time.
+  // In Normal Mode, display the 5-minute countdown (bossCountdown).
+  // While in a Bossfight, the timer pauses until the boss is defeated.
+  const displayTime = isBossRush ? survivalTime : (bossCountdown !== undefined ? bossCountdown : Math.max(0, 300 - survivalTime));
+  const minutes = Math.floor(displayTime / 60);
+  const seconds = Math.floor(displayTime % 60);
   const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
   // Boss UI logic
@@ -153,12 +161,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 pointer-events-none select-none flex flex-col justify-between p-3 sm:p-5 font-sans">
-      {/* TOP ROW: ... */}
-      <div className="w-full flex flex-col items-center gap-4">
-        <div className="w-full flex items-start justify-between gap-4">
+    <div className="absolute inset-0 pointer-events-none select-none flex flex-col justify-between p-2 sm:p-5 font-sans overflow-hidden">
+      {/* TOP ROW: Compact Player HUD (Left) & Controls/Timer (Right) */}
+      <div className="w-full flex flex-col items-center gap-2 sm:gap-4">
+        <div className="w-full flex items-start justify-between gap-1.5 sm:gap-4">
           {/* Top Left: Compact Player HUD */}
-          <div id="player-hud" className="relative pointer-events-auto flex items-start gap-2.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] pt-3 sm:pt-0">
+          <div id="player-hud" className="relative pointer-events-auto flex items-start gap-1.5 sm:gap-2.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] pt-0.5 sm:pt-0 shrink min-w-0">
             {instaKill && (
               <div className="absolute -top-1 sm:-top-4 left-0 bg-rose-950/95 border border-rose-500 text-rose-300 font-extrabold text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded shadow animate-pulse tracking-wider uppercase whitespace-nowrap z-20">
                 Cheats Enabled
@@ -169,12 +177,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               <div className="relative">
                 <WitchPortrait 
                   isHurt={isHurt} 
-                  size={46} 
+                  size={mobileMode ? 38 : 46} 
                   spriteUrl={character?.spriteUrl}
                   fallbackSpriteUrl={character?.fallbackSpriteUrl}
                   characterName={character?.name}
                 />
-                <div className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 font-black text-[9px] rounded px-1 py-0.2 border border-slate-950 shadow">
+                <div className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 font-black text-[8px] sm:text-[9px] rounded px-1 py-0.2 border border-slate-950 shadow">
                   {player.level}
                 </div>
               </div>
@@ -190,18 +198,18 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               )}
             </div>
 
-            {/* Red HP Bar and Blue EXP Bar ... */}
-            <div className="flex flex-col gap-1 w-36 sm:w-48">
-              {/* Red HP Bar ... */}
+            {/* Red HP Bar and Blue EXP Bar */}
+            <div className="flex flex-col gap-1 w-24 sm:w-44">
+              {/* Red HP Bar */}
               <div className="flex flex-col gap-0.5">
-                <div className="flex justify-between items-center text-[10px] font-bold text-rose-300 px-0.5 tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                <div className="flex justify-between items-center text-[9px] sm:text-[10px] font-bold text-rose-300 px-0.5 tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                   <span className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                     HP
                   </span>
                   <span className="font-mono">{Math.ceil(player.hp)} / {Math.ceil(player.maxHp)}</span>
                 </div>
-                <div className="relative h-2.5 w-full bg-black/60 rounded-md overflow-hidden border border-rose-600/40 shadow-inner">
+                <div className="relative h-2 sm:h-2.5 w-full bg-black/60 rounded-md overflow-hidden border border-rose-600/40 shadow-inner">
                   <div
                     className="h-full bg-gradient-to-r from-red-600 via-rose-500 to-red-400 transition-all duration-150 rounded-sm"
                     style={{ width: `${healthPercent}%` }}
@@ -213,11 +221,11 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               {/* Blue EXP Bar underneath (Hidden in Boss Rush Mode) */}
               {!isBossRush && (
                 <div className="flex flex-col gap-0.5">
-                  <div className="flex justify-between items-center text-[9px] font-bold text-sky-300 px-0.5 tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                  <div className="flex justify-between items-center text-[8px] sm:text-[9px] font-bold text-sky-300 px-0.5 tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                     <span>EXP</span>
                     <span className="font-mono">{Math.floor(player.exp)} / {player.expToNextLevel}</span>
                   </div>
-                  <div className="relative h-2 w-full bg-black/60 rounded-md overflow-hidden border border-sky-600/40 shadow-inner">
+                  <div className="relative h-1.5 sm:h-2 w-full bg-black/60 rounded-md overflow-hidden border border-sky-600/40 shadow-inner">
                     <div
                       className="h-full bg-gradient-to-r from-blue-600 via-sky-400 to-cyan-300 transition-all duration-150 rounded-sm"
                       style={{ width: `${expPercent}%` }}
@@ -230,25 +238,42 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           </div>
 
           {/* Top Right: Timer & Quick Control Badges */}
-          <div className={`pointer-events-auto flex flex-col items-end gap-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] transition-all duration-200 ${
-            mobileMode ? 'mr-12 sm:mr-16' : ''
-          }`}>
-            <div className="flex items-center gap-2">
-              {/* Survival Timer */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950/70 backdrop-blur-sm border border-purple-900/40 shadow">
-                <span className="text-[10px] font-bold tracking-wider text-purple-400">TIME</span>
-                <span className="font-mono text-base font-bold text-amber-300 drop-shadow">{formattedTime}</span>
+          <div className="pointer-events-auto flex flex-col items-end gap-1 sm:gap-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] shrink-0 z-20">
+            <div className="flex items-center gap-1 sm:gap-2">
+              {/* Survival / Boss Countdown Timer */}
+              <div
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-slate-950/80 backdrop-blur-sm border shadow transition-colors ${
+                  !isBossRush && isBossFight
+                    ? 'border-rose-700/60 shadow-rose-950/50'
+                    : 'border-purple-900/40'
+                }`}
+                title={!isBossRush ? (isBossFight ? 'Boss Fight Active (Timer Paused)' : 'Countdown to Next Boss Fight') : 'Run Time'}
+              >
+                <span className="text-[9px] sm:text-[10px] font-bold tracking-wider text-purple-400">
+                  {isBossRush ? 'TIME' : (!isBossFight ? 'BOSS' : 'PAUSED')}
+                </span>
+                <span
+                  className={`font-mono text-sm sm:text-base font-bold drop-shadow ${
+                    !isBossRush && isBossFight
+                      ? 'text-rose-400'
+                      : !isBossRush && displayTime <= 30
+                      ? 'text-amber-400 animate-pulse'
+                      : 'text-amber-300'
+                  }`}
+                >
+                  {formattedTime}
+                </span>
               </div>
 
               {/* Pause Button (Square with just pause symbol) */}
               <button
                 id="hud-pause-btn"
                 onClick={onOpenPauseMenu}
-                className="w-8 h-8 rounded-lg bg-slate-950/70 hover:bg-purple-950/90 text-purple-200 border border-purple-800/40 hover:border-purple-500/60 transition-all cursor-pointer shadow flex items-center justify-center shrink-0"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-950/80 hover:bg-purple-950/90 text-purple-200 border border-purple-800/40 hover:border-purple-500/60 transition-all cursor-pointer shadow flex items-center justify-center shrink-0 active:scale-95 touch-manipulation"
                 title="Pause Game (ESC)"
                 aria-label="Pause Game"
               >
-                <Pause className="w-4 h-4 text-purple-300" />
+                <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-300" />
               </button>
             </div>
 
@@ -356,7 +381,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                   </h4>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-[10px] font-mono font-bold text-amber-400">
-                      Tier {hoveredItem.tier}/6
+                      {hoveredItem.tier >= 7 ? 'Mega Evolved' : `Rank ${hoveredItem.tier}`}
                     </span>
                     {hoveredItem.shootingType && (
                       <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-950 border border-purple-800 text-purple-300">
@@ -513,9 +538,9 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         <div className={`pointer-events-auto relative flex flex-col items-center gap-2.5 transition-all duration-300 ${
           mobileMode && isBossFight ? 'mb-24 sm:mb-28' : ''
         }`}>
-          {/* Virtual Cursor / Aim Joystick in Mobile Mode, positioned directly above Dash button */}
-          {mobileMode && (
-            <div className="flex flex-col items-center mb-1">
+          {/* Virtual Cursor / Aim Joystick in Mobile Mode (if Joystick Aim is active), positioned directly above Dash button */}
+          {mobileMode && mobileAimMode !== 'TOUCH' && (
+            <div className="flex flex-col items-center mr-6 sm:mr-8 mb-3 -translate-y-2">
               <VirtualJoystick
                 size={108}
                 variant="cursor"

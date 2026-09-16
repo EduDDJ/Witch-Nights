@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ALL_WEAPONS, ALL_STAT_ITEMS, WITCH_DEALS } from '../data/gameData';
+import { ALL_WEAPONS, ALL_STAT_ITEMS, WITCH_DEALS, CHARACTERS } from '../data/gameData';
 import { ShootingType } from '../types/game';
 import {
   Sparkles,
@@ -289,7 +289,7 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
     isBoss: true,
     description: 'A stationary botanical nightmare with vicious roots and an insatiable appetite.',
     attacks: [
-      { name: 'Vine Attack', damage: '10', telegraph: '0.75s', description: 'Spawns roots near the player. Emits a smaller warning circle before striking.' },
+      { name: 'Vine Snare', damage: '10', telegraph: '1s', description: 'Spawns roots near the player. Emits a smaller warning circle before striking.' },
       { name: 'Chomp Attack', damage: '25', telegraph: '0.85s', description: 'Massive area-of-effect bite centered on the player. Dash is required to escape.' }
     ]
   },
@@ -674,7 +674,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                   isDiscovered,
                   isUnlocked,
                   isLegendary,
-                  description: `${c.subtitle} — ${c.description}`,
+                  description: c.subtitle ? `${c.subtitle} — ${c.description}` : c.description,
                   unlockCondition: c.unlockCondition,
                   bulletColor: c.color,
                   icon: DisplayIcon,
@@ -863,7 +863,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                             : selectedItem.category === 'PASSIVE'
                             ? 'Undiscovered Artifact'
                             : selectedItem.category === 'CURSE'
-                            ? 'Undiscovered Curse'
+                            ? "Undiscovered Witch's Deal"
                             : selectedItem.isLegendary
                             ? 'Undiscovered Boss'
                             : 'Undiscovered Enemy')
@@ -1006,7 +1006,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                       )}
                     </h3>
                     <p className="text-xs text-stone-400">
-                      Category: {selectedItem.category === 'WEAPON' ? 'Weapon' : selectedItem.category === 'PASSIVE' ? 'Artifact / Passive' : selectedItem.category === 'CURSE' ? 'Witch Curse' : 'Boss Enemy'}
+                      Category: {selectedItem.category === 'WEAPON' ? 'Weapon' : selectedItem.category === 'PASSIVE' ? 'Artifact / Passive' : selectedItem.category === 'CURSE' ? "Witch's Deal" : 'Boss Enemy'}
                     </p>
                   </div>
                 </div>
@@ -1141,11 +1141,20 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                                 statsList.push(`Pierce: +${diffPierce}`);
                               }
 
-                              if (baseWeapon.id === 'seeking_wisp' && t.tier === 4) {
-                                statsList.push('Special: Burn Effect (5s)');
-                              }
                               if (baseWeapon.id === 'seeking_wisp' && t.tier === 6) {
-                                statsList.push('Special: Mega Blast Explosion');
+                                statsList.push('Special: Small Explosion');
+                              }
+                              if (baseWeapon.id === 'seeking_wisp' && t.tier === 7) {
+                                statsList.push('Special: Mega Blast Explosion + Continuous Burn');
+                              }
+                              if (baseWeapon.id === 'arcane_wand' && t.tier === 7) {
+                                statsList.push('Special: Infinite Piercing Laser');
+                              }
+                              if (baseWeapon.id === 'brimstone_shotgun' && t.tier === 7) {
+                                statsList.push('Special: Wide Wave (2x Dmg + Knockback + 15s Acid)');
+                              }
+                              if (baseWeapon.id === 'astral_sword' && t.tier === 7) {
+                                statsList.push('Special: Persistent Cursor Blade + High Speed Slash + Burn/Acid');
                               }
                             }
                           }
@@ -1225,10 +1234,16 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                             className="bg-stone-950/80 p-3 rounded-xl border border-stone-900 hover:border-purple-900/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-left"
                           >
                             <div className="min-w-0 text-left">
-                              <div className="flex items-center gap-2 text-left">
+                              <div className="flex items-center gap-2 text-left flex-wrap">
                                 <span className="text-xs font-mono font-bold text-purple-400 bg-purple-950/80 px-1.5 py-0.5 rounded border border-purple-800/40">
-                                  Rank {t.tier}
+                                  {t.tier === 7 ? 'Mega Evolved' : `Rank ${t.tier}`}
                                 </span>
+                                {t.tier === 7 && (
+                                  <span className="text-[10px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/80 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
+                                    <Sparkles className="w-3 h-3 text-amber-400" />
+                                    {CHARACTERS.find((c) => c.startingWeaponId === selectedItem.id)?.name || 'Character'}&apos;s Mega Evolution
+                                  </span>
+                                )}
                               </div>
                               <p className="text-xs text-stone-300 mt-1 text-left">{t.description}</p>
                             </div>
