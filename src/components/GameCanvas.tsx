@@ -230,19 +230,31 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Load Character Sprite dynamically based on selected character
   useEffect(() => {
-    const characterSprite = character?.spriteUrl || 'https://i.imgur.com/uvH316Y.png';
-    const characterFallback = character?.fallbackSpriteUrl || 'assets/aistudio/witch.png';
+    const rawSprite = character?.spriteUrl || 'https://i.imgur.com/uvH316Y.png';
+    const rawFallback = character?.fallbackSpriteUrl || 'assets/aistudio/witch.png';
+
+    const resolveSrc = (url: string) => {
+      if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('/')) {
+        return url;
+      }
+      return `${import.meta.env.BASE_URL}${url}`;
+    };
 
     const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = characterSprite;
+    if (!rawSprite.startsWith('data:')) {
+      img.crossOrigin = 'anonymous';
+    }
+    img.src = resolveSrc(rawSprite);
     img.onload = () => {
       witchImageRef.current = img;
     };
     img.onerror = () => {
-      // Fallback to local asset
+      // Fallback to local asset / data URI
       const fallback = new Image();
-      fallback.src = `${import.meta.env.BASE_URL}${characterFallback}`;
+      if (!rawFallback.startsWith('data:')) {
+        fallback.crossOrigin = 'anonymous';
+      }
+      fallback.src = resolveSrc(rawFallback);
       fallback.onload = () => {
         witchImageRef.current = fallback;
       };

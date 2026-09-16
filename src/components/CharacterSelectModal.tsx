@@ -78,14 +78,19 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                   {/* Sprite Container (Slightly smaller) */}
                   <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-b from-indigo-950/60 to-purple-950/80 border border-purple-500/30 flex items-center justify-center p-1 overflow-hidden transition-transform group-hover:scale-105">
                     <img
-                      src={char.spriteUrl}
+                      src={char.spriteUrl.startsWith('http') || char.spriteUrl.startsWith('data:') ? char.spriteUrl : `${import.meta.env.BASE_URL}${char.spriteUrl}`}
                       alt={char.name}
-                      crossOrigin="anonymous"
+                      crossOrigin={char.spriteUrl.startsWith('data:') ? undefined : 'anonymous'}
                       onError={(e) => {
                         const target = e.currentTarget;
-                        const fallbackPath = char.fallbackSpriteUrl || 'assets/aistudio/witch.png';
-                        if (!target.src.includes(fallbackPath)) {
-                          target.src = `${import.meta.env.BASE_URL}${fallbackPath}`;
+                        const fallback = char.fallbackSpriteUrl || 'assets/aistudio/witch.png';
+                        if (fallback.startsWith('data:')) {
+                          target.src = fallback;
+                        } else {
+                          const fallbackUrl = fallback.startsWith('http') ? fallback : `${import.meta.env.BASE_URL}${fallback}`;
+                          if (target.src !== fallbackUrl) {
+                            target.src = fallbackUrl;
+                          }
                         }
                       }}
                       className="w-full h-full object-contain [image-rendering:pixelated] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]"
@@ -113,14 +118,19 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
               {/* Character Portrait (Elevated slightly upwards) */}
               <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-indigo-950/90 via-purple-950/90 to-slate-950 border-2 border-purple-500/70 p-1.5 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-950/60 ring-2 ring-purple-500/20 -mt-1 sm:-mt-1.5">
                 <img
-                  src={selectedCharacter.spriteUrl}
+                  src={selectedCharacter.spriteUrl.startsWith('http') || selectedCharacter.spriteUrl.startsWith('data:') ? selectedCharacter.spriteUrl : `${import.meta.env.BASE_URL}${selectedCharacter.spriteUrl}`}
                   alt={selectedCharacter.name}
-                  crossOrigin="anonymous"
+                  crossOrigin={selectedCharacter.spriteUrl.startsWith('data:') ? undefined : 'anonymous'}
                   onError={(e) => {
                     const target = e.currentTarget;
-                    const fallbackPath = selectedCharacter.fallbackSpriteUrl || 'assets/aistudio/witch.png';
-                    if (!target.src.includes(fallbackPath)) {
-                      target.src = `${import.meta.env.BASE_URL}${fallbackPath}`;
+                    const fallback = selectedCharacter.fallbackSpriteUrl || 'assets/aistudio/witch.png';
+                    if (fallback.startsWith('data:')) {
+                      target.src = fallback;
+                    } else {
+                      const fallbackUrl = fallback.startsWith('http') ? fallback : `${import.meta.env.BASE_URL}${fallback}`;
+                      if (target.src !== fallbackUrl) {
+                        target.src = fallbackUrl;
+                      }
                     }
                   }}
                   className="w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"

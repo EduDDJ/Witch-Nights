@@ -59,8 +59,8 @@ export const CHARACTERS: CharacterDefinition[] = [
     speedMultiplier: 1.1,
     speedLabel: '1.1x',
     description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
-    spriteUrl: 'https://i.imgur.com/XfPpV8k.png',
-    fallbackSpriteUrl: 'assets/aistudio/geraldo.png',
+    spriteUrl: 'assets/aistudio/geraldo.png',
+    fallbackSpriteUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy18oC7NsFSIg4ESyxlJsRRkITI4+votQ/S7H6SaAwYkB7XCzadwtrWoMNk+J8ViRmRLKQUk+xg9uMn1NbmpmuFX6TswJheQYjE8cSFbCGKT42sWUlwJSsVgUIYu85YUY0i3mG/+SvwK/P1pYzEM2Dx/jiF2RFKSJDNITlwwS6X38aLQ2BxDNYuRDX/q9BmFJhWQFdSkBis2QGoZ+3/zxo1wji80MYHEoGyizSPLxzCA7AhSAcmJS7csi2zLkAFJ1SKodAKVUjAAKlBgfFKrSLLLahAw7SK5GqaOxafLyG/9UGQxJWDQBzVGwmLAEtSkVI1UC2p0R9HU4tFUPSQsJq/NRUCMGEBs6iA1MgmaCwgAAP//UV9intFESasAAAAASUVORK5CYII=',
     color: '#ef4444',
   },
 ];

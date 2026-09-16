@@ -15,6 +15,10 @@ export const WitchPortrait: React.FC<WitchPortraitProps> = ({
   fallbackSpriteUrl = 'assets/aistudio/witch.png',
   characterName = 'Character Portrait',
 }) => {
+  const resolvedSrc = spriteUrl.startsWith('http') || spriteUrl.startsWith('data:') 
+    ? spriteUrl 
+    : `${import.meta.env.BASE_URL}${spriteUrl}`;
+
   return (
     <div
       className={`relative rounded-xl overflow-hidden border-2 transition-all duration-150 flex-shrink-0 bg-gradient-to-b from-indigo-950 via-purple-950 to-slate-950 shadow-lg flex items-center justify-center p-1 ${
@@ -23,15 +27,20 @@ export const WitchPortrait: React.FC<WitchPortraitProps> = ({
       style={{ width: size, height: size }}
     >
       <img
-        src={spriteUrl}
+        src={resolvedSrc}
         alt={characterName}
-        crossOrigin="anonymous"
+        crossOrigin={spriteUrl.startsWith('data:') ? undefined : 'anonymous'}
         onError={(e) => {
-          // Fallback to local asset if external image fails to load
+          // Fallback to local asset / data URI if image fails to load
           const target = e.currentTarget;
-          const fallbackPath = fallbackSpriteUrl || 'assets/aistudio/witch.png';
-          if (!target.src.includes(fallbackPath)) {
-            target.src = `${import.meta.env.BASE_URL}${fallbackPath}`;
+          const fallback = fallbackSpriteUrl || 'assets/aistudio/witch.png';
+          if (fallback.startsWith('data:')) {
+            target.src = fallback;
+          } else {
+            const fallbackUrl = fallback.startsWith('http') ? fallback : `${import.meta.env.BASE_URL}${fallback}`;
+            if (target.src !== fallbackUrl) {
+              target.src = fallbackUrl;
+            }
           }
         }}
         className="w-full h-full object-contain [image-rendering:pixelated]"
