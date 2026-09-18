@@ -27,9 +27,11 @@ import {
   Clover,
   Eye,
   FlaskConical,
+  Sprout,
 } from 'lucide-react';
 
 import { BossInstance, CharacterDefinition, MobileAimMode } from '../types/game';
+import { getLanguage, translateCharacterName, translateBossName, t } from '../utils/i18n';
 
 interface GameHUDProps {
   player: PlayerStats;
@@ -69,6 +71,7 @@ const WEAPON_ICONS: Record<string, React.ElementType> = {
   Pentagram: PentagramIcon,
   Sword,
   FlaskConical,
+  Sprout,
 };
 
 const STAT_ICONS: Record<string, React.ElementType> = {
@@ -84,6 +87,7 @@ const STAT_ICONS: Record<string, React.ElementType> = {
   Heart,
   Clover,
   Eye,
+  Sprout,
 };
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -169,7 +173,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           <div id="player-hud" className="relative pointer-events-auto flex items-start gap-1.5 sm:gap-2.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] pt-0.5 sm:pt-0 shrink min-w-0">
             {instaKill && (
               <div className="absolute -top-1 sm:-top-4 left-0 bg-rose-950/95 border border-rose-500 text-rose-300 font-extrabold text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded shadow animate-pulse tracking-wider uppercase whitespace-nowrap z-20">
-                Cheats Enabled
+                {t('cheats_enabled', getLanguage())}
               </div>
             )}
             {/* Witch's face */}
@@ -180,7 +184,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                   size={mobileMode ? 38 : 46} 
                   spriteUrl={character?.spriteUrl}
                   fallbackSpriteUrl={character?.fallbackSpriteUrl}
-                  characterName={character?.name}
+                  characterName={character ? translateCharacterName(character.id, character.name, getLanguage()) : undefined}
                 />
                 <div className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 font-black text-[8px] sm:text-[9px] rounded px-1 py-0.2 border border-slate-950 shadow">
                   {player.level}
@@ -190,10 +194,10 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                 <div
                   id="true-witch-hud-badge"
                   className="mt-1 bg-gradient-to-r from-rose-950 via-rose-900 to-purple-950 border border-rose-500/80 text-rose-200 font-black text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded shadow-md shadow-rose-950/80 tracking-wider uppercase whitespace-nowrap flex items-center gap-0.5 animate-pulse"
-                  title="True Witch Mode Active"
+                  title={getLanguage() === 'en' ? "True Witch Mode Active" : "Modo Bruxa Verdadeira Ativo"}
                 >
                   <Flame className="w-2.5 h-2.5 text-rose-400 shrink-0" />
-                  <span>True Witch</span>
+                  <span>{getLanguage() === 'en' ? 'True Witch' : 'Bruxa Verdadeira'}</span>
                 </div>
               )}
             </div>
@@ -284,7 +288,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                   className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-950/70 backdrop-blur-sm border border-rose-900/40 shadow"
                   title="Current Enemy Level (scales with survival time)"
                 >
-                  <span className="text-[9px] font-bold tracking-wider text-rose-400">FOE LV</span>
+                  <span className="text-[9px] font-bold tracking-wider text-rose-400">{t('foe_level', getLanguage())}</span>
                   <span className="font-mono text-sm font-bold text-rose-300 drop-shadow">
                     {getEnemyLevel(survivalTime)}
                   </span>
@@ -299,47 +303,113 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       {isBossFight && boss && (
         <div
           id="boss-health-hud"
-          className={`absolute bottom-4 sm:bottom-6 ${isBossRush ? 'left-1/2' : 'left-[58%]'} -translate-x-1/2 w-[92%] max-w-lg sm:max-w-xl pointer-events-auto flex flex-col gap-1.5 drop-shadow-[0_8px_24px_rgba(0,0,0,0.95)] z-40 animate-in fade-in slide-in-from-bottom-3 duration-300`}
+          className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-lg sm:max-w-xl pointer-events-auto flex flex-col gap-1.5 drop-shadow-[0_8px_24px_rgba(0,0,0,0.95)] z-40 animate-in fade-in slide-in-from-bottom-3 duration-300"
         >
-          {/* Top Row above the bar: Bigger Boss Name (top-left) & 1:30 Countdown (top-right) */}
+          {/* Top Row above the bar: Boss Name & Phase Badge */}
           <div className="flex items-end justify-between px-1">
             <div className="flex items-baseline gap-2">
               <span className="text-xl sm:text-2xl font-black text-rose-100 font-serif tracking-wide drop-shadow-[0_2px_12px_rgba(244,63,94,0.9)]">
-                {boss.name}
+                {boss.id === 'archmages'
+                  ? (boss.archmagesPhase === 'PHASE2'
+                      ? translateBossName('geraldo_rgb', 'Geraldo The RGB', getLanguage())
+                      : translateBossName('archmages', boss.name, getLanguage()))
+                  : translateBossName(boss.id, boss.name, getLanguage())}
               </span>
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-950/90 border border-rose-600/80 text-rose-300 shadow">
-                BOSS
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-950/90 border border-amber-500/60 shadow">
-              <span className="text-[10px] font-bold tracking-wider text-stone-400 uppercase hidden sm:inline">
-                ENRAGE:
-              </span>
-              <span
-                className={`font-mono font-bold text-base sm:text-lg drop-shadow ${
-                  bossTimer !== undefined && bossTimer <= 20
-                    ? 'text-red-500 animate-pulse'
-                    : 'text-amber-300'
-                }`}
-              >
-                {bossFormattedTimer}
+                {boss.id === 'archmages' && boss.archmagesPhase === 'PHASE2' ? 'PHASE 2' : 'BOSS'}
               </span>
             </div>
           </div>
 
-          {/* Boss Health Bar */}
-          <div className="relative w-full h-5 sm:h-6 bg-stone-950/95 rounded-lg overflow-hidden border-2 border-rose-600/90 shadow-2xl">
-            <div
-              className="h-full bg-gradient-to-r from-red-700 via-rose-500 to-amber-500 transition-all duration-150 rounded-sm"
-              style={{ width: `${bossHealthPercent}%` }}
-            />
-            {/* Gloss reflection overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-black/30 pointer-events-none" />
-            {/* Centered Numeric HP Readout */}
-            <div className="absolute inset-0 flex items-center justify-center text-[10px] sm:text-xs font-mono font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,1)] pointer-events-none">
-              {Math.ceil(boss.hp)} / {boss.maxHp}
+          {/* Boss Health Bar(s) */}
+          {boss.id === 'archmages' && boss.archmagesPhase === 'PHASE1' && boss.archmagesList ? (
+            /* Phase 1: 3 Wizard Health Bars side-by-side */
+            <div className="grid grid-cols-3 gap-2 w-full">
+              {boss.archmagesList.map((wiz) => {
+                const percent = Math.max(0, Math.min(100, (wiz.hp / wiz.maxHp) * 100));
+                const isKnockedDown = wiz.hp <= 0;
+                const isActive = boss.activeArchmageId === wiz.id;
+
+                const gradClass =
+                  wiz.id === 'geraldo_red'
+                    ? 'from-red-700 via-rose-600 to-red-400'
+                    : wiz.id === 'geraldo_green'
+                    ? 'from-emerald-700 via-green-500 to-emerald-300'
+                    : 'from-blue-700 via-sky-500 to-cyan-300';
+
+                const borderClass =
+                  wiz.id === 'geraldo_red'
+                    ? 'border-red-500/80'
+                    : wiz.id === 'geraldo_green'
+                    ? 'border-emerald-500/80'
+                    : 'border-blue-500/80';
+
+                return (
+                  <div
+                    key={wiz.id}
+                    className={`flex flex-col gap-1 p-1.5 rounded-xl bg-stone-950/90 border-2 transition-all ${borderClass} ${
+                      isActive ? 'ring-2 ring-amber-400/90 shadow-lg shadow-amber-500/30' : 'opacity-90'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center text-[10px] font-bold">
+                      <span
+                        className="truncate max-w-[90px]"
+                        style={{ color: wiz.color }}
+                      >
+                        {translateBossName(wiz.id, wiz.name, getLanguage())}
+                      </span>
+                      {isKnockedDown ? (
+                        <span className="text-[9px] px-1 py-0.2 rounded bg-cyan-950 border border-cyan-400 text-cyan-300 font-mono flex items-center gap-0.5 animate-pulse">
+                          🛡️ SHIELD
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-mono text-stone-300">
+                          {Math.ceil(wiz.hp)}/{wiz.maxHp}
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative w-full h-3.5 sm:h-4 bg-stone-900 rounded-md overflow-hidden border border-white/20">
+                      <div
+                        className={`h-full bg-gradient-to-r ${gradClass} transition-all duration-150 rounded-sm`}
+                        style={{ width: `${percent}%` }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-black/30 pointer-events-none" />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          ) : boss.id === 'archmages' && boss.archmagesPhase === 'MERGING' ? (
+            /* Merging Animation Banner */
+            <div className="relative w-full h-6 bg-stone-950/95 rounded-lg overflow-hidden border-2 border-purple-500 shadow-2xl flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-600 via-green-500 via-blue-500 to-purple-600 opacity-60 animate-pulse" />
+              <span className="relative text-xs font-black tracking-widest text-white uppercase drop-shadow-md">
+                ⚡ {getLanguage() === 'pt-BR' ? 'FUSÃO...' : 'MERGING...'} ⚡
+              </span>
+            </div>
+          ) : (
+            /* Standard / Phase 2 Health Bar */
+            <div className={`relative w-full h-5 sm:h-6 bg-stone-950/95 rounded-lg overflow-hidden border-2 shadow-2xl ${
+              boss.id === 'archmages' && boss.archmagesPhase === 'PHASE2'
+                ? 'border-purple-400 shadow-purple-900/80'
+                : 'border-rose-600/90'
+            }`}>
+              <div
+                className={`h-full transition-all duration-150 rounded-sm ${
+                  boss.id === 'archmages' && boss.archmagesPhase === 'PHASE2'
+                    ? 'bg-gradient-to-r from-red-500 via-amber-400 via-green-400 via-blue-500 to-purple-500'
+                    : 'bg-gradient-to-r from-red-700 via-rose-500 to-amber-500'
+                }`}
+                style={{ width: `${bossHealthPercent}%` }}
+              />
+              {/* Gloss reflection overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-black/30 pointer-events-none" />
+              {/* Centered Numeric HP Readout */}
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] sm:text-xs font-mono font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,1)] pointer-events-none">
+                {Math.ceil(boss.hp)} / {boss.maxHp}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -359,8 +429,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             </div>
           )}
 
-          {/* Hover Tooltip Card (Appears ONLY when cursor hovers over an item image) */}
-          {hoveredItem && !(mobileMode && isBossFight) && (
+          {/* Hover Tooltip Card (Appears ONLY when cursor hovers over an item image outside boss fights) */}
+          {hoveredItem && !isBossFight && (
             <div
               className={`absolute bottom-full left-0 mb-3 w-64 p-3 rounded-xl bg-slate-950/95 backdrop-blur-md border shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 ${
                 hoveredItem.type === 'STAT'
@@ -401,8 +471,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             </div>
           )}
 
-          {/* Acquired Weapons & Stat Items List (Disabled during Boss fights in Mobile Mode) */}
-          {!(mobileMode && isBossFight) && (
+          {/* Acquired Weapons & Stat Items List (Disabled during Boss fights) */}
+          {!isBossFight && (
             <>
               {/* TOP ROW: Acquired Artifacts (Passives) - Displayed in a row ON TOP of weapons (Hidden in Boss Rush where max is 0) */}
               {!isBossRush && (

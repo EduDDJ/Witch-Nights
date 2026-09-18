@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookOpen, Play, Settings, HelpCircle, Skull, Trophy } from 'lucide-react';
+import { getLanguage, t } from '../utils/i18n';
 
 interface MainMenuProps {
   onStartGame: () => void;
@@ -24,6 +25,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   unlockedCount,
   totalCount,
 }) => {
+  const currentLang = getLanguage();
+
   return (
     <div className="relative min-h-screen w-full flex flex-col items-center justify-between p-6 sm:p-10 bg-gradient-to-b from-[#0a0712] via-[#120b22] to-[#080510] text-slate-100 select-none overflow-hidden font-sans">
       {/* Mystical Background Visuals */}
@@ -52,33 +55,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
         {/* Middle Controls & Buttons */}
         <main className="flex flex-col items-center w-full max-w-lg">
-          <div className="flex flex-col sm:flex-row items-start justify-center gap-4 w-full">
-            {/* Column with "Start Game" and "Boss Rush" buttons */}
-            <div className="flex-1 w-full flex flex-col items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch justify-center gap-4 w-full">
+            {/* Left Column: Prominent "Start Game" button */}
+            <div className="flex-1 w-full flex flex-col items-center">
               <button
                 id="start-game-button"
                 onClick={onStartGame}
-                className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white font-bold text-lg sm:text-xl shadow-xl shadow-purple-900/50 hover:shadow-purple-700/60 hover:-translate-y-0.5 transition-all duration-200 border border-purple-400/40 flex items-center justify-center gap-3 cursor-pointer"
+                className="group relative w-full h-full min-h-[140px] px-8 py-6 rounded-2xl bg-gradient-to-br from-purple-700 via-purple-600 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white font-bold text-xl sm:text-2xl shadow-xl shadow-purple-900/50 hover:shadow-purple-700/60 hover:-translate-y-0.5 transition-all duration-200 border-2 border-purple-400/50 flex flex-col items-center justify-center gap-3 cursor-pointer overflow-hidden"
               >
-                <Play className="w-6 h-6 fill-white text-white group-hover:scale-110 transition-transform" />
-                <span>Start Game</span>
-              </button>
-
-              <button
-                id="boss-rush-button"
-                onClick={onOpenBossRush}
-                className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-stone-900 via-purple-950 to-stone-900 hover:bg-purple-950 text-purple-200 hover:text-white font-bold text-lg sm:text-xl shadow-xl shadow-purple-950/50 hover:shadow-purple-800/60 hover:-translate-y-0.5 transition-all duration-200 border-2 border-purple-600/60 hover:border-purple-400 flex items-center justify-center gap-3 cursor-pointer"
-              >
-                <Skull className="w-6 h-6 text-purple-400 group-hover:scale-110 transition-transform" />
-                <span>Boss Rush</span>
-                {hasTrueWitchTrophy && (
-                  <div
-                    className="absolute right-4 flex items-center justify-center"
-                    title="Diamond Trophy - True Witch Mode Mastered!"
-                  >
-                    <Trophy className="w-6 h-6 text-cyan-300 fill-cyan-400/40 drop-shadow-[0_0_10px_rgba(6,182,212,0.95)] animate-pulse" />
-                  </div>
-                )}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform pointer-events-none" />
+                <Play className="w-10 h-10 fill-white text-white group-hover:scale-110 transition-transform drop-shadow-md" />
+                <span>{t('start_game', currentLang)}</span>
               </button>
             </div>
 
@@ -90,7 +77,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 className="group relative w-full px-7 py-4 rounded-2xl bg-slate-900/90 hover:bg-purple-950/80 text-purple-200 hover:text-white font-bold text-lg border-2 border-purple-700/50 hover:border-purple-400 shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-3 cursor-pointer"
               >
                 <BookOpen className="w-5 h-5 text-amber-400 group-hover:rotate-6 transition-transform" />
-                <span>Collection</span>
+                <span>{t('collection', currentLang)}</span>
                 <span className="text-xs bg-purple-900/80 border border-purple-600/50 px-2 py-0.5 rounded-full text-purple-300 font-mono">
                   {unlockedCount}/{totalCount}
                 </span>
@@ -104,20 +91,20 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     id="tutorial-button"
                     onClick={onOpenTutorial}
                     className="w-full inline-flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
-                    title="Learn how to play"
+                    title={currentLang === 'en' ? 'Learn how to play' : 'Aprenda a jogar'}
                   >
                     <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Tutorial</span>
+                    <span>{t('tutorial', currentLang)}</span>
                   </button>
 
                   <button
                     id="achievements-button"
                     onClick={onOpenAchievements}
                     className="w-full inline-flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
-                    title="View Achievements"
+                    title={currentLang === 'en' ? 'View Achievements' : 'Ver Conquistas'}
                   >
                     <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Achievements</span>
+                    <span>{t('achievements', currentLang)}</span>
                   </button>
                 </div>
 
@@ -127,10 +114,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     id="options-button"
                     onClick={onOpenOptions}
                     className="w-full h-full inline-flex flex-col items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/50 hover:border-purple-500/70 text-purple-300 hover:text-white text-xs font-semibold shadow-sm transition-all cursor-pointer hover:scale-105"
-                    title="Game Options"
+                    title={currentLang === 'en' ? 'Game Options' : 'Opções de Jogo'}
                   >
                     <Settings className="w-4 h-4 text-purple-400" />
-                    <span>Options</span>
+                    <span>{t('options', currentLang)}</span>
                   </button>
                 </div>
               </div>

@@ -12,8 +12,8 @@ export const CHARACTERS: CharacterDefinition[] = [
     speedMultiplier: 1.1,
     speedLabel: '1.1x',
     description: 'A good hearted woman born as a witch, fending herself because of that. And they call *her* the monster.',
-    spriteUrl: 'https://i.imgur.com/uvH316Y.png',
-    fallbackSpriteUrl: 'assets/aistudio/witch.png',
+    spriteUrl: 'assets/aistudio/witch.png',
+    fallbackSpriteUrl: 'https://i.imgur.com/uvH316Y.png',
     color: '#a855f7',
   },
   {
@@ -27,8 +27,8 @@ export const CHARACTERS: CharacterDefinition[] = [
     speedMultiplier: 1.25,
     speedLabel: '1.25x',
     description: "Just a goo. People treat them like a monster, when all they want to do is... to be honest, I'm not entirely sure I know what they do.",
-    spriteUrl: 'https://i.imgur.com/xNWJ044.png',
-    fallbackSpriteUrl: 'assets/aistudio/glowob.png',
+    spriteUrl: 'assets/aistudio/glowob.png',
+    fallbackSpriteUrl: 'https://i.imgur.com/xNWJ044.png',
     color: '#22c55e',
   },
   {
@@ -44,8 +44,8 @@ export const CHARACTERS: CharacterDefinition[] = [
     speedMultiplier: 1.05,
     speedLabel: '1.05x',
     description: "A former villain, chosen and converted by a higher organization to protect the injusticed. That's why she's here.",
-    spriteUrl: 'https://i.imgur.com/VAvCvjR.png',
-    fallbackSpriteUrl: 'assets/aistudio/odalia.png',
+    spriteUrl: 'assets/aistudio/odalia.png',
+    fallbackSpriteUrl: 'https://i.imgur.com/VAvCvjR.png',
     color: '#38bdf8',
   },
   {
@@ -62,6 +62,37 @@ export const CHARACTERS: CharacterDefinition[] = [
     spriteUrl: 'assets/aistudio/geraldo.png',
     fallbackSpriteUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy18oC7NsFSIg4ESyxlJsRRkITI4+votQ/S7H6SaAwYkB7XCzadwtrWoMNk+J8ViRmRLKQUk+xg9uMn1NbmpmuFX6TswJheQYjE8cSFbCGKT42sWUlwJSsVgUIYu85YUY0i3mG/+SvwK/P1pYzEM2Dx/jiF2RFKSJDNITlwwS6X38aLQ2BxDNYuRDX/q9BmFJhWQFdSkBis2QGoZ+3/zxo1wji80MYHEoGyizSPLxzCA7AhSAcmJS7csi2zLkAFJ1SKodAKVUjAAKlBgfFKrSLLLahAw7SK5GqaOxafLyG/9UGQxJWDQBzVGwmLAEtSkVI1UC2p0R9HU4tFUPSQsJq/NRUCMGEBs6iA1MgmaCwgAAP//UV9intFESasAAAAASUVORK5CYII=',
     color: '#ef4444',
+  },
+  {
+    id: 'geraldo_green',
+    name: 'Geraldo The Green',
+    title: 'RGB Archmage',
+    startingWeaponId: 'vine_snare',
+    startingWeaponName: 'Vine Snare',
+    megaEvolutionName: 'Pet Plant',
+    baseMaxHp: 100,
+    speedMultiplier: 1.1,
+    speedLabel: '1.1x',
+    startingLevelBonus: 1,
+    description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
+    spriteUrl: 'assets/aistudio/geraldo_green.png',
+    fallbackSpriteUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJklEQVR4nGJiIA/8h2KyAakWgy2UWMvEwBvKxECJ5YykWAqyEBl8XcHA8Hn1P1LNAQOSg/pF8D84mzuCgWyfk2IxI7KllAKSfYwe3OT6mtxUzXDoPTsYkwtIsRieuJAtBLHJ8TULKa4EpWIQMGb4SYo2rICk7LR540a8Cnz9/Yk2kyQfw4DN8+cYYkckJUkyg+TEBbNUeh8vCo3NMVSzGNnwp06fUWhSAVlBTWqwYgOklrEoCQyamBhAYqQkLAZyfQwDhFI5PkBy4kr9E0i2ZciApHwMKp1ApRQMgAoUGJ/UKpLsshoEzrrTp6zGAMY7yS86KbKYEjDogxojYTFgCWpSqkaqBTW6o2hq8WiqHhIWk9XmIiRGDCC2rCa1p0DQXEAAAAD//4iQWgTajTwnAAAAAElFTkSuQmCC',
+    color: '#22c55e',
+  },
+  {
+    id: 'geraldo_blue',
+    name: 'Geraldo The Blue',
+    title: 'RGB Archmage',
+    startingWeaponId: 'thunderstrike',
+    startingWeaponName: 'Thunderstrike',
+    megaEvolutionName: 'Thunderstorm',
+    baseMaxHp: 100,
+    speedMultiplier: 1.1,
+    speedLabel: '1.1x',
+    description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
+    spriteUrl: 'assets/aistudio/geraldo_blue.png',
+    fallbackSpriteUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy1kdH3KwKrbzUCJ5YykWAqyEBmwvFjG8PtyKanmgAHJQf1/tzSc/Uciimyfk2IxI7KllAKSfYwe3OT6mtxUzXAzXAWMyQWkWAxPXMgWgtjk+JqkVA01HCcgJYWzkGAxw7oWNbzyvv7Em0WSxTBg8/w5htgRSUmSzCA5ccEsld7Hi0JjcwzVLEY2/KnTZxSaVEBWUJMarNgAqWXs/80bN8I5vv6Q1AQSg7KJNo8sH8MAsiNIBSQnLr8pJmRbhgxILkBApRQMgKpFGJ/UKpLsshoErubXka2XIou1JzYNjMWUgEEf1BgJiwFLUJNSNVItqNEdRVOLR1P1kLCYpEoCVCwSI0YMILasJrWnQNBcQAAAAP//QBhgnucfiVkAAAAASUVORK5CYII=',
+    color: '#3b82f6',
   },
 ];
 
@@ -92,6 +123,16 @@ export const BOSS_POOL: BossDefinition[] = [
     damage: 25,
     radius: 50,
     color: '#3b2f2f', // Dark brown/black bear color
+  },
+  {
+    id: 'archmages',
+    name: 'The 3 Archmages',
+    maxHp: 1800,
+    damage: 20,
+    radius: 32,
+    color: '#a855f7',
+    spriteUrl: 'assets/aistudio/geraldo_rgb.png',
+    fallbackSpriteUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy18oC7NsFSIg4ESyxlJsRRkITI4+votQ/S7H6SaAwYkB7XCzadwtrWoMNk+J8ViRmRLKQUk+xg9uMn1NbmpmuFX6TswJheQYjE8cSFbCGKT42sWUlwJSsVgUIYu85YUY0i3mG/+SvwK/P1pYzEM2Dx/jiF2RFKSJDNITlwwS6X38aLQ2BxDNYuRDX/q9BmFJhWQFdSkBis2QGoZ+3/zxo1wji80MYHEoGyizSPLxzCA7AhSAcmJS7csi2zLkAFJ1SKodAKVUjAAKlBgfFKrSLLLahAw7SK5GqaOxafLyG/9UGQxJWDQBzVGwmLAEtSkVI1UC2p0R9HU4tFUPSQsJq/NRUCMGEBs6iA1MgmaCwgAAP//UV9intFESasAAAAASUVORK5CYII=',
   }
 ];
 
@@ -224,7 +265,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     baseCount: 1,
     bulletColor: '#22c55e',
     tiers: [
-      { tier: 1, name: 'Pentagram', description: 'Emits a 130px circular pulse and inverted star around the witch.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 1, name: 'Pentagram', description: 'Emits a 130px circular pulse and glowing star around the witch.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: '', description: 'Pulse radius expands (+25px) and deals +8 damage.', damageBonus: 8, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
       { tier: 3, name: '', description: 'Pulse recharges quicker and deals +12 damage.', damageBonus: 12, fireRateBonus: 0.90, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
       { tier: 4, name: '', description: 'Pulse radius expands (+30px) and deals +16 damage.', damageBonus: 16, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 30, pierceBonus: 0 },
@@ -277,6 +318,31 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
       { tier: 4, name: '', description: 'Decreases vine cooldown by 38%.', damageBonus: 11, fireRateBonus: 0.62, countBonus: 0, sizeBonus: 4, pierceBonus: 0 },
       { tier: 5, name: '', description: 'Targets +1 additional enemy (3 enemies total).', damageBonus: 15, fireRateBonus: 0.62, countBonus: 1, sizeBonus: 4, pierceBonus: 0 },
       { tier: 6, name: '', description: 'Rapidly traps 4 nearest enemies in thick thorny vines.', damageBonus: 22, fireRateBonus: 0.44, countBonus: 2, sizeBonus: 6, pierceBonus: 0 },
+      { tier: 7, name: 'Pet Plant', description: 'Summons a loyal miniature Carnivore Plant companion that follows you into battle, periodically lunging and viciously biting nearby enemies with snapping jaws while you continue trapping foes.', damageBonus: 40, fireRateBonus: 0.38, countBonus: 2, sizeBonus: 8, pierceBonus: 0 },
+    ]
+  },
+  {
+    id: 'thunderstrike',
+    name: 'Thunderstrike',
+    shootingType: 'NEAREST_ENEMY',
+    icon: 'Zap',
+    description: 'A strong homing lightning weapon with high cooldown that strikes the nearest enemy.',
+    baseDamage: 30,
+    baseInterval: 2.2,
+    baseSpeed: 550,
+    baseSize: 14,
+    basePierce: 1,
+    baseCount: 1,
+    bulletColor: '#3b82f6',
+    iconColor: '#3b82f6',
+    tiers: [
+      { tier: 1, name: 'Thunderstrike', description: 'Shoots a Thunderstrike at the closest enemy, dealing 30 damage. High cooldown.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: 'Thunderstrike freezes enemies hit by 0.5 second.', damageBonus: 6, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'After first hit, smaller thunderstrikes chain off the first enemy, dealing 50% damage to other enemies nearby, to a max of 2.', damageBonus: 12, fireRateBonus: 0.90, countBonus: 0, sizeBonus: 4, pierceBonus: 0 },
+      { tier: 4, name: '', description: 'Thunderstrike can now chain off to 4 enemies.', damageBonus: 18, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 6, pierceBonus: 0 },
+      { tier: 5, name: '', description: 'Thunderstrike now freezes the enemy hit for 0.75s.', damageBonus: 25, fireRateBonus: 0.80, countBonus: 0, sizeBonus: 8, pierceBonus: 0 },
+      { tier: 6, name: '', description: 'Chained off Thunderstrikes now freeze the enemy hit for 0.5s.', damageBonus: 34, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 10, pierceBonus: 0 },
+      { tier: 7, name: 'Thunderstorm', description: 'Shoots 2 Thunderstrikes simultaneously. Creates an area around the player that slows down enemies by 10%.', damageBonus: 45, fireRateBonus: 0.65, countBonus: 1, sizeBonus: 14, pierceBonus: 1 },
     ]
   }
 ];
@@ -510,6 +576,7 @@ export const DEFAULT_UNLOCKED_ITEM_IDS: string[] = [
   'grimoire_orbit',
   'hellfire_nova',
   'seeking_wisp',
+  'thunderstrike',
   'shield_of_protection',
   'astral_lens',
   'repulsion_talisman',

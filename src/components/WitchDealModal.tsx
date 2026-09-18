@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { CurseChoice } from '../types/game';
 import { Sparkles, Sword, Skull, Flame, Wind, AlertTriangle, RotateCcw, ShieldOff } from 'lucide-react';
+import { getLanguage, t, translateCurseTitle, translateCurseSubtitle, translateCurseDescription } from '../utils/i18n';
 
 interface WitchDealModalProps {
   curses: CurseChoice[];
@@ -62,29 +63,30 @@ export const WitchDealModal: React.FC<WitchDealModalProps> = ({ curses, mobileMo
           <h2 className={`font-black text-transparent bg-clip-text bg-gradient-to-r from-red-300 via-amber-200 to-rose-300 font-serif tracking-wide ${
             mobileMode ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'
           }`}>
-            THE WITCH'S DEAL
+            {t('witch_deal', getLanguage()).toUpperCase()}
           </h2>
         </div>
 
         <div className={`inline-flex items-center gap-1 rounded-full bg-rose-950/80 border border-rose-700/60 text-rose-300 font-bold uppercase tracking-wider ${
           mobileMode ? 'px-2 py-0.2 text-[10px] mb-1.5' : 'px-2.5 py-0.5 text-[11px] mb-2'
         }`}>
-          <AlertTriangle className="w-3 h-3 text-amber-400" /> Minute 7:30 Epoch
+          <AlertTriangle className="w-3 h-3 text-amber-400" /> {t('minute_epoch', getLanguage())}
         </div>
 
         <p className={`text-stone-300 max-w-md mx-auto leading-snug ${
           mobileMode ? 'text-[11px] sm:text-xs mb-2.5' : 'text-xs sm:text-sm mb-3.5'
         }`}>
           {hasMultipleDeals
-            ? "The Blood Moon reaches its zenith. Destiny Control grants 2 Witch Deals. Choose an offer or Deny Both:"
-            : "The Blood Moon reaches its zenith. A Witch offers a forbidden bargain. Choose to Accept or Deny:"}
+            ? (getLanguage() === 'en' ? "The Blood Moon reaches its zenith. Destiny Control grants 2 Witch Deals. Choose an offer or Deny Both:" : "A Lua de Sangue atinge seu zênite. O Controle do Destino concede 2 Acordos da Bruxa. Escolha uma oferta ou Recuse Ambos:")
+            : (getLanguage() === 'en' ? "The Blood Moon reaches its zenith. A Witch offers a forbidden bargain. Choose to Accept or Deny:" : "A Lua de Sangue atinge seu zênite. Uma Bruxa oferece um pacto proibido. Escolha Aceitar ou Recusar:")}
         </p>
 
         {/* Options Grid */}
         <div className={`grid grid-cols-1 ${hasMultipleDeals ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} text-left ${mobileMode ? 'gap-2' : 'gap-3'}`}>
           {curses.map((curse, idx) => {
             const IconComp = CURSE_ICONS[curse.icon] || Skull;
-            const dealLabel = hasMultipleDeals ? `Accept [Deal ${idx + 1}]` : 'Accept';
+            const acceptText = t('accept_deal', getLanguage());
+            const dealLabel = hasMultipleDeals ? `${acceptText} [Deal ${idx + 1}]` : acceptText;
             return (
               <button
                 key={curse.id}
@@ -115,21 +117,21 @@ export const WitchDealModal: React.FC<WitchDealModalProps> = ({ curses, mobileMo
                   <h3 className={`font-bold text-slate-100 group-hover:text-rose-200 transition-colors font-serif leading-tight ${
                     mobileMode ? 'text-xs sm:text-sm mb-0.5' : 'text-sm sm:text-base mb-1'
                   }`}>
-                    {curse.title}
+                    {translateCurseTitle(curse.id, curse.title, getLanguage())}
                   </h3>
 
-                  {curse.subtitle ? (
+                  {curse.subtitle || translateCurseSubtitle(curse.id, '', getLanguage()) ? (
                     <div className={`font-medium text-rose-400/90 italic leading-tight ${
                       mobileMode ? 'text-[10px] mb-1.5' : 'text-[11px] mb-2'
                     }`}>
-                      "{curse.subtitle}"
+                      "{translateCurseSubtitle(curse.id, curse.subtitle, getLanguage())}"
                     </div>
                   ) : null}
 
                   <p className={`text-stone-200 leading-relaxed bg-black/50 rounded-lg border border-stone-800 ${
                     mobileMode ? 'text-[10px] sm:text-[11px] p-2 leading-snug' : 'text-[11px] sm:text-xs p-2.5'
                   }`}>
-                    {curse.description}
+                    {translateCurseDescription(curse.id, curse.description, getLanguage())}
                   </p>
                 </div>
 
@@ -168,7 +170,7 @@ export const WitchDealModal: React.FC<WitchDealModalProps> = ({ curses, mobileMo
               <h3 className={`font-bold text-slate-100 group-hover:text-amber-200 transition-colors font-serif leading-tight ${
                 mobileMode ? 'text-xs sm:text-sm mb-0.5' : 'text-sm sm:text-base mb-1'
               }`}>
-                {hasMultipleDeals ? 'Deny Both' : 'Deny'}
+                {hasMultipleDeals ? t('deny_both', getLanguage()) : t('deny_deal', getLanguage())}
               </h3>
 
               <div className={`font-medium text-amber-400/80 italic leading-tight ${

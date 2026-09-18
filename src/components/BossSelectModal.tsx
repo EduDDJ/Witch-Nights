@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { BossDefinition } from '../types/game';
-import { Eye, Swords, Sparkles, AlertTriangle } from 'lucide-react';
+import { Eye, Swords, Sparkles, AlertTriangle, Wrench, X } from 'lucide-react';
+import { resolveAssetPath } from '../utils/assets';
+import { getLanguage, t, translateBossName } from '../utils/i18n';
 
 interface BossSelectModalProps {
   bosses: BossDefinition[];
   mobileMode?: boolean;
+  isDevChoice?: boolean;
   onSelectBoss: (bossId: string) => void;
+  onClose?: () => void;
 }
 
 export const BossSelectModal: React.FC<BossSelectModalProps> = ({
   bosses,
   mobileMode = false,
+  isDevChoice = false,
   onSelectBoss,
+  onClose,
 }) => {
   const [isReady, setIsReady] = useState(false);
 
@@ -22,17 +28,19 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Keyboard 1, 2, 3 shortcuts
+  // Keyboard 1, 2, 3, 4 and Escape shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isReady) return;
       if (e.key === '1' && bosses[0]) onSelectBoss(bosses[0].id);
       if (e.key === '2' && bosses[1]) onSelectBoss(bosses[1].id);
       if (e.key === '3' && bosses[2]) onSelectBoss(bosses[2].id);
+      if (e.key === '4' && bosses[3]) onSelectBoss(bosses[3].id);
+      if (e.key === 'Escape' && onClose) onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [bosses, isReady, onSelectBoss]);
+  }, [bosses, isReady, onSelectBoss, onClose]);
 
   return (
     <div
@@ -48,6 +56,18 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
             : 'max-w-2xl rounded-3xl p-6 sm:p-8'
         }`}
       >
+        {/* Optional Close Button for Dev Mode */}
+        {onClose && (
+          <button
+            id="boss-select-close-btn"
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-900/80 hover:bg-amber-950 border border-amber-700/50 hover:border-amber-400 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer z-10"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+
         {/* Glow Header */}
         <div className={`text-center ${mobileMode ? 'mb-3' : 'mb-6'}`}>
           <div
@@ -55,21 +75,29 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
               mobileMode ? 'px-2 py-0.5 text-[10px] mb-1' : 'px-3.5 py-1 text-xs mb-2'
             }`}
           >
-            <Eye className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> Destiny Control Activated
+            {isDevChoice ? (
+              <>
+                <Wrench className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> {t('dev_tools_badge', getLanguage())}
+              </>
+            ) : (
+              <>
+                <Eye className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> {t('destiny_control_activated', getLanguage())}
+              </>
+            )}
           </div>
           <h2
             className={`font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-pink-200 to-purple-200 tracking-tight font-serif ${
               mobileMode ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'
             }`}
           >
-            CHOOSE YOUR BOSS
+            {isDevChoice ? t('dev_choose_boss_title', getLanguage()) : t('choose_boss', getLanguage())}
           </h2>
           <p
             className={`text-slate-300 max-w-lg mx-auto ${
               mobileMode ? 'text-[11px] sm:text-xs mt-0.5' : 'text-xs sm:text-sm mt-1'
             }`}
           >
-            Your mastery over fate allows you to choose which monstrous terror shall emerge from the dark grove:
+            {isDevChoice ? t('dev_choose_boss_desc', getLanguage()) : t('choose_boss_desc', getLanguage())}
           </p>
         </div>
 
@@ -85,6 +113,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
             const isPlant = boss.id === 'carnivore_plant';
             const isEye = boss.id === 'haunted_eye';
             const isBear = boss.id === 'night_bear';
+            const isArchmages = boss.id === 'archmages';
 
             return (
               <button
@@ -96,6 +125,8 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                     ? 'bg-gradient-to-b from-emerald-950/60 via-slate-900 to-emerald-950/40 border-emerald-500/50 hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-900/40'
                     : isEye 
                     ? 'bg-gradient-to-b from-rose-950/60 via-slate-900 to-rose-950/40 border-rose-500/50 hover:border-rose-400 hover:shadow-lg hover:shadow-rose-900/40'
+                    : isArchmages
+                    ? 'bg-gradient-to-b from-purple-950/60 via-slate-900 to-indigo-950/40 border-purple-500/50 hover:border-purple-400 hover:shadow-lg hover:shadow-purple-900/40'
                     : 'bg-gradient-to-b from-stone-950/60 via-slate-900 to-stone-950/40 border-stone-500/50 hover:border-stone-400 hover:shadow-lg hover:shadow-stone-900/40'
                 }`}
               >
@@ -115,18 +146,19 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                           ? 'bg-emerald-950/80 border-emerald-500/60 shadow-emerald-900/50'
                           : isEye
                           ? 'bg-rose-950/80 border-rose-500/60 shadow-rose-900/50'
+                          : isArchmages
+                          ? 'bg-purple-950/80 border-purple-500/60 shadow-purple-900/50'
                           : 'bg-stone-950/80 border-stone-500/60 shadow-stone-900/50'
                       }`}
                     >
                       {isPlant && (
                         <img
-                          src="https://i.imgur.com/kaNPLzb.png"
+                          src={resolveAssetPath('assets/aistudio/carnivore_plant.png')}
                           alt="Carnivore Plant Visual"
-                          crossOrigin="anonymous"
                           onError={(e) => {
                             const target = e.currentTarget;
-                            if (!target.src.includes('carnivore_plant.png')) {
-                              target.src = `${import.meta.env.BASE_URL}assets/aistudio/carnivore_plant.png`;
+                            if (!target.src.includes('kaNPLzb.png')) {
+                              target.src = 'https://i.imgur.com/kaNPLzb.png';
                             }
                           }}
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
@@ -135,13 +167,12 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
 
                       {isEye && (
                         <img
-                          src="https://i.imgur.com/caqAbHC.png"
+                          src={resolveAssetPath('assets/aistudio/haunted_eye_open.png')}
                           alt="Haunted Eye Visual"
-                          crossOrigin="anonymous"
                           onError={(e) => {
                             const target = e.currentTarget;
-                            if (!target.src.includes('haunted_eye_open.png')) {
-                              target.src = `${import.meta.env.BASE_URL}assets/aistudio/haunted_eye_open.png`;
+                            if (!target.src.includes('caqAbHC.png')) {
+                              target.src = 'https://i.imgur.com/caqAbHC.png';
                             }
                           }}
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
@@ -150,13 +181,28 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
 
                       {isBear && (
                         <img
-                          src="https://i.imgur.com/Pjkp2on.png"
+                          src={resolveAssetPath('assets/aistudio/night_bear.png')}
                           alt="NightBear Visual"
-                          crossOrigin="anonymous"
                           onError={(e) => {
                             const target = e.currentTarget;
-                            if (!target.src.includes('night_bear.png')) {
-                              target.src = `${import.meta.env.BASE_URL}assets/aistudio/night_bear.png`;
+                            if (!target.src.includes('Pjkp2on.png')) {
+                              target.src = 'https://i.imgur.com/Pjkp2on.png';
+                            }
+                          }}
+                          className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
+                        />
+                      )}
+
+                      {isArchmages && (
+                        <img
+                          src={resolveAssetPath('assets/aistudio/geraldo_rgb.png')}
+                          alt="The 3 Archmages Visual"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (!target.src.includes('w8qU2F1.png') && !target.src.startsWith('data:')) {
+                              target.src = 'https://i.imgur.com/w8qU2F1.png';
+                            } else if (!target.src.startsWith('data:')) {
+                              target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy18oC7NsFSIg4ESyxlJsRRkITI4+votQ/S7H6SaAwYkB7XCzadwtrWoMNk+J8ViRmRLKQUk+xg9uMn1NbmpmuFX6TswJheQYjE8cSFbCGKT42sWUlwJSsVgUIYu85YUY0i3mG/+SvwK/P1pYzEM2Dx/jiF2RFKSJDNITlwwS6X38aLQ2BxDNYuRDX/q9BmFJhWQFdSkBis2QGoZ+3/zxo1wji80MYHEoGyizSPLxzCA7AhSAcmJS7csi2zLkAFJ1SKodAKVUjAAKlBgfFKrSLLLahAw7SK5GqaOxafLyG/9UGQxJWDQBzVGwmLAEtSkVI1UC2p0R9HU4tFUPSQsJq/NRUCMGEBs6iA1MgmaCwgAAP//UV9intFESasAAAAASUVORK5CYII=';
                             }
                           }}
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
@@ -169,10 +215,10 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                   <div className="text-center mt-2">
                     <h3
                       className={`text-lg sm:text-xl font-bold font-serif ${
-                        isPlant ? 'text-emerald-200' : isEye ? 'text-rose-200' : 'text-stone-200'
+                        isPlant ? 'text-emerald-200' : isEye ? 'text-rose-200' : isArchmages ? 'text-purple-200' : 'text-stone-200'
                       }`}
                     >
-                      {boss.name}
+                      {translateBossName(boss.id, boss.name, getLanguage())}
                     </h3>
                     <div
                       className={`inline-block text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full mt-1 ${
@@ -180,10 +226,18 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                           ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-700/50'
                           : isEye
                           ? 'bg-rose-900/60 text-rose-300 border border-rose-700/50'
+                          : isArchmages
+                          ? 'bg-purple-900/60 text-purple-300 border border-purple-700/50'
                           : 'bg-stone-900/60 text-stone-300 border border-stone-700/50'
                       }`}
                     >
-                      {isPlant ? "Greenhouse's Devil" : isEye ? 'All-Seeing Spirit' : 'Uncontrollable Beast'}
+                      {isPlant
+                        ? (getLanguage() === 'pt-BR' ? 'O Diabo da Estufa' : "Greenhouse's Devil")
+                        : isEye
+                        ? (getLanguage() === 'pt-BR' ? 'Espírito Onisciente' : 'All-Seeing Spirit')
+                        : isArchmages
+                        ? (getLanguage() === 'pt-BR' ? 'Trindade Elemental' : 'Elemental Trinity')
+                        : (getLanguage() === 'pt-BR' ? 'Besta Incontrolável' : 'Uncontrollable Beast')}
                     </div>
                   </div>
 
@@ -193,45 +247,56 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                       <>
                         <div className="flex items-start gap-1.5 text-slate-300">
                           <span className="text-emerald-400 font-bold">•</span>
-                          <span>Spawns crushing thorny vine lines across the grove.</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Dispara linhas de vinhas espinhosas esmagadoras pelo bosque.' : 'Spawns crushing thorny vine lines across the grove.'}</span>
                         </div>
                         <div className="flex items-start gap-1.5 text-slate-300">
                           <span className="text-emerald-400 font-bold">•</span>
-                          <span>Unleashes deadly expanding Chomp AoE strikes.</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Libera ataques de mordida mortais em área (AoE).' : 'Unleashes deadly expanding Chomp AoE strikes.'}</span>
                         </div>
                         <div className="flex items-start gap-1.5 text-amber-300 font-medium pt-1">
                           <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                          <span>Defeating it unlocks the legendary Vine Snare!</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Derrotá-lo desbloqueia o lendário Cepo de Videira!' : 'Defeating it unlocks the legendary Vine Snare!'}</span>
                         </div>
                       </>
                     ) : isEye ? (
                       <>
                         <div className="flex items-start gap-1.5 text-slate-300">
                           <span className="text-rose-400 font-bold">•</span>
-                          <span>Weeps slow homing tears while closed and spawns Mini Eye minions to hunt you down.</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Chora lágrimas lentas teleguiadas enquanto fechado e invoca lacaios Mini Olhos para caçá-la.' : 'Weeps slow homing tears while closed and spawns Mini Eye minions to hunt you down.'}</span>
                         </div>
                         <div className="flex items-start gap-1.5 text-amber-300 font-medium">
                           <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                          <span>When it opens, you must look away (cursor Y &gt; Witch) to avoid its deadly gaze curse!</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Quando abrir, você deve desviar o olhar (cursor Y > Bruxa) para evitar a maldição do olhar mortal!' : 'When it opens, you must look away (cursor Y > Witch) to avoid its deadly gaze curse!'}</span>
                         </div>
                         <div className="flex items-start gap-1.5 text-amber-300 font-medium pt-1">
                           <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                          <span>Defeating it unlocks the legendary Medusa's Eye!</span>
+                          <span>{getLanguage() === 'pt-BR' ? "Derrotá-lo desbloqueia o lendário Olho da Medusa!" : "Defeating it unlocks the legendary Medusa's Eye!"}</span>
+                        </div>
+                      </>
+                    ) : isArchmages ? (
+                      <>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-purple-400 font-bold">•</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Fase 1: Enfrente 3 Arquemagos (Vermelho, Verde, Azul) que atacam em ciclo.' : 'Phase 1: Battle 3 Archmages (Red, Green, Blue) cycling their signature attacks.'}</span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-purple-400 font-bold">•</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Fase 2: Fundem-se com feitiços de clonagem e 8 feixes de arco-íris!' : 'Phase 2: Merge with cloning spells and 8-way spinning beams!'}</span>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="flex items-start gap-1.5 text-slate-300">
                           <span className="text-stone-400 font-bold">•</span>
-                          <span>A hulking beast that charges across the arena, becoming dizzy after crashing into walls 3 times.</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Uma fera corpulenta que investe pela arena, ficando tonta após colidir com as paredes 3 vezes.' : 'A hulking beast that charges across the arena, becoming dizzy after crashing into walls 3 times.'}</span>
                         </div>
                         <div className="flex items-start gap-1.5 text-slate-300">
                           <span className="text-stone-400 font-bold">•</span>
-                          <span>Alternates 2 - 1 with "THE Bite": after 2 dizzy states (Charge Attacks), leaps to top center and unleashes bites with a clear opening nearby!</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Alterne 2 - 1 com "A Mordida": após 2 estados de tontura (Investidas), salta para o topo central e desfere mordidas com uma abertura clara próxima!' : 'Alternates 2 - 1 with "THE Bite": after 2 dizzy states (Charge Attacks), leaps to top center and unleashes bites with a clear opening nearby!'}</span>
                         </div>
                         <div className="flex items-start gap-1.5 text-amber-300 font-medium pt-1">
                           <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                          <span>Defeating it unlocks the legendary Nightbear's Claws!</span>
+                          <span>{getLanguage() === 'pt-BR' ? "Derrotá-lo desbloqueia as lendárias Garras do Urso Noturno!" : "Defeating it unlocks the legendary Nightbear's Claws!"}</span>
                         </div>
                       </>
                     )}
@@ -246,11 +311,13 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                         ? 'bg-emerald-600 group-hover:bg-emerald-500 text-white shadow-md shadow-emerald-950'
                         : isEye
                         ? 'bg-rose-600 group-hover:bg-rose-500 text-white shadow-md shadow-rose-950'
+                        : isArchmages
+                        ? 'bg-purple-600 group-hover:bg-purple-500 text-white shadow-md shadow-purple-950'
                         : 'bg-stone-600 group-hover:bg-stone-700 text-white shadow-md shadow-stone-950'
                     }`}
                   >
                     <Swords className="w-3.5 h-3.5" />
-                    Summon {boss.name}
+                    {getLanguage() === 'pt-BR' ? `Invocar ${translateBossName(boss.id, boss.name, getLanguage())}` : `Summon ${translateBossName(boss.id, boss.name, getLanguage())}`}
                   </div>
                 </div>
               </button>

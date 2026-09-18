@@ -1,5 +1,6 @@
 import React from 'react';
-import { Wrench, ArrowUpCircle, Skull, Clock, X, Sparkles, Zap, Plus } from 'lucide-react';
+import { Wrench, ArrowUpCircle, Skull, Clock, X, Sparkles, Zap, Plus, Swords } from 'lucide-react';
+import { getLanguage, t } from '../utils/i18n';
 
 interface DevToolsModalProps {
   currentLevel: number;
@@ -7,10 +8,10 @@ interface DevToolsModalProps {
   mobileMode?: boolean;
   instaKill: boolean;
   onInstantLevelUp: () => void;
-  onSkipToMinute5: () => void;
   onSkipToMinute730: () => void;
   onToggleInstaKill: () => void;
   onOpenWeaponSelector: () => void;
+  onFightBoss: () => void;
   onClose: () => void;
 }
 
@@ -20,12 +21,13 @@ export const DevToolsModal: React.FC<DevToolsModalProps> = ({
   mobileMode = false,
   instaKill,
   onInstantLevelUp,
-  onSkipToMinute5,
   onSkipToMinute730,
   onToggleInstaKill,
   onOpenWeaponSelector,
+  onFightBoss,
   onClose,
 }) => {
+  const currentLang = getLanguage();
   const minutes = Math.floor(survivalTime / 60);
   const seconds = Math.floor(survivalTime % 60);
   const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
@@ -52,10 +54,10 @@ export const DevToolsModal: React.FC<DevToolsModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black font-serif tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-400">
-                Dev Tools
+                {currentLang === 'en' ? 'Dev Tools' : 'Ferramentas Dev'}
               </h2>
               <p className="text-[11px] text-amber-400/80">
-                Quick gameplay debugging & testing actions
+                {currentLang === 'en' ? 'Quick gameplay debugging & testing actions' : 'Ações rápidas de depuração e testes'}
               </p>
             </div>
           </div>
@@ -72,11 +74,15 @@ export const DevToolsModal: React.FC<DevToolsModalProps> = ({
         {/* Current State Info */}
         <div className="grid grid-cols-2 gap-2 text-xs bg-slate-950/80 p-2.5 rounded-xl border border-purple-900/40">
           <div className="flex flex-col">
-            <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Current Level</span>
+            <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+              {currentLang === 'en' ? 'Current Level' : 'Nível Atual'}
+            </span>
             <span className="text-purple-300 font-mono font-bold text-sm">LVL {currentLevel}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Survival Time</span>
+            <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+              {currentLang === 'en' ? 'Survival Time' : 'Tempo de Sobrevivência'}
+            </span>
             <span className="text-amber-300 font-mono font-bold text-sm">{formattedTime}</span>
           </div>
         </div>
@@ -101,15 +107,15 @@ export const DevToolsModal: React.FC<DevToolsModalProps> = ({
               </div>
               <div>
                 <div className="font-bold text-sm text-slate-100 flex items-center gap-2">
-                  <span>Insta Kill</span>
+                  <span>{currentLang === 'en' ? 'Insta Kill' : 'Morte Instantânea'}</span>
                   <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded ${
                     instaKill ? 'bg-rose-500 text-white' : 'bg-slate-800 text-slate-400'
                   }`}>
-                    {instaKill ? 'ACTIVE' : 'OFF'}
+                    {instaKill ? (currentLang === 'en' ? 'ACTIVE' : 'ATIVO') : (currentLang === 'en' ? 'OFF' : 'DESLIGADO')}
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-400">
-                  Defeat any enemy & boss in one hit
+                  {currentLang === 'en' ? 'Defeat any enemy & boss in one hit' : 'Derrote qualquer inimigo e chefe em um golpe'}
                 </div>
               </div>
             </div>
@@ -132,36 +138,36 @@ export const DevToolsModal: React.FC<DevToolsModalProps> = ({
               </div>
               <div>
                 <div className="font-bold text-sm text-slate-100 group-hover:text-amber-200 transition-colors">
-                  Weapon Selector
+                  {currentLang === 'en' ? 'Weapon Selector' : 'Seletor de Armas'}
                 </div>
                 <div className="text-[11px] text-slate-400">
-                  Select and upgrade any weapon or artifact
+                  {currentLang === 'en' ? 'Select and upgrade any weapon or artifact' : 'Selecione e melhore armas ou artefatos'}
                 </div>
               </div>
             </div>
             <Sparkles className="w-4 h-4 text-amber-400 opacity-70 group-hover:opacity-100 transition-opacity" />
           </button>
 
-          {/* Action 2: Skip to Minute 5:00 */}
+          {/* Action 2: Fight Boss (Sets boss timer to 0 and lets player choose a boss) */}
           <button
-            id="dev-action-skip-min-5"
-            onClick={onSkipToMinute5}
-            className="group flex items-center justify-between p-3 rounded-2xl bg-slate-900/90 hover:bg-emerald-950/80 border-2 border-emerald-900/50 hover:border-emerald-400 transition-all cursor-pointer hover:-translate-y-0.5 shadow-md shadow-emerald-950/40"
+            id="dev-action-fight-boss"
+            onClick={onFightBoss}
+            className="group flex items-center justify-between p-3 rounded-2xl bg-slate-900/90 hover:bg-purple-950/80 border-2 border-purple-900/50 hover:border-purple-400 transition-all cursor-pointer hover:-translate-y-0.5 shadow-md shadow-purple-950/40"
           >
             <div className="flex items-center gap-3 text-left">
-              <div className="w-9 h-9 rounded-xl bg-emerald-900/60 border border-emerald-500/50 flex items-center justify-center text-emerald-300 group-hover:scale-105 transition-transform">
-                <Skull className="w-5 h-5 text-emerald-300" />
+              <div className="w-9 h-9 rounded-xl bg-purple-900/60 border border-purple-500/50 flex items-center justify-center text-purple-300 group-hover:scale-105 transition-transform">
+                <Swords className="w-5 h-5 text-purple-300" />
               </div>
               <div>
-                <div className="font-bold text-sm text-slate-100 group-hover:text-emerald-200 transition-colors">
-                  Skip to Minute 5:00
+                <div className="font-bold text-sm text-slate-100 group-hover:text-purple-200 transition-colors">
+                  {t('dev_fight_boss', currentLang)}
                 </div>
                 <div className="text-[11px] text-slate-400">
-                  Jump to 05:00 & choose a Boss Fight
+                  {t('dev_fight_boss_desc', currentLang)}
                 </div>
               </div>
             </div>
-            <Clock className="w-4 h-4 text-emerald-400 opacity-70 group-hover:opacity-100 transition-opacity" />
+            <Skull className="w-4 h-4 text-purple-400 opacity-70 group-hover:opacity-100 transition-opacity" />
           </button>
 
           {/* Action 3: Skip to Minute 7:30 */}
@@ -176,10 +182,10 @@ export const DevToolsModal: React.FC<DevToolsModalProps> = ({
               </div>
               <div>
                 <div className="font-bold text-sm text-slate-100 group-hover:text-rose-200 transition-colors">
-                  Skip to Minute 7:30
+                  {currentLang === 'en' ? 'Skip to Minute 7:30' : 'Avançar para Minuto 7:30'}
                 </div>
                 <div className="text-[11px] text-slate-400">
-                  Jump to 07:30 & trigger The Witch's Deal
+                  {currentLang === 'en' ? "Jump to 07:30 & trigger The Witch's Deal" : 'Pule para 07:30 e ative o Acordo da Bruxa'}
                 </div>
               </div>
             </div>

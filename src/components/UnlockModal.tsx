@@ -2,6 +2,7 @@ import React from 'react';
 import { Sprout, Eye, Check, Sparkles, HelpCircle, Flame, Skull, BookOpen, Crosshair, Zap, Sword } from 'lucide-react';
 import { ALL_WEAPONS, ALL_STAT_ITEMS } from '../data/gameData';
 import { VampireFangsIcon } from './VampireFangsIcon';
+import { getLanguage, t, translateWeaponName, translateStatItemName } from '../utils/i18n';
 
 interface UnlockModalProps {
   itemId: string;
@@ -22,10 +23,19 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 export const UnlockModal: React.FC<UnlockModalProps> = ({ itemId, mobileMode = false, onContinue }) => {
+  const lang = getLanguage();
   const item = ALL_WEAPONS.find(w => w.id === itemId) || ALL_STAT_ITEMS.find(s => s.id === itemId);
-  const itemName = item ? item.name : 'Unknown Item';
+  const rawItemName = item ? item.name : 'Unknown Item';
+  const itemName = item
+    ? ('shootingType' in item ? translateWeaponName(item.id, rawItemName, lang) : translateStatItemName(item.id, rawItemName, lang))
+    : rawItemName;
   const iconName = item ? item.icon : '';
   const IconComponent = ICON_MAP[iconName] || HelpCircle;
+
+  const descTemplate = t('item_unlocked_desc', lang) !== 'item_unlocked_desc'
+    ? t('item_unlocked_desc', lang)
+    : '{name} has been unlocked and can now show up as a level up option! Obtain it in a run in order to discover it!';
+  const descText = descTemplate.replace('{name}', itemName);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
@@ -38,19 +48,19 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({ itemId, mobileMode = f
         </div>
 
         <h2 className="text-xl sm:text-2xl font-black font-serif text-amber-300 tracking-wide mb-1">
-          ITEM UNLOCKED!
+          {t('item_unlocked', lang)}
         </h2>
         <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
           <h3 className="text-base sm:text-lg font-bold text-emerald-300">
             {itemName}
           </h3>
           <span className="text-[10px] sm:text-[11px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-sm shadow-amber-500/30">
-            <Sparkles className="w-3 h-3 text-amber-400" /> Legendary Item
+            <Sparkles className="w-3 h-3 text-amber-400" /> {t('legendary_item', lang)}
           </span>
         </div>
 
         <p className="text-xs sm:text-sm text-stone-200 leading-relaxed mb-6 bg-stone-900/90 border border-stone-800 p-3.5 rounded-xl shadow-inner">
-          {itemName} has been unlocked and can now show up as a level up option! Obtain it in a run in order to discover it!
+          {descText}
         </p>
 
         <button
@@ -58,7 +68,7 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({ itemId, mobileMode = f
           onClick={onContinue}
           className="w-full py-3 px-6 rounded-xl font-bold text-sm sm:text-base bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50 transition-all cursor-pointer flex items-center justify-center gap-2"
         >
-          <Check className="w-5 h-5" /> Continue
+          <Check className="w-5 h-5" /> {lang === 'pt-BR' ? 'Continuar' : 'Continue'}
         </button>
       </div>
     </div>

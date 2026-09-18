@@ -22,10 +22,9 @@ export const PentagramIcon: React.FC<PentagramIconProps> = ({
     >
       {/* Outer Circle */}
       <circle cx="12" cy="12" r="10" />
-      {/* Pentagram Star (Inverted) */}
+      {/* Pentagram Star (Right side up) */}
       <path 
         d="M12 3.5 L17 18.88 L3.92 9.37 L20.08 9.37 L7 18.88 Z" 
-        transform="rotate(180 12 12)"
       />
     </svg>
   );

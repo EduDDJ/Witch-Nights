@@ -19,7 +19,8 @@ import {
   Heart,
   Clover,
   Eye,
-  Sprout
+  Sprout,
+  FlaskConical
 } from 'lucide-react';
 import { OwnedWeapon, OwnedStatItem } from '../types/game';
 import { ALL_WEAPONS, ALL_STAT_ITEMS } from '../data/gameData';
@@ -38,6 +39,7 @@ const WEAPON_ICONS: Record<string, React.ElementType> = {
   Pentagram: PentagramIcon,
   Sword,
   Sprout,
+  FlaskConical,
 };
 
 const STAT_ICONS: Record<string, React.ElementType> = {

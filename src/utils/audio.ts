@@ -71,7 +71,7 @@ class SoundEngine {
     }
   }
 
-  public playShoot(type: 'wand' | 'shotgun' | 'wisp' | 'lightning' | 'nova' | 'cauldron' | 'sword') {
+  public playShoot(type: 'wand' | 'shotgun' | 'wisp' | 'lightning' | 'nova' | 'cauldron' | 'sword' | 'fireball' | 'plant') {
     if (!this.enabled || this.volume <= 0.01) return;
     try {
       this.init();

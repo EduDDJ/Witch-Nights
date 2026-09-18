@@ -1,6 +1,8 @@
 import React from 'react';
 import { ShieldAlert, Sword, Heart, Zap, AlertTriangle, CheckCircle, Skull, Flame } from 'lucide-react';
 import { BossDefinition } from '../types/game';
+import { resolveAssetPath } from '../utils/assets';
+import { getLanguage, t, translateBossName } from '../utils/i18n';
 
 interface BossIncomingModalProps {
   boss: BossDefinition;
@@ -13,46 +15,74 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
   mobileMode = false,
   onStartBattle,
 }) => {
+  const isPt = getLanguage() === 'pt-BR';
   // Get mechanics and explanation based on boss id
   const getBossDetails = (id: string) => {
     switch (id) {
       case 'carnivore_plant':
         return {
-          title: 'Carnivore Plant',
-          subtitle: "Greenhouse's Devil",
+          title: translateBossName(id, boss.name, getLanguage()),
+          subtitle: isPt ? "O Diabo da Estufa" : "Greenhouse's Devil",
           color: '#22c55e',
           accent: 'emerald',
-          mechanics: [
+          mechanics: isPt ? [
+            'Vinhas Espinhosas: Dispara vinhas emaranhadas que prendem a bruxa no lugar.',
+            'Ataque de Mordida: Descarrega uma mordida devastadora. Nota: A Investida (Dash) é necessária para escapar!'
+          ] : [
             'Thorny Vines: Shoots tangled thorny vines that snare and root the witch in place.',
             'Chomp Attack: Delivers a devastating chomp bite. Note: Dash is necessary to escape the Chomp Attack!'
           ],
-          strategy: 'Keep your distance and circle around the perimeter. Use your Dash ability to evade the Chomp Attack and escape when cornered.'
+          strategy: isPt ? 'Mantenha distância e circule o perímetro. Use sua habilidade de Investida para esquivar da mordida.' : 'Keep your distance and circle around the perimeter. Use your Dash ability to evade the Chomp Attack and escape when cornered.'
         };
       case 'haunted_eye':
         return {
-          title: 'Haunted Eye',
-          subtitle: 'All-Seeing Spirit',
+          title: isPt ? 'Olho Assombrado' : 'Haunted Eye',
+          subtitle: isPt ? 'Espírito Onisciente' : 'All-Seeing Spirit',
           color: '#dc2626',
           accent: 'rose',
-          mechanics: [
+          mechanics: isPt ? [
+            'Lágrimas Pranteantes: Dispara rajadas de lágrimas ocultas teleguiadas.',
+            'Defesa Ocular: O olho só fecha quando os 3 Mini Olhos forem derrotados.',
+            'ZONA PROIBIDA (Desvie o Olhar): Durante a fase de olho aberto, mantenha o cursor abaixo da Bruxa (Y > Bruxa). Olhar diretamente causa 20 DPS!'
+          ] : [
             'Weeping Tears: Fires volleys of homing occult teardrops that track your position.',
             'Eye Defense: The Eye only closes when all 3 Mini Eyes are defeated.',
             'FORBIDDEN ZONE (Look Away): During its eye-open phase, you MUST keep your cursor below the Witch (Y > Witch). Staring directly at the eye inflicts 20 DPS!'
           ],
-          strategy: 'Destroy all 3 Mini Eyes first so the main Eye closes. Watch your cursor position when the warning line appears!'
+          strategy: isPt ? 'Destrua todos os 3 Mini Olhos primeiro para que o Olho principal feche. Fique atento à posição do cursor!' : 'Destroy all 3 Mini Eyes first so the main Eye closes. Watch your cursor position when the warning line appears!'
+        };
+      case 'archmages':
+        return {
+          title: isPt ? 'Os 3 Arquemagos' : 'The 3 Archmages',
+          subtitle: isPt ? 'Trindade Elemental Ancestral' : 'Ancient Elemental Trinity',
+          color: '#a855f7',
+          accent: 'purple',
+          mechanics: isPt ? [
+            'Fase 1 (Trindade): Vermelho (Chuva de Fogo teleguiada), Verde (Caixa de Vinhas e golpes 3x1), Azul (Feixes de Trovão giratórios de 10s).',
+            'Defesa de Bolha: Magos nocauteados (0 HP) ficam protegidos no canto inferior esquerdo.',
+            'Fase 2: Unem-se (1200 HP) com feitiço de clone sincronizado, 8 feixes de arco-íris e tempestade de relâmpagos.'
+          ] : [
+            'Phase 1 (Trinity): Red (Homing fireballs), Green (Vine Box & 3x1 bursts), Blue (10s spinning Thunder Beams).',
+            'Bubble Shield: Knocked-down wizards (0 HP) move to the bottom left wrapped in protective bubbles.',
+            'Phase 2: Merge (1200 HP) with synchronized player cloning, 8 spinning rainbow beams, and thunder hazards.'
+          ],
+          strategy: isPt ? 'Na Fase 1, foque o dano no Mago ativo. Na Fase 2, posicione-se em áreas seguras tanto para você quanto para seu clone!' : 'In Phase 1, burst down whichever Wizard is currently active. In Phase 2, navigate tiles that are safe for BOTH you and your synchronized clone!'
         };
       case 'night_bear':
       default:
         return {
           title: 'NightBear',
-          subtitle: 'Uncontrollable Beast',
+          subtitle: isPt ? 'Besta Incontrolável' : 'Uncontrollable Beast',
           color: '#b45309',
           accent: 'amber',
-          mechanics: [
+          mechanics: isPt ? [
+            'Investidas Frenéticas: Corre pela arena em linha reta, ficando tonto após bater nas paredes 3 vezes.',
+            'Ataque "A Mordida": Disparado após 2 atordoamentos por tontura. NightBear salta para o centro superior e morde toda a arena!'
+          ] : [
             'Frenzied Charges: Sprints across the arena in linear charges, becoming dizzy after crashing into walls 3 times.',
             '"THE Bite" Attack: Triggers after 2 Charge Attack dizzy stuns. NightBear leaps to the top center and unleashes arena-wide bites! A clear opening always exists near you to escape!'
           ],
-          strategy: 'Bait his charges into walls to stun him. After recovering from his 2nd dizzy stun, watch for his leap to top center, then quickly react and step into the clear gap to avoid bite damage!'
+          strategy: isPt ? 'Atraia suas investidas para as paredes para atordoá-lo. Após o 2º atordoamento, observe o salto para o topo e desvie pela abertura!' : 'Bait his charges into walls to stun him. After recovering from his 2nd dizzy stun, watch for his leap to top center, then quickly react and step into the clear gap to avoid bite damage!'
         };
     }
   };
@@ -69,7 +99,7 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
         <div className="flex items-center justify-center gap-3 bg-rose-950/60 border border-rose-500/50 py-2.5 px-4 rounded-2xl shadow-lg shadow-rose-950/50 animate-pulse">
           <ShieldAlert className="w-6 h-6 text-rose-400 shrink-0" />
           <span className="text-xs sm:text-sm font-black text-rose-300 uppercase tracking-widest">
-            ⚠️ BOSS INCOMING ⚠️
+            {t('boss_incoming_banner', getLanguage())}
           </span>
           <ShieldAlert className="w-6 h-6 text-rose-400 shrink-0" />
         </div>
@@ -82,39 +112,50 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
           >
             {boss.id === 'carnivore_plant' ? (
               <img
-                src="https://i.imgur.com/kaNPLzb.png"
+                src={resolveAssetPath('assets/aistudio/carnivore_plant.png')}
                 alt="Carnivore Plant"
-                crossOrigin="anonymous"
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (!target.src.includes('carnivore_plant.png')) {
-                    target.src = `${import.meta.env.BASE_URL}assets/aistudio/carnivore_plant.png`;
+                  if (!target.src.includes('kaNPLzb.png')) {
+                    target.src = 'https://i.imgur.com/kaNPLzb.png';
                   }
                 }}
                 className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
               />
             ) : boss.id === 'haunted_eye' ? (
               <img
-                src="https://i.imgur.com/caqAbHC.png"
+                src={resolveAssetPath('assets/aistudio/haunted_eye_open.png')}
                 alt="Haunted Eye"
-                crossOrigin="anonymous"
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (!target.src.includes('haunted_eye_open.png')) {
-                    target.src = `${import.meta.env.BASE_URL}assets/aistudio/haunted_eye_open.png`;
+                  if (!target.src.includes('caqAbHC.png')) {
+                    target.src = 'https://i.imgur.com/caqAbHC.png';
                   }
                 }}
                 className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
               />
             ) : boss.id === 'night_bear' ? (
               <img
-                src="https://i.imgur.com/Pjkp2on.png"
+                src={resolveAssetPath('assets/aistudio/night_bear.png')}
                 alt="NightBear"
-                crossOrigin="anonymous"
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (!target.src.includes('night_bear.png')) {
-                    target.src = `${import.meta.env.BASE_URL}assets/aistudio/night_bear.png`;
+                  if (!target.src.includes('Pjkp2on.png')) {
+                    target.src = 'https://i.imgur.com/Pjkp2on.png';
+                  }
+                }}
+                className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
+              />
+            ) : boss.id === 'archmages' ? (
+              <img
+                src={resolveAssetPath('assets/aistudio/geraldo_rgb.png')}
+                alt="The 3 Archmages"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes('w8qU2F1.png') && !target.src.startsWith('data:')) {
+                    target.src = 'https://i.imgur.com/w8qU2F1.png';
+                  } else if (!target.src.startsWith('data:')) {
+                    target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy18oC7NsFSIg4ESyxlJsRRkITI4+votQ/S7H6SaAwYkB7XCzadwtrWoMNk+J8ViRmRLKQUk+xg9uMn1NbmpmuFX6TswJheQYjE8cSFbCGKT42sWUlwJSsVgUIYu85YUY0i3mG/+SvwK/P1pYzEM2Dx/jiF2RFKSJDNITlwwS6X38aLQ2BxDNYuRDX/q9BmFJhWQFdSkBis2QGoZ+3/zxo1wji80MYHEoGyizSPLxzCA7AhSAcmJS7csi2zLkAFJ1SKodAKVUjAAKlBgfFKrSLLLahAw7SK5GqaOxafLyG/9UGQxJWDQBzVGwmLAEtSkVI1UC2p0R9HU4tFUPSQsJq/NRUCMGEBs6iA1MgmaCwgAAP//UV9intFESasAAAAASUVORK5CYII=';
                   }
                 }}
                 className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
@@ -138,7 +179,7 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
                 <Sword className="w-3.5 h-3.5 text-amber-400" /> ATK: {boss.damage}
               </span>
               <span className="flex items-center gap-1 bg-purple-950/60 px-2.5 py-1 rounded-lg border border-purple-800 text-purple-300">
-                <Zap className="w-3.5 h-3.5 text-purple-400" /> Time: 90s Limit
+                <Zap className="w-3.5 h-3.5 text-purple-400" /> {isPt ? 'Tempo: Limite de 90s' : 'Time: 90s Limit'}
               </span>
             </div>
           </div>
@@ -147,7 +188,7 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
         {/* Mechanics & Attacks */}
         <div className="flex flex-col gap-3 bg-slate-950/80 border border-slate-800/80 p-4 rounded-2xl">
           <h3 className="text-xs font-black text-amber-400 uppercase tracking-widest flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400" /> Attacks & Mechanics
+            <AlertTriangle className="w-4 h-4 text-amber-400" /> {isPt ? 'Ataques & Mecânicas' : 'Attacks & Mechanics'}
           </h3>
           <ul className="flex flex-col gap-2">
             {details.mechanics.map((mech, idx) => (
@@ -162,7 +203,7 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
         {/* Strategy Tip */}
         <div className="flex flex-col gap-2 bg-emerald-950/30 border border-emerald-600/30 p-4 rounded-2xl">
           <h3 className="text-xs font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-400" /> Survival Strategy
+            <CheckCircle className="w-4 h-4 text-emerald-400" /> {isPt ? 'Estratégia de Sobrevivência' : 'Survival Strategy'}
           </h3>
           <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed italic">
             "{details.strategy}"
@@ -175,7 +216,7 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
           className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-base uppercase tracking-widest shadow-xl shadow-rose-950/80 border-2 border-rose-400/50 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-3"
         >
           <Flame className="w-5 h-5 text-yellow-300 animate-bounce" />
-          BEGIN BATTLE
+          {isPt ? 'INICIAR BATALHA' : 'BEGIN BATTLE'}
           <Flame className="w-5 h-5 text-yellow-300 animate-bounce" />
         </button>
 

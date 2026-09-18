@@ -41,8 +41,10 @@ import { WeaponSelectorModal } from './components/WeaponSelectorModal';
 import { TutorialModal } from './components/TutorialModal';
 import { BossSelectModal } from './components/BossSelectModal';
 import { BossRushModal } from './components/BossRushModal';
+import { GameModeSelectModal } from './components/GameModeSelectModal';
 import { BossIncomingModal } from './components/BossIncomingModal';
 import { soundEngine } from './utils/audio';
+import { setLanguage, getLanguage, translateAchievement, t } from './utils/i18n';
 
 type GameScreen = 'MENU' | 'PLAYING' | 'COLLECTION' | 'CHARACTER_SELECT';
 
@@ -104,7 +106,9 @@ export default function App() {
   const [bossSelectOptions, setBossSelectOptions] = useState<BossDefinition[] | null>(null);
   const [gameOverStats, setGameOverStats] = useState<{ time: number; level: number; kills: number; bossesKilled: number; totalDamage?: number; killerName?: string; isVictory?: boolean } | null>(null);
   const [isBossRushModalOpen, setIsBossRushModalOpen] = useState<boolean>(false);
+  const [isGameModeSelectOpen, setIsGameModeSelectOpen] = useState<boolean>(false);
   const [isBossRush, setIsBossRush] = useState<boolean>(false);
+  const [bossRushQueue, setBossRushQueue] = useState<string[]>(['carnivore_plant', 'haunted_eye', 'night_bear', 'archmages']);
 
   // Boss fight state
   const [boss, setBoss] = useState<BossInstance | null>(null);
@@ -124,7 +128,7 @@ export default function App() {
   const [isOptionsOpen, setIsOptionsOpen] = useState<boolean>(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState<boolean>(false);
-  const [achievementNotification, setAchievementNotification] = useState<AchievementNotificationData | null>(null);
+  const [achievementQueue, setAchievementQueue] = useState<AchievementNotificationData[]>([]);
   const [isPauseMenuOpen, setIsPauseMenuOpen] = useState<boolean>(false);
   const [isDevToolsOpen, setIsDevToolsOpen] = useState<boolean>(false);
   const [isLevelUpFromDevTools, setIsLevelUpFromDevTools] = useState<boolean>(false);
@@ -133,6 +137,7 @@ export default function App() {
   const [instaKill, setInstaKill] = useState<boolean>(false);
   const [hasUsedRerollThisLevel, setHasUsedRerollThisLevel] = useState<boolean>(false);
   const [incomingBoss, setIncomingBoss] = useState<BossDefinition | null>(null);
+  const [isDevBossSelect, setIsDevBossSelect] = useState<boolean>(false);
 
   // Sync options changes with localStorage and SoundEngine
   useEffect(() => {
@@ -143,15 +148,29 @@ export default function App() {
     }
     soundEngine.setEnabled(options.soundEnabled);
     soundEngine.setVolume(options.soundVolume / 100);
+    if (options.language) {
+      setLanguage(options.language as any);
+    }
   }, [options]);
 
   const handleUpdateOptions = (updated: Partial<GameOptions>) => {
     setOptions((prev) => ({ ...prev, ...updated }));
   };
 
-  // Global Escape key listener for pausing and dismissing modals
+  // Global Escape & P key listener for pausing and dismissing modals
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Toggle pause with 'p' or 'P' key during gameplay
+      if (e.key === 'p' || e.key === 'P') {
+        if (screen === 'PLAYING') {
+          // If level up, witch deal, boss select, or game over is active, don't toggle pause menu
+          if (levelUpOptions === null && witchDealCurses === null && gameOverStats === null && bossSelectOptions === null) {
+            setIsPauseMenuOpen((prev) => !prev);
+          }
+        }
+        return;
+      }
+
       if (e.key === 'Escape') {
         if (isOptionsOpen) {
           setIsOptionsOpen(false);
@@ -169,13 +188,18 @@ export default function App() {
           setIsCollectionFromPause(false);
           return;
         }
+        if (bossSelectOptions !== null && isDevBossSelect) {
+          setBossSelectOptions(null);
+          setIsDevBossSelect(false);
+          return;
+        }
         if (screen === 'COLLECTION' || screen === 'CHARACTER_SELECT') {
           setScreen('MENU');
           return;
         }
         if (screen === 'PLAYING') {
-          // If level up, witch deal, or game over is active, don't toggle pause menu
-          if (levelUpOptions === null && witchDealCurses === null && gameOverStats === null) {
+          // If level up, witch deal, boss select, or game over is active, don't toggle pause menu
+          if (levelUpOptions === null && witchDealCurses === null && gameOverStats === null && bossSelectOptions === null) {
             setIsPauseMenuOpen((prev) => !prev);
           }
         }
@@ -183,7 +207,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOptionsOpen, isDevToolsOpen, isCollectionFromPause, screen, levelUpOptions, witchDealCurses, gameOverStats]);
+  }, [isOptionsOpen, isDevToolsOpen, isWeaponSelectorOpen, isCollectionFromPause, bossSelectOptions, isDevBossSelect, screen, levelUpOptions, witchDealCurses, gameOverStats]);
 
   // Persistent Collection state across runs (saved in localStorage)
   const [unlockedWeapons, setUnlockedWeapons] = useState<string[]>(() => {
@@ -340,11 +364,33 @@ export default function App() {
       ) {
         ids.push('being_a_witch_isnt_a_job');
       }
+      if (
+        localStorage.getItem('witch_nights_geraldo_unlocked') === 'true' &&
+        !ids.includes('color_me_impressed')
+      ) {
+        ids.push('color_me_impressed');
+      }
+      if (
+        localStorage.getItem('witch_nights_geraldo_green_unlocked') === 'true' &&
+        !ids.includes('alphabet_green')
+      ) {
+        ids.push('alphabet_green');
+      }
+      if (
+        localStorage.getItem('witch_nights_geraldo_blue_unlocked') === 'true' &&
+        !ids.includes('feeling_blue')
+      ) {
+        ids.push('feeling_blue');
+      }
       return ids;
     } catch {
       return [];
     }
   });
+
+  const isGeraldoUnlocked = completedAchievementIds.includes('color_me_impressed');
+  const isGeraldoGreenUnlocked = completedAchievementIds.includes('alphabet_green');
+  const isGeraldoBlueUnlocked = completedAchievementIds.includes('feeling_blue');
 
   // Complete achievement logic
   const completeAchievement = useCallback((achievementId: string) => {
@@ -375,6 +421,30 @@ export default function App() {
       });
     }
 
+    if (achievementId === 'color_me_impressed') {
+      try {
+        localStorage.setItem('witch_nights_geraldo_unlocked', 'true');
+      } catch {
+        // safe ignore
+      }
+    }
+
+    if (achievementId === 'alphabet_green') {
+      try {
+        localStorage.setItem('witch_nights_geraldo_green_unlocked', 'true');
+      } catch {
+        // safe ignore
+      }
+    }
+
+    if (achievementId === 'feeling_blue') {
+      try {
+        localStorage.setItem('witch_nights_geraldo_blue_unlocked', 'true');
+      } catch {
+        // safe ignore
+      }
+    }
+
     if (achievementId === 'youre_a_witch_ruby') {
       setIsTrueWitchUnlocked(true);
       try {
@@ -393,25 +463,54 @@ export default function App() {
       }
     }
 
-    soundEngine.playLevelUp();
-
-    setAchievementNotification({
-      id: `${ach.id}-${Date.now()}`,
-      achievementTitle: ach.title,
-      unlockText: ach.unlockText,
+    setAchievementQueue((prev) => {
+      // Prevent duplicate queue entries for the same achievement
+      if (prev.some((item) => item.achievementId === ach.id)) return prev;
+      return [
+        ...prev,
+        {
+          id: `${ach.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          achievementId: ach.id,
+          achievementTitle: translateAchievement(ach.id, 'title', ach.title, getLanguage()),
+          unlockText: translateAchievement(ach.id, 'unlockText', ach.unlockText, getLanguage()),
+        },
+      ];
     });
+  }, []);
+
+  // Play achievement sound whenever a new notification becomes active at the front of the queue
+  useEffect(() => {
+    if (achievementQueue.length > 0) {
+      soundEngine.playLevelUp();
+    }
+  }, [achievementQueue[0]?.id]);
+
+  const handleDismissAchievementNotification = useCallback(() => {
+    setAchievementQueue((prev) => (prev.length > 0 ? prev.slice(1) : []));
   }, []);
 
   const handleBossDefeated = useCallback((bossId: string) => {
     if (isBossRush) return;
     if (bossId === 'carnivore_plant') {
       completeAchievement('plants_vs_witches');
+      if (bossRushCharBestTimes['geraldo'] !== undefined) {
+        completeAchievement('alphabet_green');
+      }
     } else if (bossId === 'haunted_eye') {
       completeAchievement('eye_see_you');
     } else if (bossId === 'night_bear') {
       completeAchievement('bearely_any_trouble');
+    } else if (bossId === 'archmages') {
+      completeAchievement('color_me_impressed');
     }
-  }, [completeAchievement, isBossRush]);
+  }, [completeAchievement, isBossRush, bossRushCharBestTimes]);
+
+  const handleBossUpdate = useCallback((b: BossInstance | null, isFight: boolean, timer: number, hp: number) => {
+    setBoss(b);
+    setIsBossFight(isFight);
+    setBossTimer(timer);
+    setBossHP(hp);
+  }, []);
 
   // Save collections to localStorage
   useEffect(() => {
@@ -516,17 +615,27 @@ export default function App() {
 
   // Start a new run (Normal Game) with selected character
   const handleStartGame = (character: CharacterDefinition = selectedCharacter) => {
-    setSelectedCharacter(character);
+    let finalChar = character;
+    if (['geraldo', 'geraldo_green', 'geraldo_blue'].includes(character.id)) {
+      if (!isGeraldoUnlocked) {
+        finalChar = CHARACTERS[0];
+      } else if (character.id === 'geraldo_green' && !isGeraldoGreenUnlocked) {
+        finalChar = CHARACTERS.find((c) => c.id === 'geraldo') || CHARACTERS[0];
+      } else if (character.id === 'geraldo_blue' && !isGeraldoBlueUnlocked) {
+        finalChar = CHARACTERS.find((c) => c.id === 'geraldo') || CHARACTERS[0];
+      }
+    }
+    setSelectedCharacter(finalChar);
     setIsBossRush(false);
-    handleItemUnlocked('WEAPON', character.startingWeaponId);
-    if (character.startingStatItemId) {
-      handleItemUnlocked('STAT', character.startingStatItemId);
+    handleItemUnlocked('WEAPON', finalChar.startingWeaponId);
+    if (finalChar.startingStatItemId) {
+      handleItemUnlocked('STAT', finalChar.startingStatItemId);
     }
     setGameRunId((prev) => prev + 1);
-    const charMaxHp = character.baseMaxHp;
-    const charSpeed = 165 * (character.speedMultiplier ?? 1.1);
-    const initialStatItems = character.startingStatItemId
-      ? [{ id: character.startingStatItemId, level: 1 }]
+    const charMaxHp = finalChar.baseMaxHp;
+    const charSpeed = 165 * (finalChar.speedMultiplier ?? 1.1);
+    const initialStatItems = finalChar.startingStatItemId
+      ? [{ id: finalChar.startingStatItemId, level: 1 }]
       : [];
     setPlayer({
       ...INITIAL_PLAYER_STATS,
@@ -534,7 +643,7 @@ export default function App() {
       hp: charMaxHp,
       speed: charSpeed,
     });
-    setWeapons([{ id: character.startingWeaponId, level: 1, lastFired: 0, statsMultiplier: 1.0 }]);
+    setWeapons([{ id: finalChar.startingWeaponId, level: 1, lastFired: 0, statsMultiplier: 1.0 }]);
     setStatItems(initialStatItems);
     recalculatePassives(initialStatItems, charMaxHp, character);
     setSurvivalTime(0);
@@ -555,9 +664,18 @@ export default function App() {
     setIsCollectionFromPause(false);
     setInstaKill(false);
     setScreen('PLAYING');
+
+    // If character starts with bonus levels (e.g. Geraldo The Green), trigger level up selection right after Start Run
+    if (character.startingLevelBonus && character.startingLevelBonus > 0) {
+      soundEngine.playLevelUp();
+      const initialWeapons = [{ id: character.startingWeaponId, level: 1, lastFired: 0, statsMultiplier: 1.0 }];
+      handleTriggerLevelUp(character.startingLevelBonus, initialWeapons, initialStatItems);
+    }
   };
 
-  const handleStartBossRush = () => {
+  const handleStartBossRush = (queue?: string[]) => {
+    const selectedQueue = queue || ['carnivore_plant', 'haunted_eye', 'night_bear', 'archmages'];
+    setBossRushQueue(selectedQueue);
     setIsBossRush(true);
     handleItemUnlocked('WEAPON', selectedCharacter.startingWeaponId);
     if (selectedCharacter.startingStatItemId) {
@@ -600,6 +718,13 @@ export default function App() {
     setIsCollectionFromPause(false);
     setInstaKill(false);
     setScreen('PLAYING');
+
+    // Starting level bonus for Boss Rush mode as well
+    if (selectedCharacter.startingLevelBonus && selectedCharacter.startingLevelBonus > 0) {
+      soundEngine.playLevelUp();
+      const initialWeapons = [{ id: selectedCharacter.startingWeaponId, level: 1, lastFired: 0, statsMultiplier: 1.0 }];
+      handleTriggerLevelUp(selectedCharacter.startingLevelBonus, initialWeapons, initialStatItems);
+    }
   };
 
   // Reset Run
@@ -666,6 +791,15 @@ export default function App() {
 
   const handleTriggerTestBoss = () => {
     handleSkipToMinute5();
+  };
+
+  const handleDevFightBoss = () => {
+    setIsDevToolsOpen(false);
+    setIsPauseMenuOpen(false);
+    setBossCountdown(0);
+    window.dispatchEvent(new CustomEvent('set-boss-timer-zero'));
+    setIsDevBossSelect(true);
+    setBossSelectOptions(BOSS_POOL);
   };
 
   const handleTriggerWitchDeal = (curses: CurseChoice[]) => {
@@ -1012,15 +1146,35 @@ export default function App() {
   const handleGameOver = useCallback((stats: any) => {
     setGameOverStats(stats);
     if (isBossRush && stats.isVictory) {
-      completeAchievement('youre_a_witch_ruby');
-      if (isTrueWitchMode) {
-        completeAchievement('being_a_witch_isnt_a_job');
-      }
-      setIsTrueWitchUnlocked(true);
-      try {
-        localStorage.setItem('witch_nights_true_witch_unlocked', 'true');
-      } catch {
-        // safe ignore
+      const isFullBossRush = stats.isFullBossRush ?? (bossRushQueue.length > 1);
+      if (isFullBossRush) {
+        completeAchievement('youre_a_witch_ruby');
+        if (isTrueWitchMode) {
+          completeAchievement('being_a_witch_isnt_a_job');
+        }
+
+        // Achievement: "Out of the whole Alphabet, Green is my Favorite Number"
+        // Condition: "Unlock Vine Snare and complete Boss Rush as Geraldo The Red."
+        // Unlocks: Geraldo The Green.
+        const isVineSnareUnlocked =
+          unlockedItemIds.includes('vine_snare') || completedAchievementIds.includes('plants_vs_witches');
+        if (selectedCharacter.id === 'geraldo' && isVineSnareUnlocked) {
+          completeAchievement('alphabet_green');
+        }
+
+        // Achievement: "Feeling Blue"
+        // Condition: "Complete Boss Rush as Geraldo The Green."
+        // Unlocks: Geraldo The Blue.
+        if (selectedCharacter.id === 'geraldo_green') {
+          completeAchievement('feeling_blue');
+        }
+
+        setIsTrueWitchUnlocked(true);
+        try {
+          localStorage.setItem('witch_nights_true_witch_unlocked', 'true');
+        } catch {
+          // safe ignore
+        }
       }
       setBestBossRushTime((prev) => {
         const newBest = prev === null ? stats.time : Math.min(prev, stats.time);
@@ -1047,7 +1201,7 @@ export default function App() {
         });
       }
     }
-  }, [isBossRush, isTrueWitchMode, selectedCharacter, completeAchievement]);
+  }, [isBossRush, bossRushQueue, isTrueWitchMode, selectedCharacter, unlockedItemIds, completedAchievementIds, completeAchievement]);
 
   // Reset discovered collection & progress
   const handleResetProgress = () => {
@@ -1058,6 +1212,7 @@ export default function App() {
     setEnemyKills({});
     setUnlockedItemIds(DEFAULT_UNLOCKED_ITEM_IDS);
     setCompletedAchievementIds([]);
+    setAchievementQueue([]);
     setHasTrueWitchTrophy(false);
     setBestBossRushTime(null);
     setIsTrueWitchUnlocked(false);
@@ -1075,6 +1230,12 @@ export default function App() {
       localStorage.removeItem('witch_nights_boss_rush_best_time');
       localStorage.removeItem('witch_nights_true_witch_unlocked');
       localStorage.removeItem('witch_nights_true_witch_enabled');
+      localStorage.removeItem('witch_nights_geraldo_unlocked');
+      localStorage.removeItem('witch_nights_geraldo_green_unlocked');
+      localStorage.removeItem('witch_nights_geraldo_blue_unlocked');
+      if (['geraldo', 'geraldo_green', 'geraldo_blue'].includes(selectedCharacter.id)) {
+        setSelectedCharacter(CHARACTERS[0]);
+      }
     } catch {
       // safe ignore
     }
@@ -1088,7 +1249,7 @@ export default function App() {
       {/* 1. MAIN MENU SCREEN */}
       {screen === 'MENU' && (
         <MainMenu
-          onStartGame={() => setScreen('CHARACTER_SELECT')}
+          onStartGame={() => setIsGameModeSelectOpen(true)}
           onOpenBossRush={() => setIsBossRushModalOpen(true)}
           onOpenCollection={() => setScreen('COLLECTION')}
           onOpenOptions={() => setIsOptionsOpen(true)}
@@ -1100,12 +1261,31 @@ export default function App() {
         />
       )}
 
+      {/* 1.5 GAME MODE SELECT MODAL */}
+      {isGameModeSelectOpen && (
+        <GameModeSelectModal
+          onSelectNormalRun={() => {
+            setIsGameModeSelectOpen(false);
+            setScreen('CHARACTER_SELECT');
+          }}
+          onSelectBossRush={() => {
+            setIsGameModeSelectOpen(false);
+            setIsBossRushModalOpen(true);
+          }}
+          onClose={() => setIsGameModeSelectOpen(false)}
+          hasTrueWitchTrophy={hasTrueWitchTrophy}
+        />
+      )}
+
       {/* 2. CHARACTER SELECT SCREEN */}
       {screen === 'CHARACTER_SELECT' && (
         <CharacterSelectModal
           onStartRun={handleStartGame}
           onClose={() => setScreen('MENU')}
           mobileMode={options.mobileMode}
+          isGeraldoUnlocked={isGeraldoUnlocked}
+          isGeraldoGreenUnlocked={isGeraldoGreenUnlocked}
+          isGeraldoBlueUnlocked={isGeraldoBlueUnlocked}
         />
       )}
 
@@ -1136,6 +1316,7 @@ export default function App() {
             bossCountdown={bossCountdown}
             gameSpeed={1}
             isBossRush={isBossRush}
+            bossRushQueue={bossRushQueue}
             isTrueWitchMode={isBossRush && isTrueWitchMode}
             isPaused={
               levelUpOptions !== null ||
@@ -1174,12 +1355,7 @@ export default function App() {
               }));
             }}
             onBossDefeated={handleBossDefeated}
-            onBossUpdate={(b, isFight, timer, hp) => {
-              setBoss(b);
-              setIsBossFight(isFight);
-              setBossTimer(timer);
-              setBossHP(hp);
-            }}
+            onBossUpdate={handleBossUpdate}
           />
 
           {/* Top-Left Face, Red HP, Blue EXP, Timer HUD & Bottom-Left Weapons */}
@@ -1235,8 +1411,8 @@ export default function App() {
               mobileMode={options.mobileMode}
               instaKill={instaKill}
               onInstantLevelUp={handleDevInstantLevelUp}
-              onSkipToMinute5={handleSkipToMinute5}
               onSkipToMinute730={handleSkipToMinute730}
+              onFightBoss={handleDevFightBoss}
               onToggleInstaKill={() => setInstaKill((prev) => !prev)}
               onOpenWeaponSelector={() => setIsWeaponSelectorOpen(true)}
               onClose={() => setIsDevToolsOpen(false)}
@@ -1272,14 +1448,26 @@ export default function App() {
             />
           )}
 
-          {/* Destiny Control Boss Selection Modal */}
+          {/* Boss Selection Modal (Destiny Control or Dev Tools) */}
           {bossSelectOptions && (
             <BossSelectModal
               bosses={bossSelectOptions}
               mobileMode={options.mobileMode}
-              onSelectBoss={(bossId) => {
+              isDevChoice={isDevBossSelect}
+              onClose={() => {
                 setBossSelectOptions(null);
-                window.dispatchEvent(new CustomEvent('trigger-test-boss', { detail: { bossId } }));
+                setIsDevBossSelect(false);
+              }}
+              onSelectBoss={(bossId) => {
+                const wasDev = isDevBossSelect;
+                setBossSelectOptions(null);
+                setIsDevBossSelect(false);
+                setBossCountdown(0);
+                if (wasDev) {
+                  window.dispatchEvent(new CustomEvent('spawn-boss-fight', { detail: { bossId } }));
+                } else {
+                  window.dispatchEvent(new CustomEvent('trigger-test-boss', { detail: { bossId } }));
+                }
               }}
             />
           )}
@@ -1341,9 +1529,9 @@ export default function App() {
               // safe ignore
             }
           }}
-          onStartBossRush={() => {
+          onStartBossRush={(queue) => {
             setIsBossRushModalOpen(false);
-            handleStartBossRush();
+            handleStartBossRush(queue);
           }}
           onOpenCharacterSelect={() => setIsBossRushCharSelectOpen(true)}
           onClose={() => setIsBossRushModalOpen(false)}
@@ -1354,13 +1542,16 @@ export default function App() {
       {isBossRushCharSelectOpen && (
         <CharacterSelectModal
           initialCharacter={selectedCharacter}
-          actionLabel="Confirm Character"
+          actionLabel={t('confirm_character', getLanguage())}
           onStartRun={(char) => {
             setSelectedCharacter(char);
             setIsBossRushCharSelectOpen(false);
           }}
           onClose={() => setIsBossRushCharSelectOpen(false)}
           mobileMode={options.mobileMode}
+          isGeraldoUnlocked={isGeraldoUnlocked}
+          isGeraldoGreenUnlocked={isGeraldoGreenUnlocked}
+          isGeraldoBlueUnlocked={isGeraldoBlueUnlocked}
         />
       )}
 
@@ -1397,11 +1588,59 @@ export default function App() {
         />
       )}
 
-      {/* 8. TOP ACHIEVEMENT NOTIFICATION BANNER */}
+      {/* 8. TOP ACHIEVEMENT NOTIFICATION BANNER (QUEUED SEQUENTIALLY) */}
       <AchievementBanner
-        notification={achievementNotification}
-        onDismiss={() => setAchievementNotification(null)}
+        notification={achievementQueue[0] || null}
+        onDismiss={handleDismissAchievementNotification}
       />
+
+      {/* FIRST-TIME LANGUAGE CHOICE MODAL */}
+      {!options.language && (
+        <div
+          id="first-time-language-modal"
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 animate-in fade-in duration-300"
+        >
+          <div
+            id="first-time-language-card"
+            className="w-full max-w-md bg-gradient-to-b from-[#1a1033] via-[#120a24] to-[#0a0515] border-2 border-purple-500 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-purple-950/90 text-center flex flex-col gap-6 select-none"
+          >
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-16 h-16 rounded-2xl bg-purple-900/40 border border-purple-500/50 flex items-center justify-center text-purple-300 shadow-lg shadow-purple-950/50">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-100 via-purple-300 to-indigo-200 tracking-wide mt-2">
+                Select Language / Selecionar Idioma
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed px-2">
+                Please choose your preferred language to begin / Escolha o seu idioma preferido para começar:
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3.5 mt-2">
+              <button
+                id="select-lang-en-btn"
+                onClick={() => {
+                  handleUpdateOptions({ language: 'en' });
+                  setLanguage('en');
+                }}
+                className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-purple-800 to-purple-700 hover:from-purple-700 hover:to-purple-600 border border-purple-500 text-white text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-lg shadow-purple-950/50 flex items-center justify-center gap-2.5"
+              >
+                <span>English</span>
+              </button>
+              <button
+                id="select-lang-pt-btn"
+                onClick={() => {
+                  handleUpdateOptions({ language: 'pt-BR' });
+                  setLanguage('pt-BR');
+                }}
+                className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-indigo-800 to-indigo-700 hover:from-indigo-700 hover:to-indigo-600 border border-indigo-500 text-white text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-lg shadow-indigo-950/50 flex items-center justify-center gap-2.5"
+              >
+                <span>Português Brasileiro</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

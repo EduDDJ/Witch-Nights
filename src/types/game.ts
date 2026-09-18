@@ -1,7 +1,17 @@
 export type ShootingType = 'NEAREST_ENEMY' | 'MOUSE_DIRECTION' | 'AREA_OF_EFFECT';
 
 export interface BossAttack {
-  type: 'CARNIVORE_PLANT_AOE' | 'CARNIVORE_PLANT_VINES' | 'HAUNTED_EYE_PROJECTILE' | 'HAUNTED_EYE_TEAR' | 'NIGHT_BEAR_BITE';
+  type:
+    | 'CARNIVORE_PLANT_AOE'
+    | 'CARNIVORE_PLANT_VINES'
+    | 'HAUNTED_EYE_PROJECTILE'
+    | 'HAUNTED_EYE_TEAR'
+    | 'NIGHT_BEAR_BITE'
+    | 'ARCHMAGES_FIREBALL'
+    | 'ARCHMAGES_RAINBOW_FIREBALL'
+    | 'ARCHMAGES_VINE_TILE_ATTACK'
+    | 'ARCHMAGES_THUNDER_STRIKE'
+    | 'ARCHMAGES_SPINNING_BEAM';
   x: number;
   y: number;
   vx?: number;
@@ -11,6 +21,11 @@ export interface BossAttack {
   duration: number;
   damage: number;
   radius: number;
+  targetAngle?: number;
+  color?: string;
+  isHoming?: boolean;
+  spawnTime?: number;
+  maxLife?: number;
   vines?: {
     x1: number;
     y1: number;
@@ -35,6 +50,21 @@ export interface BossDefinition {
   widthRadius?: number;
   heightRadius?: number;
   color: string;
+  spriteUrl?: string;
+  fallbackSpriteUrl?: string;
+}
+
+export interface ArchmageState {
+  id: 'geraldo_red' | 'geraldo_green' | 'geraldo_blue';
+  name: string;
+  hp: number;
+  maxHp: number;
+  x: number;
+  y: number;
+  isShielded: boolean;
+  isTurnShielded?: boolean;
+  turnDamageTaken?: number;
+  color: string;
 }
 
 export interface BossInstance {
@@ -51,6 +81,7 @@ export interface BossInstance {
   color: string;
   attacks: BossAttack[];
   vineRootedDuration?: number;
+  frozenTimer?: number;
   burnDuration?: number;
   burnTickTimer?: number;
   burnDamagePerTick?: number;
@@ -60,6 +91,9 @@ export interface BossInstance {
   eyeState?: 'CLOSED' | 'WARNING' | 'OPEN';
   eyeTimer?: number;
   lastHitBy?: string;
+  archmagesPhase?: 'PHASE1' | 'MERGING' | 'PHASE2';
+  activeArchmageId?: 'geraldo_red' | 'geraldo_green' | 'geraldo_blue' | 'geraldo_rgb' | null;
+  archmagesList?: ArchmageState[];
 }
 
 export interface WeaponTier {
@@ -158,6 +192,7 @@ export interface Enemy {
   attackCooldown: number;
   isRed?: boolean;
   vineRootedDuration?: number;
+  frozenTimer?: number;
   burnDuration?: number;
   burnTickTimer?: number;
   burnDamagePerTick?: number;
@@ -202,6 +237,10 @@ export interface Projectile {
   explosionRadius?: number;
   explosionDamage?: number;
   isLaser?: boolean;
+  freezeDuration?: number;
+  chainMax?: number;
+  chainFreeze?: number;
+  hasChained?: boolean;
   hitEnemyIds?: Set<number>;
   hitBoss?: boolean;
 }
@@ -316,6 +355,7 @@ export interface GameOptions {
   mobileMode: boolean;
   mobileAimMode?: MobileAimMode; // 'JOYSTICK' (default) | 'TOUCH'
   brightness: number; // 50 to 150 (percentage)
+  language?: string;
 }
 
 export interface CharacterDefinition {
@@ -330,6 +370,7 @@ export interface CharacterDefinition {
   baseMaxHp: number;
   speedMultiplier: number;
   speedLabel: string;
+  startingLevelBonus?: number;
   description: string;
   spriteUrl: string;
   fallbackSpriteUrl?: string;

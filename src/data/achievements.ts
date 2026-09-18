@@ -33,6 +33,25 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     bossId: 'night_bear',
   },
   {
+    id: 'color_me_impressed',
+    title: 'Color Me Impressed',
+    description: 'Defeat the 3 Archmages in a run.',
+    unlockText: 'Geraldo The Red',
+    bossId: 'archmages',
+  },
+  {
+    id: 'alphabet_green',
+    title: 'Out of the whole Alphabet, Green is my Favorite Number',
+    description: 'Unlock Vine Snare and complete Boss Rush as Geraldo The Red.',
+    unlockText: 'Geraldo The Green',
+  },
+  {
+    id: 'feeling_blue',
+    title: 'Feeling Blue',
+    description: 'Complete Boss Rush as Geraldo The Green.',
+    unlockText: 'Geraldo The Blue',
+  },
+  {
     id: 'youre_a_witch_ruby',
     title: "You're a Witch, Ruby",
     description: 'Win Boss Rush for the first time.',
@@ -40,7 +59,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   },
   {
     id: 'being_a_witch_isnt_a_job',
-    title: "Being a Witch isn't a Job",
+    title: "I AM a freaking Witch!",
     description: 'Win Boss Rush in True Witch Mode.',
     unlockText: 'Diamond Trophy',
   },

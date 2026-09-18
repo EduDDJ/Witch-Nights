@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Play, Settings, BookOpen, LogOut, Pause, RotateCcw, Wrench } from 'lucide-react';
 import { OwnedWeapon, OwnedStatItem } from '../types/game';
 import { ALL_WEAPONS, ALL_STAT_ITEMS } from '../data/gameData';
+import { useLanguage, t } from '../utils/i18n';
 import { PentagramIcon } from './PentagramIcon';
 import { VampireFangsIcon } from './VampireFangsIcon';
 import { BroomIcon } from './BroomIcon';
@@ -83,6 +84,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
   onOpenCollection,
   onReturnToMainMenu,
 }) => {
+  const lang = useLanguage();
   const minutes = Math.floor(survivalTime / 60);
   const seconds = Math.floor(survivalTime % 60);
   const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
@@ -112,10 +114,10 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               <BookOpen className="w-5 h-5 text-amber-300" />
             </div>
             <h3 className="text-lg font-black font-serif tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-purple-300 to-indigo-200">
-              CURRENT ITEMS
+              {t('current_items', lang)}
             </h3>
             <div className="text-[11px] text-slate-400 font-mono">
-              {weapons.length} Weapon{weapons.length !== 1 ? 's' : ''} {!isBossRush ? `• ${statItems.length} Artifact${statItems.length !== 1 ? 's' : ''}` : ''}
+              {weapons.length} {t('weapons_label', lang)} {!isBossRush ? `• ${statItems.length} ${t('artifacts_label', lang)}` : ''}
             </div>
           </div>
 
@@ -124,7 +126,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
             {!isBossRush && (
               <div className="flex flex-col gap-1.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/90 px-1">
-                  Artifacts ({statItems.length}/5)
+                  {t('artifacts_label', lang)} ({statItems.length}/5)
                 </span>
                 <div className="flex items-center justify-center gap-1.5 p-2 rounded-2xl bg-slate-950/80 border border-amber-900/50 shadow-inner w-full">
                   {Array.from({ length: 5 }).map((_, idx) => {
@@ -185,7 +187,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
             {/* Weapons Section */}
             <div className="flex flex-col gap-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300/90 px-1">
-                Weapons ({weapons.length}/{isBossRush ? 1 : maxWeapons})
+                {t('weapons_label', lang)} ({weapons.length}/{isBossRush ? 1 : maxWeapons})
               </span>
               <div className="flex items-center justify-center gap-1.5 p-2 rounded-2xl bg-slate-950/80 border border-purple-900/50 shadow-inner w-full">
                 {Array.from({ length: isBossRush ? 1 : maxWeapons }).map((_, idx) => {
@@ -256,7 +258,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               </div>
             ) : (
               <div className="text-[11px] text-slate-400/80 text-center italic bg-black/30 p-2 rounded-xl border border-slate-800/60 w-full">
-                Hover over an item to inspect stats
+                {t('hover_inspect', lang)}
               </div>
             )}
           </div>
@@ -273,10 +275,10 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               <Pause className="w-5 h-5 text-purple-300" />
             </div>
             <h2 className="text-xl sm:text-2xl font-black font-serif tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-purple-300 to-indigo-200">
-              GAME PAUSED
+              {t('game_paused', lang)}
             </h2>
             <div className="text-xs text-slate-400 flex items-center gap-1.5">
-              <span>Total Time:</span>
+              <span>{t('total_time', lang)}</span>
               <span className="font-mono font-bold text-amber-300">{formattedTime}</span>
             </div>
           </div>
@@ -290,7 +292,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-purple-900/50 border border-purple-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.02]"
             >
               <Play className="w-4 h-4 fill-white text-white" />
-              <span>Resume Game</span>
+              <span>{t('resume_game', lang)}</span>
             </button>
 
             {/* 2. Restart Run */}
@@ -300,7 +302,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-slate-900/80 hover:bg-cyan-950/80 text-cyan-200 hover:text-white font-semibold text-sm border border-cyan-800/50 hover:border-cyan-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <RotateCcw className="w-4 h-4 text-cyan-400" />
-              <span>Restart Run</span>
+              <span>{t('restart_run', lang)}</span>
             </button>
 
             {/* 3. Dev Tools */}
@@ -310,7 +312,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-slate-900/80 hover:bg-amber-950/80 text-amber-200 hover:text-white font-semibold text-sm border border-amber-800/50 hover:border-amber-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <Wrench className="w-4 h-4 text-amber-400" />
-              <span>Dev Tools</span>
+              <span>{t('dev_tools', lang)}</span>
             </button>
 
             {/* 4. Options */}
@@ -320,7 +322,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-slate-900/80 hover:bg-purple-950/80 text-purple-200 hover:text-white font-semibold text-sm border border-purple-700/50 hover:border-purple-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <Settings className="w-4 h-4 text-purple-400" />
-              <span>Options</span>
+              <span>{t('options', lang)}</span>
             </button>
 
             {/* 5. Collection */}
@@ -330,7 +332,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-slate-900/80 hover:bg-purple-950/80 text-purple-200 hover:text-white font-semibold text-sm border border-purple-700/50 hover:border-purple-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <BookOpen className="w-4 h-4 text-purple-300" />
-              <span>Collection</span>
+              <span>{t('collection', lang)}</span>
             </button>
 
             {/* 6. Main Menu */}
@@ -340,7 +342,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-rose-950/40 hover:bg-rose-950/70 text-rose-300 hover:text-rose-100 font-semibold text-sm border border-rose-800/40 hover:border-rose-600/60 flex items-center justify-center gap-2 transition-all cursor-pointer mt-0.5"
             >
               <LogOut className="w-4 h-4 text-rose-400" />
-              <span>Quit to Main Menu</span>
+              <span>{t('quit_to_main_menu', lang)}</span>
             </button>
           </div>
         </div>

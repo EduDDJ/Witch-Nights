@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { Trophy, X, Check, Lock, Sparkles, Gem } from 'lucide-react';
+import { Trophy, X, Check, Lock } from 'lucide-react';
 import { ACHIEVEMENTS } from '../data/achievements';
+import { getLanguage, t, translateAchievement } from '../utils/i18n';
 
 interface AchievementsModalProps {
   completedAchievementIds: string[];
@@ -13,6 +14,8 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
   onClose,
   mobileMode = false,
 }) => {
+  const currentLang = getLanguage();
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -39,7 +42,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
           id="close-achievements-button"
           onClick={onClose}
           className="absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 p-1 sm:p-2 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700/50 text-purple-300 hover:text-white transition-all cursor-pointer z-10"
-          title="Close Achievements"
+          title={currentLang === 'en' ? 'Close Achievements' : 'Fechar Conquistas'}
         >
           <X className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
         </button>
@@ -52,7 +55,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-amber-100 to-indigo-200 font-serif tracking-wide truncate">
-                Achievements
+                {t('achievements', currentLang)}
               </h2>
               <span className="text-[10px] sm:text-xs font-mono font-bold px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full bg-purple-900/60 border border-purple-500/40 text-amber-300 shrink-0">
                 {completedCount} / {totalCount}
@@ -69,11 +72,15 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
           />
         </div>
 
-        {/* Horizontal List of Achievements (Slim vertical cards fitting ~4 in view) */}
+        {/* Horizontal List of Achievements */}
         <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-1 sm:gap-2 min-h-0">
           {ACHIEVEMENTS.map((ach) => {
             const isCompleted = completedAchievementIds.includes(ach.id);
             const isTrueWitchModeAch = ach.id === 'being_a_witch_isnt_a_job';
+
+            const localizedTitle = translateAchievement(ach.id, 'title', ach.title, currentLang);
+            const localizedDesc = translateAchievement(ach.id, 'description', ach.description, currentLang);
+            const localizedUnlock = translateAchievement(ach.id, 'unlockText', ach.unlockText, currentLang);
 
             return (
               <div
@@ -88,7 +95,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
                 {/* Left Side: Square Checkbox */}
                 <div
                   id={`achievement-checkbox-${ach.id}`}
-                  aria-label={isCompleted ? `${ach.title} completed` : `${ach.title} incomplete`}
+                  aria-label={isCompleted ? `${localizedTitle} completed` : `${localizedTitle} incomplete`}
                   className={`w-5 h-5 sm:w-7 sm:h-7 rounded-md sm:rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${
                     isCompleted
                       ? 'border-emerald-400 bg-emerald-500/20 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.35)]'
@@ -108,7 +115,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
                     <span className={`font-serif font-bold text-[11px] sm:text-sm truncate ${
                       isCompleted ? 'text-purple-100' : 'text-stone-300'
                     }`}>
-                      {ach.title}
+                      {localizedTitle}
                     </span>
 
                     {isTrueWitchModeAch && (
@@ -124,13 +131,17 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
                     <span className={`text-[9px] sm:text-xs flex items-center gap-1 font-medium ${
                       isCompleted ? 'text-amber-300/90' : 'text-stone-400'
                     }`}>
-                      <span className="text-purple-400/70">Unlocks:</span>
-                      <strong className={isCompleted ? 'text-amber-200' : 'text-stone-300'}>{ach.unlockText}</strong>
+                      <span className="text-purple-400/70">
+                        {currentLang === 'en' ? 'Unlocks:' : 'Desbloqueia:'}
+                      </span>
+                      <strong className={isCompleted ? 'text-amber-200' : 'text-stone-300'}>
+                        {localizedUnlock}
+                      </strong>
                     </span>
                   </div>
 
                   <p className="text-[9px] sm:text-xs text-stone-400 truncate sm:line-clamp-1 leading-tight mt-0.2 sm:mt-0.5">
-                    {ach.description}
+                    {localizedDesc}
                   </p>
                 </div>
 
@@ -139,13 +150,19 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
                   {isCompleted ? (
                     <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1.5 py-0.5 sm:px-2 rounded-md bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[9px] sm:text-xs font-bold">
                       <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                      <span className="hidden sm:inline">Completed</span>
-                      <span className="sm:hidden">Done</span>
+                      <span className="hidden sm:inline">
+                        {currentLang === 'en' ? 'Completed' : 'Concluída'}
+                      </span>
+                      <span className="sm:hidden">
+                        {currentLang === 'en' ? 'Done' : 'Feito'}
+                      </span>
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1.5 py-0.5 sm:px-2 rounded-md bg-stone-900 border border-stone-700/60 text-stone-500 text-[9px] sm:text-xs font-semibold">
                       <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                      <span>Locked</span>
+                      <span>
+                        {currentLang === 'en' ? 'Locked' : 'Bloqueado'}
+                      </span>
                     </span>
                   )}
                 </div>
@@ -161,7 +178,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
             onClick={onClose}
             className="w-full sm:w-auto px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl bg-purple-900/60 hover:bg-purple-800/80 border border-purple-600/50 hover:border-purple-400 text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer"
           >
-            Close
+            {currentLang === 'en' ? 'Close' : 'Fechar'}
           </button>
         </div>
       </div>

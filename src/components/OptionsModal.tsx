@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Wind, Crosshair, Sparkles, X, Sliders, Smartphone, RotateCcw, Check, BookOpen, Image as ImageIcon } from 'lucide-react';
+import { Volume2, VolumeX, Wind, Crosshair, Sparkles, X, Sliders, Smartphone, RotateCcw, Check, BookOpen, Globe, Image as ImageIcon } from 'lucide-react';
 import { GameOptions, DashMode } from '../types/game';
 import { soundEngine } from '../utils/audio';
+import { t, Language } from '../utils/i18n';
 
 interface OptionsModalProps {
   options: GameOptions;
@@ -22,6 +23,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [resetSuccess, setResetSuccess] = useState<boolean>(false);
   const triggerReset = onResetProgress || onResetCollection;
+  const currentLang = (options.language || 'en') as Language;
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
@@ -69,9 +71,9 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               <h2 className={`font-bold font-serif text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-purple-300 to-indigo-200 ${
                 isMobile ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'
               }`}>
-                Game Options
+                {t('game_options', currentLang)}
               </h2>
-              <p className="text-[10px] sm:text-xs text-purple-400/80">Configure audio, mobile layout, and controls</p>
+              <p className="text-[10px] sm:text-xs text-purple-400/80">{t('options_subtitle', currentLang)}</p>
             </div>
           </div>
           <button
@@ -86,12 +88,50 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
 
         {/* Options Content */}
         <div className={`flex flex-col text-sm ${isMobile ? 'gap-2.5' : 'gap-4'}`}>
+          
+          {/* LANGUAGE SECTION */}
+          <div className={`rounded-xl bg-purple-950/40 border border-purple-800/40 flex flex-col ${isMobile ? 'p-2.5 gap-1.5' : 'p-3.5 gap-2.5'}`}>
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-purple-200 flex items-center gap-2 text-xs sm:text-sm">
+                <Globe className="w-4 h-4 text-emerald-400" />
+                {t('language', currentLang)}
+              </span>
+              <div className="flex gap-1.5">
+                <button
+                  id="lang-en-toggle-btn"
+                  onClick={() => onChangeOptions({ language: 'en' })}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                    currentLang === 'en'
+                      ? 'bg-purple-900/80 border-purple-500 text-purple-200 font-bold'
+                      : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  id="lang-pt-toggle-btn"
+                  onClick={() => onChangeOptions({ language: 'pt-BR' })}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                    currentLang === 'pt-BR'
+                      ? 'bg-purple-900/80 border-purple-500 text-purple-200 font-bold'
+                      : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
+                  }`}
+                >
+                  Português (BR)
+                </button>
+              </div>
+            </div>
+            <p className="text-[10px] sm:text-[11px] text-slate-400">
+              {currentLang === 'en' ? 'Select game language.' : 'Selecione o idioma do jogo.'}
+            </p>
+          </div>
+
           {/* MOBILE MODE SECTION */}
           <div className={`rounded-xl bg-purple-950/40 border border-purple-800/40 flex flex-col ${isMobile ? 'p-2.5 gap-1.5' : 'p-3.5 gap-2.5'}`}>
             <div className="flex items-center justify-between">
               <span className="font-semibold text-purple-200 flex items-center gap-2 text-xs sm:text-sm">
                 <Smartphone className="w-4 h-4 text-sky-400" />
-                Mobile Mode
+                {t('mobile_mode', currentLang)}
               </span>
               <button
                 id="toggle-mobile-mode-btn"
@@ -102,11 +142,11 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                     : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
                 }`}
               >
-                {options.mobileMode ? 'ENABLED' : 'DISABLED'}
+                {options.mobileMode ? t('enabled', currentLang) : t('disabled', currentLang)}
               </button>
             </div>
             <p className="text-[10px] sm:text-[11px] text-slate-400">
-              Adds on-screen movement and controls, compacts menus for smaller screens, and adjusts HUD positioning.
+              {t('mobile_mode_desc', currentLang)}
             </p>
 
             {/* Sub-option: Mobile Aiming Mode */}
@@ -114,7 +154,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               <div className="mt-1 pt-2 border-t border-purple-800/30 flex flex-col gap-1.5 animate-in fade-in duration-150">
                 <span className="text-[11px] sm:text-xs font-semibold text-purple-300 flex items-center gap-1.5">
                   <Crosshair className="w-3.5 h-3.5 text-rose-400" />
-                  Mobile Aiming Mode
+                  {t('mobile_aim_mode', currentLang)}
                 </span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -128,10 +168,10 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                   >
                     <div className="flex items-center gap-1.5 font-bold text-xs">
                       <Crosshair className="w-3.5 h-3.5 text-rose-400" />
-                      Joystick Aim
+                      {t('joystick_aim', currentLang)}
                     </div>
                     <span className="text-[10px] text-slate-400 leading-tight">
-                      Use right-side virtual joystick to aim weapons.
+                      {t('joystick_aim_desc', currentLang)}
                     </span>
                   </button>
 
@@ -146,10 +186,10 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                   >
                     <div className="flex items-center gap-1.5 font-bold text-xs">
                       <Smartphone className="w-3.5 h-3.5 text-sky-400" />
-                      Touch to Aim
+                      {t('touch_aim', currentLang)}
                     </div>
                     <span className="text-[10px] text-slate-400 leading-tight">
-                      Tap/click anywhere to aim directly (removes aim joystick).
+                      {t('touch_aim_desc', currentLang)}
                     </span>
                   </button>
                 </div>
@@ -166,7 +206,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 ) : (
                   <VolumeX className="w-4 h-4 text-rose-400" />
                 )}
-                Sound Effects
+                {t('sound_settings', currentLang)}
               </span>
               <button
                 id="toggle-sound-btn"
@@ -177,16 +217,16 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                     : 'bg-rose-950/80 border-rose-600/70 text-rose-300 hover:bg-rose-900'
                 }`}
               >
-                {options.soundEnabled ? 'ENABLED' : 'MUTED'}
+                {options.soundEnabled ? t('enabled', currentLang) : (currentLang === 'en' ? 'MUTED' : 'MUTADO')}
               </button>
             </div>
 
             {/* Loudness Slider */}
             <div className="flex flex-col gap-1 mt-0.5">
               <div className="flex justify-between items-center text-[10px] sm:text-xs text-slate-300">
-                <span>Volume</span>
+                <span>{t('volume', currentLang)}</span>
                 <span className="font-mono font-bold text-amber-300">
-                  {options.soundEnabled ? `${options.soundVolume}%` : 'Muted'}
+                  {options.soundEnabled ? `${options.soundVolume}%` : (currentLang === 'en' ? 'Muted' : 'Mutado')}
                 </span>
               </div>
               <input
@@ -207,7 +247,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
             <div>
               <div className="font-semibold text-purple-200 flex items-center gap-2 text-xs sm:text-sm">
                 <Wind className="w-4 h-4 text-cyan-400" />
-                Dash Direction
+                {t('dash_input_mode', currentLang)}
               </div>
             </div>
 
@@ -224,10 +264,10 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 <Wind className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${options.dashMode === 'MOVEMENT' ? 'text-cyan-300' : 'text-slate-500'}`} />
                 <div>
                   <div className="font-bold text-xs flex items-center gap-1.5">
-                    Movement Direction
+                    {t('movement_dir', currentLang)}
                   </div>
                   <div className="text-[10px] text-slate-400">
-                    Dashes along WASD movement.
+                    {t('movement_dir_desc', currentLang)}
                   </div>
                 </div>
               </button>
@@ -244,10 +284,10 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 <Crosshair className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${options.dashMode === 'CURSOR' ? 'text-cyan-300' : 'text-slate-500'}`} />
                 <div>
                   <div className="font-bold text-xs">
-                    Cursor Aim
+                    {t('cursor_position', currentLang)}
                   </div>
                   <div className="text-[10px] text-slate-400">
-                    Dashes toward cursor.
+                    {t('cursor_position_desc', currentLang)}
                   </div>
                 </div>
               </button>
@@ -258,13 +298,13 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
           <div className={`rounded-xl bg-purple-950/40 border border-purple-800/40 flex flex-col ${isMobile ? 'p-2.5 gap-2' : 'p-3.5 gap-2.5'}`}>
             <div className="font-semibold text-purple-200 flex items-center gap-2 text-xs sm:text-sm">
               <Sparkles className="w-4 h-4 text-amber-400" />
-              Visual Feedback
+              {t('gameplay_graphics', currentLang)}
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-semibold text-slate-200">Screen Shake</div>
-                <div className="text-[10px] text-slate-400">Subtle camera recoil on impactful strikes</div>
+                <div className="text-xs font-semibold text-slate-200">{t('screen_shake', currentLang)}</div>
+                <div className="text-[10px] text-slate-400">{t('screen_shake_desc', currentLang)}</div>
               </div>
               <button
                 id="toggle-screenshake-btn"
@@ -281,8 +321,8 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
 
             <div className="flex items-center justify-between pt-1.5 border-t border-purple-900/30">
               <div>
-                <div className="text-xs font-semibold text-slate-200">Damage Numbers</div>
-                <div className="text-[10px] text-slate-400">Show floating combat damage values</div>
+                <div className="text-xs font-semibold text-slate-200">{t('damage_numbers', currentLang)}</div>
+                <div className="text-[10px] text-slate-400">{t('damage_numbers_desc', currentLang)}</div>
               </div>
               <button
                 id="toggle-damage-numbers-btn"
@@ -300,7 +340,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
             {/* Brightness Slider */}
             <div className="flex flex-col gap-1 pt-1.5 border-t border-purple-900/30">
               <div className="flex justify-between items-center text-[10px] sm:text-xs text-slate-300">
-                <span className="font-semibold">Screen Brightness</span>
+                <span className="font-semibold">{t('screen_brightness', currentLang)}</span>
                 <span className="font-mono font-bold text-amber-300">
                   {options.brightness}%
                 </span>
@@ -316,14 +356,12 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 className="w-full h-1.5 sm:h-2 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
               <div className="flex justify-between text-[8px] text-slate-500 font-mono">
-                <span>50% (Dark)</span>
-                <span>100% (Default)</span>
-                <span>150% (Bright)</span>
+                <span>50% ({currentLang === 'en' ? 'Dark' : 'Escuro'})</span>
+                <span>100% ({currentLang === 'en' ? 'Default' : 'Padrão'})</span>
+                <span>150% ({currentLang === 'en' ? 'Bright' : 'Claro'})</span>
               </div>
             </div>
           </div>
-
-
 
           {/* COLLECTION PROGRESS & DATA SECTION */}
           {triggerReset && (
@@ -331,19 +369,19 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               <div className="font-semibold text-purple-200 flex items-center justify-between text-xs sm:text-sm">
                 <span className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-rose-400" />
-                  Collection & Progress
+                  {t('collection', currentLang)} & {currentLang === 'en' ? 'Progress' : 'Progresso'}
                 </span>
                 {resetSuccess && (
                   <span className="text-[10px] sm:text-xs text-emerald-400 font-mono flex items-center gap-1 animate-in fade-in">
-                    <Check className="w-3 h-3" /> Progress Reset
+                    <Check className="w-3 h-3" /> {t('reset_success', currentLang)}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-semibold text-slate-200">Reset Progress</div>
-                  <div className="text-[10px] text-slate-400">Clear unlocked codex entries & Boss Rush records</div>
+                  <div className="text-xs font-semibold text-slate-200">{currentLang === 'en' ? 'Reset Progress' : 'Redefinir Progresso'}</div>
+                  <div className="text-[10px] text-slate-400">{t('danger_zone_desc', currentLang)}</div>
                 </div>
                 <button
                   id="options-reset-progress-btn"
@@ -351,7 +389,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                   className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer bg-rose-950/60 hover:bg-rose-900/90 text-rose-300 hover:text-white border border-rose-700/60 flex items-center gap-1.5 shrink-0"
                 >
                   <RotateCcw className="w-3 h-3" />
-                  Reset
+                  {currentLang === 'en' ? 'Reset' : 'Redefinir'}
                 </button>
               </div>
             </div>
@@ -365,7 +403,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
             onClick={onClose}
             className="w-full sm:w-auto px-5 py-2 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-purple-950/60 border border-purple-400/40 transition-all cursor-pointer"
           >
-            Save & Return
+            {currentLang === 'en' ? 'Save & Return' : 'Salvar e Sair'}
           </button>
         </div>
       </div>
@@ -387,10 +425,12 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 <RotateCcw className="w-7 h-7" />
               </div>
               <h3 className="text-xl sm:text-2xl font-serif font-bold text-slate-100 tracking-wide">
-                Reset Progress?
+                {t('confirm_reset', currentLang)}
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed px-2">
-                Are you sure you want to reset all unlocked items in your collection and your Boss Rush best time? This action is permanent and cannot be undone.
+                {currentLang === 'en' 
+                  ? 'Are you sure you want to reset all unlocked items in your collection and your Boss Rush best time? This action is permanent and cannot be undone.'
+                  : 'Tem certeza de que deseja redefinir todos os itens desbloqueados em sua coleção e seu melhor tempo no Boss Rush? Esta ação é permanente e não pode ser desfeita.'}
               </p>
             </div>
 
@@ -400,7 +440,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 onClick={() => setShowResetConfirm(false)}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold transition-all cursor-pointer border border-slate-600 shadow-md hover:text-white"
               >
-                No, Cancel
+                {t('cancel', currentLang)}
               </button>
               <button
                 id="reset-confirm-yes-btn"
@@ -414,7 +454,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
                 }}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-lg shadow-rose-950/70 border border-rose-400/40"
               >
-                Yes, Reset
+                {currentLang === 'en' ? 'Yes, Reset' : 'Sim, Redefinir'}
               </button>
             </div>
           </div>

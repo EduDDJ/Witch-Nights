@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Compass, Wind, Sparkles, Skull, X, Check, Swords, Crown, Navigation, Heart, User } from 'lucide-react';
+import { Compass, Wind, Sparkles, Skull, X, Check, Swords, Crown, Navigation, Heart, User, Pause } from 'lucide-react';
+import { useLanguage, t } from '../utils/i18n';
 
 interface TutorialModalProps {
   onClose: () => void;
@@ -7,6 +8,8 @@ interface TutorialModalProps {
 }
 
 export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGame }) => {
+  const lang = useLanguage();
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -29,7 +32,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
           id="close-tutorial-button"
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700/50 text-purple-300 hover:text-white transition-all cursor-pointer"
-          title="Close Tutorial"
+          title={t('close_tutorial', lang)}
         >
           <X className="w-5 h-5" />
         </button>
@@ -41,10 +44,10 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
           </div>
           <div>
             <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-amber-100 to-indigo-200 font-serif tracking-wide">
-              How to Play
+              {t('how_to_play', lang)}
             </h2>
             <p className="text-xs sm:text-sm text-purple-300/80">
-              Master witchcraft, survive monster hordes, conquer formidable bosses, and forge forbidden pacts.
+              {t('tutorial_subtitle', lang)}
             </p>
           </div>
         </div>
@@ -57,17 +60,17 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
               <div className="w-6 h-6 rounded-lg bg-purple-950 flex items-center justify-center border border-purple-700/50">
                 <Navigation className="w-3.5 h-3.5 text-purple-300" />
               </div>
-              <span>Movement & Targeting</span>
+              <span>{t('movement_targeting', lang)}</span>
             </div>
-            <div className="flex gap-1.5 font-mono text-xs text-purple-200">
+            <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs text-purple-200">
               <kbd className="px-2 py-0.5 rounded bg-stone-800 border border-purple-700/40">W</kbd>
               <kbd className="px-2 py-0.5 rounded bg-stone-800 border border-purple-700/40">A</kbd>
               <kbd className="px-2 py-0.5 rounded bg-stone-800 border border-purple-700/40">S</kbd>
               <kbd className="px-2 py-0.5 rounded bg-stone-800 border border-purple-700/40">D</kbd>
-              <span className="text-stone-400 font-sans text-xs self-center">or Arrow keys</span>
+              <span className="text-stone-400 font-sans text-xs self-center">{t('or_arrow_keys', lang)}</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Navigate seamlessly across the cursed realm. Aim with your <strong>mouse cursor</strong> to guide directional projectiles and targeted spells like Stellar Beam!
+              {t('movement_desc', lang)}
             </p>
           </div>
 
@@ -77,96 +80,114 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
               <div className="w-6 h-6 rounded-lg bg-cyan-950 flex items-center justify-center border border-cyan-700/50">
                 <Wind className="w-3.5 h-3.5 text-cyan-300" />
               </div>
-              <span>Phase Dash</span>
+              <span>{t('phase_dash', lang)}</span>
             </div>
             <div className="flex items-center gap-1.5 font-mono text-xs text-cyan-200">
               <kbd className="px-2.5 py-0.5 rounded bg-stone-800 border border-cyan-700/40">SHIFT</kbd>
-              <span className="text-stone-400 font-sans text-xs">or</span>
-              <kbd className="px-2.5 py-0.5 rounded bg-stone-800 border border-cyan-700/40">SPACEBAR</kbd>
+              <span className="text-stone-400 font-sans text-xs">{t('or_spacebar', lang)}</span>
+              <kbd className="px-2.5 py-0.5 rounded bg-stone-800 border border-cyan-700/40">{t('spacebar_key', lang)}</kbd>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Burst with speed and <strong>total invulnerability (i-frames)</strong> on a <strong>3s cooldown</strong>. Use Dash to pierce dense swarms or dodge lethal attacks! (Cooldown can be reduced by up to 50% with the <em>Broom of Haste</em>).
+              {t('phase_dash_desc', lang)}
             </p>
           </div>
 
-          {/* 3. Boss Encounters & AoE Telegraphs */}
+          {/* 3. Pause & Controls */}
+          <div className="p-4 rounded-2xl bg-stone-900/85 border border-amber-800/40 flex flex-col gap-2 sm:col-span-2">
+            <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
+              <div className="w-6 h-6 rounded-lg bg-amber-950 flex items-center justify-center border border-amber-700/50">
+                <Pause className="w-3.5 h-3.5 text-amber-300" />
+              </div>
+              <span>{t('pause_game', lang)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 font-mono text-xs text-amber-200">
+              <kbd className="px-2.5 py-0.5 rounded bg-stone-800 border border-amber-700/40 font-bold">P</kbd>
+              <span className="text-stone-400 font-sans text-xs">{t('or_spacebar', lang)}</span>
+              <kbd className="px-2.5 py-0.5 rounded bg-stone-800 border border-amber-700/40 font-bold">ESC</kbd>
+            </div>
+            <p className="text-xs text-stone-300 leading-relaxed">
+              {t('pause_shortcut_info', lang)}
+            </p>
+          </div>
+
+          {/* 4. Boss Encounters & AoE Telegraphs */}
           <div className="p-4 rounded-2xl bg-stone-900/85 border border-red-800/40 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-red-300 font-bold text-sm">
               <div className="w-6 h-6 rounded-lg bg-red-950 flex items-center justify-center border border-red-700/50">
                 <Crown className="w-3.5 h-3.5 text-red-400" />
               </div>
-              <span>Boss Encounters & Hazard Zones</span>
+              <span>{t('boss_encounters', lang)}</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Formidable bosses like the <strong>Carnivore Plant</strong> emerge during your run. Each boss has a <strong>Base Max HP</strong> (their health at Level 1), which scales by <strong>+12% for every player level</strong>. Watch out for red telegraphed hazard rings—activate your <strong>Phase Dash</strong> to evade!
+              {t('boss_encounters_desc', lang)}
             </p>
           </div>
 
-          {/* 4. Vitality & Regeneration */}
+          {/* 5. Vitality & Regeneration */}
           <div className="p-4 rounded-2xl bg-stone-900/85 border border-emerald-800/40 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-emerald-300 font-bold text-sm">
               <div className="w-6 h-6 rounded-lg bg-emerald-950 flex items-center justify-center border border-emerald-700/50">
                 <Heart className="w-3.5 h-3.5 text-emerald-300" />
               </div>
-              <span>Vitality & Regeneration</span>
+              <span>{t('vitality_regen', lang)}</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              You possess a natural <strong>passive healing of 0.5 HP/s</strong>. This vital regeneration can be significantly upgraded by finding and leveling up the <strong>Bloodstone</strong> artifact!
+              {t('vitality_regen_desc', lang)}
             </p>
           </div>
 
-          {/* 5. Weapons & Artifacts */}
+          {/* 6. Weapons & Artifacts */}
           <div className="p-4 rounded-2xl bg-stone-900/85 border border-amber-800/40 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
               <div className="w-6 h-6 rounded-lg bg-amber-950 flex items-center justify-center border border-amber-700/50">
                 <Swords className="w-3.5 h-3.5 text-amber-300" />
               </div>
-              <span>Weapons & Artifacts</span>
+              <span>{t('weapons_artifacts', lang)}</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Equip up to <strong>5 active Weapons</strong> alongside <strong>5 passive Artifacts</strong> that bestow persistent stat enhancements. Every weapon level-up also grants an innate <strong>+10% damage bonus</strong>.
+              {t('weapons_artifacts_desc', lang)}
             </p>
           </div>
 
-          {/* 6. Slain Foes & Red EXP Gems */}
+          {/* 7. Slain Foes & Red EXP Gems */}
           <div className="p-4 rounded-2xl bg-stone-900/85 border border-purple-800/40 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-purple-300 font-bold text-sm">
               <div className="w-6 h-6 rounded-lg bg-purple-950 flex items-center justify-center border border-purple-700/50">
                 <Sparkles className="w-3.5 h-3.5 text-purple-300" />
               </div>
-              <span>EXP Orbs & Enemy Drops</span>
+              <span>{t('exp_orbs', lang)}</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Defeat foes to harvest EXP: standard cyan gems, elite <strong>Village Knight</strong> red orbs (<strong>10 EXP</strong>), and colossal Boss yellow orbs (<strong>75 EXP + 25 HP Healing Food</strong>). Enemies also have a 10% chance to drop special items like <strong>Healing Food (heals half of the enemy&apos;s damage)</strong>, upgraded orbs, or rare EXP Magnets (~1%).
+              {t('exp_orbs_desc', lang)}
             </p>
           </div>
 
-          {/* 7. The Witch's Deal */}
-          <div className="p-4 rounded-2xl bg-stone-900/85 border border-rose-800/40 flex flex-col gap-2">
+          {/* 8. The Witch's Deal */}
+          <div className="p-4 rounded-2xl bg-stone-900/85 border border-rose-800/40 flex flex-col gap-2 sm:col-span-2">
             <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
               <div className="w-6 h-6 rounded-lg bg-rose-950 flex items-center justify-center border border-rose-700/50">
                 <Skull className="w-3.5 h-3.5 text-rose-400" />
               </div>
-              <span>The Witch's Deal</span>
+              <span>{t('witch_deal_tutorial_section', lang)}</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              When the clock strikes 07:30, a Witch offers a forbidden Witch's Deal. Choose to Accept for transcendent power at a dangerous cost, or Deny the bargain.
+              {t('witch_deal_desc', lang)}
             </p>
           </div>
 
-          {/* 8. Characters & Mega Evolution */}
+          {/* 9. Characters & Mega Evolution */}
           <div className="p-4 rounded-2xl bg-stone-900/85 border border-indigo-800/40 flex flex-col gap-2 sm:col-span-2">
             <div className="flex items-center gap-2 text-indigo-300 font-bold text-sm">
               <div className="w-6 h-6 rounded-lg bg-indigo-950 flex items-center justify-center border border-indigo-700/50">
                 <User className="w-3.5 h-3.5 text-indigo-300" />
               </div>
-              <span>Characters & Mega Evolution</span>
+              <span>{t('characters_mega', lang)}</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              Each character comes with distinct attributes: <strong>Max HP</strong> dictates total health, <strong>Speed</strong> determines movement swiftness across the map, and a signature <strong>Starting Weapon</strong> sets your initial combat style.
+              {t('char_mega_desc1', lang)}
             </p>
             <p className="text-xs text-stone-300 leading-relaxed">
-              <strong>Mega Evolution (Rank 7)</strong>: Every character can unlock a supreme <strong>Rank 7 Mega Evolution</strong> for their signature Starting Weapon (such as Ruby&apos;s <em>Stellar Laser</em> or GlOwOb&apos;s <em>Acidic Wave</em>). Rank 7 upgrades appear in level-up choices exclusively when playing as that specific character!
+              {t('char_mega_desc2', lang)}
             </p>
           </div>
         </div>
@@ -179,7 +200,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
             className="px-5 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 border border-stone-600/50 text-stone-200 font-semibold text-sm transition-all cursor-pointer flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
-            <span>Understood</span>
+            <span>{t('understood', lang)}</span>
           </button>
           {onStartGame && (
             <button
@@ -190,7 +211,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
               }}
               className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-purple-900/50 transition-all cursor-pointer flex items-center gap-2"
             >
-              <span>Play Now</span>
+              <span>{t('play_now', lang)}</span>
             </button>
           )}
         </div>
@@ -198,4 +219,5 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onClose, onStartGa
     </div>
   );
 };
+
 
