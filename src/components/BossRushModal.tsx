@@ -217,6 +217,20 @@ export const BossRushModal: React.FC<BossRushModalProps> = ({
                       <img
                         src={resolveAssetPath(getBossAsset(b.id))}
                         alt={b.name}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          const fallbackMap: Record<string, string> = {
+                            carnivore_plant: 'https://i.imgur.com/kaNPLzb.png',
+                            haunted_eye: 'https://i.imgur.com/caqAbHC.png',
+                            night_bear: 'https://i.imgur.com/Pjkp2on.png',
+                            archmages: 'https://i.imgur.com/w8qU2F1.png',
+                          };
+                          const fb = fallbackMap[b.id] || 'https://i.imgur.com/kaNPLzb.png';
+                          if (target.src !== fb) {
+                            target.src = fb;
+                          }
+                        }}
                         className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform"
                       />
                     </div>

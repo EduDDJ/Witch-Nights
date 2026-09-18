@@ -105,6 +105,7 @@ const PitchforkPeasantIcon: React.FC<any> = (props) => (
   <img
     src={resolveAssetPath('assets/aistudio/peasant_pitchfork.png')}
     alt="Pitchfork Peasant"
+    referrerPolicy="no-referrer"
     onError={(e) => {
       const target = e.currentTarget;
       if (!target.src.includes('kKhEjFq.png')) {
@@ -120,6 +121,7 @@ const TorchPeasantIcon: React.FC<any> = (props) => (
   <img
     src={resolveAssetPath('assets/aistudio/peasant_torch.png')}
     alt="Torch Peasant"
+    referrerPolicy="no-referrer"
     onError={(e) => {
       const target = e.currentTarget;
       if (!target.src.includes('VMPhtDP.png')) {
@@ -135,6 +137,7 @@ const VillageKnightIcon: React.FC<any> = (props) => (
   <img
     src={resolveAssetPath('assets/aistudio/village_knight.png')}
     alt="Village Knight"
+    referrerPolicy="no-referrer"
     onError={(e) => {
       const target = e.currentTarget;
       if (!target.src.includes('iHevmHN.png')) {
@@ -161,6 +164,7 @@ const CarnivorePlantIcon: React.FC<any> = (props) => (
   <img
     src={resolveAssetPath('assets/aistudio/carnivore_plant.png')}
     alt="Carnivore Plant"
+    referrerPolicy="no-referrer"
     onError={(e) => {
       const target = e.currentTarget;
       if (!target.src.includes('kaNPLzb.png')) {
@@ -176,6 +180,7 @@ const HauntedEyeIcon: React.FC<any> = (props) => (
   <img
     src={resolveAssetPath('assets/aistudio/haunted_eye_closed.png')}
     alt="Haunted Eye"
+    referrerPolicy="no-referrer"
     onError={(e) => {
       const target = e.currentTarget;
       if (!target.src.includes('gK96eW7.png')) {
@@ -191,6 +196,7 @@ const MiniEyeIcon: React.FC<any> = (props) => (
   <img
     src={resolveAssetPath('assets/aistudio/mini_eye.png')}
     alt="Mini Eye"
+    referrerPolicy="no-referrer"
     onError={(e) => {
       const target = e.currentTarget;
       if (!target.src.includes('D4Yp6Z4.png')) {
@@ -206,6 +212,7 @@ const NightBearIcon: React.FC<any> = (props) => (
   <img
     src={resolveAssetPath('assets/aistudio/night_bear.png')}
     alt="NightBear"
+    referrerPolicy="no-referrer"
     onError={(e) => {
       const target = e.currentTarget;
       if (!target.src.includes('5O8Bf2K.png')) {
@@ -221,12 +228,11 @@ const ArchmagesIcon: React.FC<any> = (props) => (
   <img
     src={resolveAssetPath('assets/aistudio/geraldo_rgb.png')}
     alt="The 3 Archmages"
+    referrerPolicy="no-referrer"
     onError={(e) => {
       const target = e.currentTarget;
-      if (!target.src.includes('w8qU2F1.png') && !target.src.startsWith('data:')) {
+      if (!target.src.includes('w8qU2F1.png')) {
         target.src = 'https://i.imgur.com/w8qU2F1.png';
-      } else if (!target.src.startsWith('data:')) {
-        target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy18oC7NsFSIg4ESyxlJsRRkITI4+votQ/S7H6SaAwYkB7XCzadwtrWoMNk+J8ViRmRLKQUk+xg9uMn1NbmpmuFX6TswJheQYjE8cSFbCGKT42sWUlwJSsVgUIYu85YUY0i3mG/+SvwK/P1pYzEM2Dx/jiF2RFKSJDNITlwwS6X38aLQ2BxDNYuRDX/q9BmFJhWQFdSkBis2QGoZ+3/zxo1wji80MYHEoGyizSPLxzCA7AhSAcmJS7csi2zLkAFJ1SKodAKVUjAAKlBgfFKrSLLLahAw7SK5GqaOxafLyG/9UGQxJWDQBzVGwmLAEtSkVI1UC2p0R9HU4tFUPSQsJq/NRUCMGEBs6iA1MgmaCwgAAP//UV9intFESasAAAAASUVORK5CYII=';
       }
     }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
@@ -238,6 +244,7 @@ const RockThrowerIcon: React.FC<any> = (props) => (
   <img
     src={resolveAssetPath('assets/aistudio/rock_thrower.png')}
     alt="Rock Thrower"
+    referrerPolicy="no-referrer"
     onError={(e) => {
       const target = e.currentTarget;
       if (!target.src.includes('X4zW2H7.png')) {

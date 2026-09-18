@@ -155,6 +155,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                         <img
                           src={resolveAssetPath('assets/aistudio/carnivore_plant.png')}
                           alt="Carnivore Plant Visual"
+                          referrerPolicy="no-referrer"
                           onError={(e) => {
                             const target = e.currentTarget;
                             if (!target.src.includes('kaNPLzb.png')) {
@@ -169,6 +170,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                         <img
                           src={resolveAssetPath('assets/aistudio/haunted_eye_open.png')}
                           alt="Haunted Eye Visual"
+                          referrerPolicy="no-referrer"
                           onError={(e) => {
                             const target = e.currentTarget;
                             if (!target.src.includes('caqAbHC.png')) {
@@ -183,6 +185,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                         <img
                           src={resolveAssetPath('assets/aistudio/night_bear.png')}
                           alt="NightBear Visual"
+                          referrerPolicy="no-referrer"
                           onError={(e) => {
                             const target = e.currentTarget;
                             if (!target.src.includes('Pjkp2on.png')) {
@@ -197,12 +200,11 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                         <img
                           src={resolveAssetPath('assets/aistudio/geraldo_rgb.png')}
                           alt="The 3 Archmages Visual"
+                          referrerPolicy="no-referrer"
                           onError={(e) => {
                             const target = e.currentTarget;
-                            if (!target.src.includes('w8qU2F1.png') && !target.src.startsWith('data:')) {
+                            if (!target.src.includes('w8qU2F1.png')) {
                               target.src = 'https://i.imgur.com/w8qU2F1.png';
-                            } else if (!target.src.startsWith('data:')) {
-                              target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy18oC7NsFSIg4ESyxlJsRRkITI4+votQ/S7H6SaAwYkB7XCzadwtrWoMNk+J8ViRmRLKQUk+xg9uMn1NbmpmuFX6TswJheQYjE8cSFbCGKT42sWUlwJSsVgUIYu85YUY0i3mG/+SvwK/P1pYzEM2Dx/jiF2RFKSJDNITlwwS6X38aLQ2BxDNYuRDX/q9BmFJhWQFdSkBis2QGoZ+3/zxo1wji80MYHEoGyizSPLxzCA7AhSAcmJS7csi2zLkAFJ1SKodAKVUjAAKlBgfFKrSLLLahAw7SK5GqaOxafLyG/9UGQxJWDQBzVGwmLAEtSkVI1UC2p0R9HU4tFUPSQsJq/NRUCMGEBs6iA1MgmaCwgAAP//UV9intFESasAAAAASUVORK5CYII=';
                             }
                           }}
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"

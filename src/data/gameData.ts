@@ -60,7 +60,7 @@ export const CHARACTERS: CharacterDefinition[] = [
     speedLabel: '1.1x',
     description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
     spriteUrl: 'assets/aistudio/geraldo.png',
-    fallbackSpriteUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy18oC7NsFSIg4ESyxlJsRRkITI4+votQ/S7H6SaAwYkB7XCzadwtrWoMNk+J8ViRmRLKQUk+xg9uMn1NbmpmuFX6TswJheQYjE8cSFbCGKT42sWUlwJSsVgUIYu85YUY0i3mG/+SvwK/P1pYzEM2Dx/jiF2RFKSJDNITlwwS6X38aLQ2BxDNYuRDX/q9BmFJhWQFdSkBis2QGoZ+3/zxo1wji80MYHEoGyizSPLxzCA7AhSAcmJS7csi2zLkAFJ1SKodAKVUjAAKlBgfFKrSLLLahAw7SK5GqaOxafLyG/9UGQxJWDQBzVGwmLAEtSkVI1UC2p0R9HU4tFUPSQsJq/NRUCMGEBs6iA1MgmaCwgAAP//UV9intFESasAAAAASUVORK5CYII=',
+    fallbackSpriteUrl: 'https://i.imgur.com/v80iCki.png',
     color: '#ef4444',
   },
   {
@@ -76,7 +76,7 @@ export const CHARACTERS: CharacterDefinition[] = [
     startingLevelBonus: 1,
     description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
     spriteUrl: 'assets/aistudio/geraldo_green.png',
-    fallbackSpriteUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJklEQVR4nGJiIA/8h2KyAakWgy2UWMvEwBvKxECJ5YykWAqyEBl8XcHA8Hn1P1LNAQOSg/pF8D84mzuCgWyfk2IxI7KllAKSfYwe3OT6mtxUzXDoPTsYkwtIsRieuJAtBLHJ8TULKa4EpWIQMGb4SYo2rICk7LR540a8Cnz9/Yk2kyQfw4DN8+cYYkckJUkyg+TEBbNUeh8vCo3NMVSzGNnwp06fUWhSAVlBTWqwYgOklrEoCQyamBhAYqQkLAZyfQwDhFI5PkBy4kr9E0i2ZciApHwMKp1ApRQMgAoUGJ/UKpLsshoEzrrTp6zGAMY7yS86KbKYEjDogxojYTFgCWpSqkaqBTW6o2hq8WiqHhIWk9XmIiRGDCC2rCa1p0DQXEAAAAD//4iQWgTajTwnAAAAAElFTkSuQmCC',
+    fallbackSpriteUrl: 'https://i.imgur.com/k6tO808.png',
     color: '#22c55e',
   },
   {
@@ -91,7 +91,7 @@ export const CHARACTERS: CharacterDefinition[] = [
     speedLabel: '1.1x',
     description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
     spriteUrl: 'assets/aistudio/geraldo_blue.png',
-    fallbackSpriteUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy1kdH3KwKrbzUCJ5YykWAqyEBmwvFjG8PtyKanmgAHJQf1/tzSc/Uciimyfk2IxI7KllAKSfYwe3OT6mtxUzXAzXAWMyQWkWAxPXMgWgtjk+JqkVA01HCcgJYWzkGAxw7oWNbzyvv7Em0WSxTBg8/w5htgRSUmSzCA5ccEsld7Hi0JjcwzVLEY2/KnTZxSaVEBWUJMarNgAqWXs/80bN8I5vv6Q1AQSg7KJNo8sH8MAsiNIBSQnLr8pJmRbhgxILkBApRQMgKpFGJ/UKpLsshoErubXka2XIou1JzYNjMWUgEEf1BgJiwFLUJNSNVItqNEdRVOLR1P1kLCYpEoCVCwSI0YMILasJrWnQNBcQAAAAP//QBhgnucfiVkAAAAASUVORK5CYII=',
+    fallbackSpriteUrl: 'https://i.imgur.com/f9W9M5Z.png',
     color: '#3b82f6',
   },
 ];
@@ -132,7 +132,7 @@ export const BOSS_POOL: BossDefinition[] = [
     radius: 32,
     color: '#a855f7',
     spriteUrl: 'assets/aistudio/geraldo_rgb.png',
-    fallbackSpriteUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy18oC7NsFSIg4ESyxlJsRRkITI4+votQ/S7H6SaAwYkB7XCzadwtrWoMNk+J8ViRmRLKQUk+xg9uMn1NbmpmuFX6TswJheQYjE8cSFbCGKT42sWUlwJSsVgUIYu85YUY0i3mG/+SvwK/P1pYzEM2Dx/jiF2RFKSJDNITlwwS6X38aLQ2BxDNYuRDX/q9BmFJhWQFdSkBis2QGoZ+3/zxo1wji80MYHEoGyizSPLxzCA7AhSAcmJS7csi2zLkAFJ1SKodAKVUjAAKlBgfFKrSLLLahAw7SK5GqaOxafLyG/9UGQxJWDQBzVGwmLAEtSkVI1UC2p0R9HU4tFUPSQsJq/NRUCMGEBs6iA1MgmaCwgAAP//UV9intFESasAAAAASUVORK5CYII=',
+    fallbackSpriteUrl: 'https://i.imgur.com/w8qU2F1.png',
   }
 ];
 

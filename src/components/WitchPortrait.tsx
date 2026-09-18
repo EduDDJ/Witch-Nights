@@ -28,20 +28,13 @@ export const WitchPortrait: React.FC<WitchPortraitProps> = ({
       <img
         src={resolvedSrc}
         alt={characterName}
-        crossOrigin={spriteUrl.startsWith('data:') ? undefined : 'anonymous'}
+        referrerPolicy="no-referrer"
         onError={(e) => {
           const target = e.currentTarget;
-          if (target.getAttribute('crossOrigin') === 'anonymous') {
-            target.removeAttribute('crossOrigin');
-            const currentSrc = target.src;
-            target.src = '';
-            target.src = currentSrc;
-          } else {
-            const fallback = fallbackSpriteUrl || 'assets/aistudio/witch.png';
-            const fallbackUrl = resolveAssetPath(fallback);
-            if (target.src !== fallbackUrl) {
-              target.src = fallbackUrl;
-            }
+          const fallback = fallbackSpriteUrl || 'assets/aistudio/witch.png';
+          const fallbackUrl = resolveAssetPath(fallback);
+          if (target.src !== fallbackUrl && target.src !== fallback) {
+            target.src = fallbackUrl;
           }
         }}
         className="w-full h-full object-contain [image-rendering:pixelated]"

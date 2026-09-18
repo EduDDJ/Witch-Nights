@@ -144,20 +144,13 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                       <img
                         src={resolveAssetPath(char.spriteUrl)}
                         alt={char.name}
-                        crossOrigin={char.spriteUrl.startsWith('data:') ? undefined : 'anonymous'}
+                        referrerPolicy="no-referrer"
                         onError={(e) => {
                           const target = e.currentTarget;
-                          if (target.getAttribute('crossOrigin') === 'anonymous') {
-                            target.removeAttribute('crossOrigin');
-                            const currentSrc = target.src;
-                            target.src = '';
-                            target.src = currentSrc;
-                          } else {
-                            const fallback = char.fallbackSpriteUrl || 'assets/aistudio/witch.png';
-                            const fallbackUrl = resolveAssetPath(fallback);
-                            if (target.src !== fallbackUrl) {
-                              target.src = fallbackUrl;
-                            }
+                          const fallback = char.fallbackSpriteUrl || 'assets/aistudio/witch.png';
+                          const fallbackUrl = resolveAssetPath(fallback);
+                          if (target.src !== fallbackUrl && target.src !== fallback) {
+                            target.src = fallbackUrl;
                           }
                         }}
                         className="w-full h-full object-contain [image-rendering:pixelated] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]"
@@ -218,11 +211,12 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                     <img
                       src={resolveAssetPath('assets/aistudio/geraldo_rgb.png')}
                       alt="Geraldo"
-                      crossOrigin="anonymous"
+                      referrerPolicy="no-referrer"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        const fallback = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAABJUlEQVR4nGJiIA/8h2KyAakWgy18oC7NsFSIg4ESyxlJsRRkITI4+votQ/S7H6SaAwYkB7XCzadwtrWoMNk+J8ViRmRLKQUk+xg9uMn1NbmpmuFX6TswJheQYjE8cSFbCGKT42sWUlwJSsVgUIYu85YUY0i3mG/+SvwK/P1pYzEM2Dx/jiF2RFKSJDNITlwwS6X38aLQ2BxDNYuRDX/q9BmFJhWQFdSkBis2QGoZ+3/zxo1wji80MYHEoGyizSPLxzCA7AhSAcmJS7csi2zLkAFJ1SKodAKVUjAAKlBgfFKrSLLLahAw7SK5GqaOxafLyG/9UGQxJWDQBzVGwmLAEtSkVI1UC2p0R9HU4tFUPSQsJq/NRUCMGEBs6iA1MgmaCwgAAP//UV9intFESasAAAAASUVORK5CYII=';
-                        if (target.src !== fallback) target.src = fallback;
+                        if (!target.src.includes('w8qU2F1.png')) {
+                          target.src = 'https://i.imgur.com/w8qU2F1.png';
+                        }
                       }}
                       className={`w-full h-full object-contain [image-rendering:pixelated] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] ${
                         !isGeraldoUnlocked ? 'grayscale brightness-50 contrast-75' : ''
@@ -310,11 +304,14 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                           <img
                             src={resolveAssetPath(skin.spriteUrl)}
                             alt={skinName}
-                            crossOrigin="anonymous"
+                            referrerPolicy="no-referrer"
                             onError={(e) => {
                               const target = e.currentTarget;
                               const fallback = skin.fallbackSpriteUrl || 'assets/aistudio/geraldo.png';
-                              if (target.src !== resolveAssetPath(fallback)) target.src = resolveAssetPath(fallback);
+                              const fallbackUrl = resolveAssetPath(fallback);
+                              if (target.src !== fallbackUrl && target.src !== fallback) {
+                                target.src = fallbackUrl;
+                              }
                             }}
                             className={`w-full h-full object-contain [image-rendering:pixelated] ${
                               !isSkinUnlocked ? 'grayscale brightness-50 contrast-75' : ''
@@ -373,20 +370,13 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                   <img
                     src={resolveAssetPath(selectedCharacter.spriteUrl)}
                     alt={selectedCharacter.name}
-                    crossOrigin={selectedCharacter.spriteUrl.startsWith('data:') ? undefined : 'anonymous'}
+                    referrerPolicy="no-referrer"
                     onError={(e) => {
                       const target = e.currentTarget;
-                      if (target.getAttribute('crossOrigin') === 'anonymous') {
-                        target.removeAttribute('crossOrigin');
-                        const currentSrc = target.src;
-                        target.src = '';
-                        target.src = currentSrc;
-                      } else {
-                        const fallback = selectedCharacter.fallbackSpriteUrl || 'assets/aistudio/witch.png';
-                        const fallbackUrl = resolveAssetPath(fallback);
-                        if (target.src !== fallbackUrl) {
-                          target.src = fallbackUrl;
-                        }
+                      const fallback = selectedCharacter.fallbackSpriteUrl || 'assets/aistudio/witch.png';
+                      const fallbackUrl = resolveAssetPath(fallback);
+                      if (target.src !== fallbackUrl && target.src !== fallback) {
+                        target.src = fallbackUrl;
                       }
                     }}
                     className="w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"
