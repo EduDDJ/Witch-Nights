@@ -3,6 +3,7 @@ import { Play, X, Trophy, Info, Lock, Flame, User, Swords, Target } from 'lucide
 import { CharacterDefinition } from '../types/game';
 import { BOSS_POOL } from '../data/gameData';
 import { resolveAssetPath } from '../utils/assets';
+import { GameImage } from './GameImage';
 import { getLanguage, translateCharacterTitle, translateCharacterName, translateBossName } from '../utils/i18n';
 
 interface BossRushModalProps {
@@ -214,24 +215,22 @@ export const BossRushModal: React.FC<BossRushModalProps> = ({
                     }`}
                   >
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-stone-950/80 border border-purple-800/40 flex items-center justify-center overflow-hidden p-1 shrink-0">
-                      <img
-                        src={resolveAssetPath(getBossAsset(b.id))}
+                      <GameImage
+                        src={b.spriteUrl || getBossAsset(b.id)}
+                        fallbackSrc={`assets/${b.id === 'carnivore_plant' ? 'carnivore_plant.png' : b.id === 'haunted_eye' ? 'haunted_eye_open.png' : b.id === 'night_bear' ? 'night_bear.png' : 'geraldo_rgb.png'}`}
+                        alternateFallbacks={[
+                          b.fallbackSpriteUrl || (
+                            b.id === 'carnivore_plant'
+                              ? 'https://i.imgur.com/kaNPLzb.png'
+                              : b.id === 'haunted_eye'
+                              ? 'https://i.imgur.com/caqAbHC.png'
+                              : b.id === 'night_bear'
+                              ? 'https://i.imgur.com/Pjkp2on.png'
+                              : 'https://i.imgur.com/w8qU2F1.png'
+                          )
+                        ]}
                         alt={b.name}
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          const fallbackMap: Record<string, string> = {
-                            carnivore_plant: 'https://i.imgur.com/kaNPLzb.png',
-                            haunted_eye: 'https://i.imgur.com/caqAbHC.png',
-                            night_bear: 'https://i.imgur.com/Pjkp2on.png',
-                            archmages: 'https://i.imgur.com/w8qU2F1.png',
-                          };
-                          const fb = fallbackMap[b.id] || 'https://i.imgur.com/kaNPLzb.png';
-                          if (target.src !== fb) {
-                            target.src = fb;
-                          }
-                        }}
-                        className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform"
+                        className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform [image-rendering:pixelated]"
                       />
                     </div>
                     <span className={`text-[10px] sm:text-xs font-bold leading-tight line-clamp-2 ${isSelected ? 'text-amber-200 font-serif' : 'text-stone-300'}`}>

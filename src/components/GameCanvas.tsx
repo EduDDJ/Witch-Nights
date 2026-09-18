@@ -134,9 +134,9 @@ function createVineAttack(
     type: 'CARNIVORE_PLANT_VINES',
     x: playerX,
     y: playerY,
-    warningTimer: 1.0, // 1.0s telegraph warning
+    warningTimer: 1.5, // 1.5s telegraph warning
     activeTimer: 0.40,
-    duration: 1.40,
+    duration: 1.90,
     damage: 25,
     radius: 0,
     vines: filteredVines,
@@ -274,31 +274,36 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       targetRef: React.MutableRefObject<HTMLImageElement | null>,
       dataUriFallback?: string
     ) => {
+      const candidates: string[] = [];
+      if (fallbackRelativePath) {
+        candidates.push(resolveAssetPath(fallbackRelativePath));
+        if (fallbackRelativePath.includes('assets/aistudio/')) {
+          candidates.push(resolveAssetPath(fallbackRelativePath.replace('assets/aistudio/', 'assets/')));
+        }
+      }
+      if (primarySrc) {
+        candidates.push(resolveAssetPath(primarySrc));
+      }
       if (dataUriFallback) {
-        const dImg = new Image();
-        dImg.onload = () => {
-          if (!targetRef.current || !targetRef.current.complete) {
-            targetRef.current = dImg;
-          }
-        };
-        dImg.src = dataUriFallback;
+        candidates.push(dataUriFallback);
       }
 
-      // Load local bundled asset directly as primary source for 100% reliability and zero CORS/network failure
-      const localImg = new Image();
-      localImg.src = resolveAssetPath(fallbackRelativePath);
-      localImg.onload = () => {
-        targetRef.current = localImg;
-      };
-      localImg.onerror = () => {
-        // Fallback to remote primarySrc if local fails
+      let currentIndex = 0;
+      const tryNext = () => {
+        if (currentIndex >= candidates.length) return;
+        const src = candidates[currentIndex++];
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.src = primarySrc;
         img.onload = () => {
           targetRef.current = img;
         };
+        img.onerror = () => {
+          tryNext();
+        };
+        img.src = src;
       };
+
+      tryNext();
     };
 
     loadImage('https://i.imgur.com/kKhEjFq.png', 'assets/aistudio/peasant_pitchfork.png', peasantImageRef);
@@ -1646,8 +1651,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 // Larger delay after the 3rd attack so the player's Dash (3s base cooldown) is guaranteed to be ready before the Chomp Attack
                 bossAttackCooldownRef.current = 4.2 + Math.random() * 0.4;
               } else {
-                // Spawns rapidly one after the other (approx 1.4s to 1.7s delay)
-                bossAttackCooldownRef.current = 1.4 + Math.random() * 0.3;
+                // Clean interval of 1.9s - 2.2s so the attack finishes before the next begins
+                bossAttackCooldownRef.current = 1.9 + Math.random() * 0.3;
               }
               const vineAtk = createVineAttack(
                 canvas.width,
@@ -6518,7 +6523,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.save();
           if (atk.type === 'CARNIVORE_PLANT_VINES') {
             if (atk.warningTimer > 0) {
-              const chargeProgress = Math.max(0, Math.min(1, 1 - atk.warningTimer / 1.0));
+              const chargeProgress = Math.max(0, Math.min(1, 1 - atk.warningTimer / 1.5));
 
               if (atk.vines && atk.vines.length > 0) {
                 const sampleWidth = atk.vines[0].width;

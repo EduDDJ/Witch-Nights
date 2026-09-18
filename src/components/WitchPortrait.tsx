@@ -1,5 +1,6 @@
 import React from 'react';
 import { resolveAssetPath } from '../utils/assets';
+import { GameImage } from './GameImage';
 
 interface WitchPortraitProps {
   isHurt?: boolean;
@@ -16,8 +17,6 @@ export const WitchPortrait: React.FC<WitchPortraitProps> = ({
   fallbackSpriteUrl = 'https://i.imgur.com/uvH316Y.png',
   characterName = 'Character Portrait',
 }) => {
-  const resolvedSrc = resolveAssetPath(spriteUrl);
-
   return (
     <div
       className={`relative rounded-xl overflow-hidden border-2 transition-all duration-150 flex-shrink-0 bg-gradient-to-b from-indigo-950 via-purple-950 to-slate-950 shadow-lg flex items-center justify-center p-1 ${
@@ -25,22 +24,16 @@ export const WitchPortrait: React.FC<WitchPortraitProps> = ({
       }`}
       style={{ width: size, height: size }}
     >
-      <img
-        src={resolvedSrc}
+      <GameImage
+        src={spriteUrl}
+        fallbackSrc={fallbackSpriteUrl}
+        alternateFallbacks={['assets/witch.png', 'https://i.imgur.com/uvH316Y.png']}
         alt={characterName}
-        referrerPolicy="no-referrer"
-        onError={(e) => {
-          const target = e.currentTarget;
-          const fallback = fallbackSpriteUrl || 'assets/aistudio/witch.png';
-          const fallbackUrl = resolveAssetPath(fallback);
-          if (target.src !== fallbackUrl && target.src !== fallback) {
-            target.src = fallbackUrl;
-          }
-        }}
         className="w-full h-full object-contain [image-rendering:pixelated]"
         style={{ filter: isHurt ? 'saturate(2) hue-rotate(330deg)' : 'none' }}
       />
     </div>
   );
 };
+
 

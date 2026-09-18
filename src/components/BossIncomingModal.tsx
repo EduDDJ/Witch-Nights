@@ -2,6 +2,7 @@ import React from 'react';
 import { ShieldAlert, Sword, Heart, Zap, AlertTriangle, CheckCircle, Skull, Flame } from 'lucide-react';
 import { BossDefinition } from '../types/game';
 import { resolveAssetPath } from '../utils/assets';
+import { GameImage } from './GameImage';
 import { getLanguage, t, translateBossName } from '../utils/i18n';
 
 interface BossIncomingModalProps {
@@ -111,55 +112,35 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
             style={{ backgroundColor: `${details.color}22`, borderColor: details.color }}
           >
             {boss.id === 'carnivore_plant' ? (
-              <img
-                src={resolveAssetPath('assets/aistudio/carnivore_plant.png')}
+              <GameImage
+                src="assets/aistudio/carnivore_plant.png"
+                fallbackSrc="assets/carnivore_plant.png"
+                alternateFallbacks={['https://i.imgur.com/kaNPLzb.png']}
                 alt="Carnivore Plant"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (!target.src.includes('kaNPLzb.png')) {
-                    target.src = 'https://i.imgur.com/kaNPLzb.png';
-                  }
-                }}
                 className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
               />
             ) : boss.id === 'haunted_eye' ? (
-              <img
-                src={resolveAssetPath('assets/aistudio/haunted_eye_open.png')}
+              <GameImage
+                src="assets/aistudio/haunted_eye_open.png"
+                fallbackSrc="assets/haunted_eye_open.png"
+                alternateFallbacks={['https://i.imgur.com/caqAbHC.png']}
                 alt="Haunted Eye"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (!target.src.includes('caqAbHC.png')) {
-                    target.src = 'https://i.imgur.com/caqAbHC.png';
-                  }
-                }}
                 className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
               />
             ) : boss.id === 'night_bear' ? (
-              <img
-                src={resolveAssetPath('assets/aistudio/night_bear.png')}
+              <GameImage
+                src="assets/aistudio/night_bear.png"
+                fallbackSrc="assets/night_bear.png"
+                alternateFallbacks={['https://i.imgur.com/Pjkp2on.png']}
                 alt="NightBear"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (!target.src.includes('Pjkp2on.png')) {
-                    target.src = 'https://i.imgur.com/Pjkp2on.png';
-                  }
-                }}
                 className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
               />
             ) : boss.id === 'archmages' ? (
-              <img
-                src={resolveAssetPath('assets/aistudio/geraldo_rgb.png')}
+              <GameImage
+                src="assets/aistudio/geraldo_rgb.png"
+                fallbackSrc="assets/geraldo_rgb.png"
+                alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
                 alt="The 3 Archmages"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (!target.src.includes('w8qU2F1.png')) {
-                    target.src = 'https://i.imgur.com/w8qU2F1.png';
-                  }
-                }}
                 className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
               />
             ) : (

@@ -101,10 +101,12 @@ export const BOSS_POOL: BossDefinition[] = [
   {
     id: 'carnivore_plant',
     name: 'Carnivore Plant',
-    maxHp: 1400,
+    maxHp: 1200,
     damage: 20,
     radius: 40,
     color: '#22c55e',
+    spriteUrl: 'assets/aistudio/carnivore_plant.png',
+    fallbackSpriteUrl: 'https://i.imgur.com/kaNPLzb.png',
   },
   {
     id: 'haunted_eye',
@@ -115,6 +117,8 @@ export const BOSS_POOL: BossDefinition[] = [
     widthRadius: 155, // Panoramic wide ocular boss (~310px width)
     heightRadius: 55, // ~110px height
     color: '#dc2626',
+    spriteUrl: 'assets/aistudio/haunted_eye_open.png',
+    fallbackSpriteUrl: 'https://i.imgur.com/caqAbHC.png',
   },
   {
     id: 'night_bear',
@@ -123,6 +127,8 @@ export const BOSS_POOL: BossDefinition[] = [
     damage: 25,
     radius: 50,
     color: '#3b2f2f', // Dark brown/black bear color
+    spriteUrl: 'assets/aistudio/night_bear.png',
+    fallbackSpriteUrl: 'https://i.imgur.com/Pjkp2on.png',
   },
   {
     id: 'archmages',

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BossDefinition } from '../types/game';
 import { Eye, Swords, Sparkles, AlertTriangle, Wrench, X } from 'lucide-react';
 import { resolveAssetPath } from '../utils/assets';
+import { GameImage } from './GameImage';
 import { getLanguage, t, translateBossName } from '../utils/i18n';
 
 interface BossSelectModalProps {
@@ -152,61 +153,41 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                       }`}
                     >
                       {isPlant && (
-                        <img
-                          src={resolveAssetPath('assets/aistudio/carnivore_plant.png')}
+                        <GameImage
+                          src="assets/aistudio/carnivore_plant.png"
+                          fallbackSrc="assets/carnivore_plant.png"
+                          alternateFallbacks={['https://i.imgur.com/kaNPLzb.png']}
                           alt="Carnivore Plant Visual"
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            if (!target.src.includes('kaNPLzb.png')) {
-                              target.src = 'https://i.imgur.com/kaNPLzb.png';
-                            }
-                          }}
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
                         />
                       )}
 
                       {isEye && (
-                        <img
-                          src={resolveAssetPath('assets/aistudio/haunted_eye_open.png')}
+                        <GameImage
+                          src="assets/aistudio/haunted_eye_open.png"
+                          fallbackSrc="assets/haunted_eye_open.png"
+                          alternateFallbacks={['https://i.imgur.com/caqAbHC.png']}
                           alt="Haunted Eye Visual"
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            if (!target.src.includes('caqAbHC.png')) {
-                              target.src = 'https://i.imgur.com/caqAbHC.png';
-                            }
-                          }}
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
                         />
                       )}
 
                       {isBear && (
-                        <img
-                          src={resolveAssetPath('assets/aistudio/night_bear.png')}
+                        <GameImage
+                          src="assets/aistudio/night_bear.png"
+                          fallbackSrc="assets/night_bear.png"
+                          alternateFallbacks={['https://i.imgur.com/Pjkp2on.png']}
                           alt="NightBear Visual"
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            if (!target.src.includes('Pjkp2on.png')) {
-                              target.src = 'https://i.imgur.com/Pjkp2on.png';
-                            }
-                          }}
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
                         />
                       )}
 
                       {isArchmages && (
-                        <img
-                          src={resolveAssetPath('assets/aistudio/geraldo_rgb.png')}
+                        <GameImage
+                          src="assets/aistudio/geraldo_rgb.png"
+                          fallbackSrc="assets/geraldo_rgb.png"
+                          alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
                           alt="The 3 Archmages Visual"
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            if (!target.src.includes('w8qU2F1.png')) {
-                              target.src = 'https://i.imgur.com/w8qU2F1.png';
-                            }
-                          }}
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
                         />
                       )}

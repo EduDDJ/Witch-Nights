@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CharacterDefinition } from '../types/game';
 import { CHARACTERS } from '../data/gameData';
 import { resolveAssetPath } from '../utils/assets';
+import { GameImage } from './GameImage';
 import { 
   Play, 
   X, 
@@ -141,18 +142,11 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                     }`}
                   >
                     <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-b from-indigo-950/60 to-purple-950/80 border border-purple-500/30 flex items-center justify-center p-1 overflow-hidden transition-transform group-hover:scale-105">
-                      <img
-                        src={resolveAssetPath(char.spriteUrl)}
+                      <GameImage
+                        src={char.spriteUrl}
+                        fallbackSrc={char.id === 'ruby' ? 'assets/witch.png' : char.id === 'glowob' ? 'assets/glowob.png' : 'assets/odalia.png'}
+                        alternateFallbacks={[char.fallbackSpriteUrl || 'assets/aistudio/witch.png']}
                         alt={char.name}
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          const fallback = char.fallbackSpriteUrl || 'assets/aistudio/witch.png';
-                          const fallbackUrl = resolveAssetPath(fallback);
-                          if (target.src !== fallbackUrl && target.src !== fallback) {
-                            target.src = fallbackUrl;
-                          }
-                        }}
                         className="w-full h-full object-contain [image-rendering:pixelated] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]"
                       />
                     </div>
@@ -208,16 +202,11 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                   <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-b from-indigo-950/60 to-purple-950/80 border flex items-center justify-center p-1 overflow-hidden transition-transform ${
                     !isGeraldoUnlocked ? 'border-stone-700/60' : 'border-purple-500/30 group-hover:scale-105'
                   }`}>
-                    <img
-                      src={resolveAssetPath('assets/aistudio/geraldo_rgb.png')}
+                    <GameImage
+                      src="assets/aistudio/geraldo_rgb.png"
+                      fallbackSrc="assets/geraldo_rgb.png"
+                      alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
                       alt="Geraldo"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (!target.src.includes('w8qU2F1.png')) {
-                          target.src = 'https://i.imgur.com/w8qU2F1.png';
-                        }
-                      }}
                       className={`w-full h-full object-contain [image-rendering:pixelated] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] ${
                         !isGeraldoUnlocked ? 'grayscale brightness-50 contrast-75' : ''
                       }`}
@@ -301,18 +290,11 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                             ? 'bg-stone-900/80 border-stone-700/60'
                             : 'bg-gradient-to-b from-indigo-950/80 to-purple-950/90 border-purple-500/40'
                         }`}>
-                          <img
-                            src={resolveAssetPath(skin.spriteUrl)}
+                          <GameImage
+                            src={skin.spriteUrl}
+                            fallbackSrc={`assets/${skin.id === 'geraldo' ? 'geraldo.png' : skin.id === 'geraldo_green' ? 'geraldo_green.png' : 'geraldo_blue.png'}`}
+                            alternateFallbacks={[skin.fallbackSpriteUrl || 'https://i.imgur.com/v80iCki.png']}
                             alt={skinName}
-                            referrerPolicy="no-referrer"
-                            onError={(e) => {
-                              const target = e.currentTarget;
-                              const fallback = skin.fallbackSpriteUrl || 'assets/aistudio/geraldo.png';
-                              const fallbackUrl = resolveAssetPath(fallback);
-                              if (target.src !== fallbackUrl && target.src !== fallback) {
-                                target.src = fallbackUrl;
-                              }
-                            }}
                             className={`w-full h-full object-contain [image-rendering:pixelated] ${
                               !isSkinUnlocked ? 'grayscale brightness-50 contrast-75' : ''
                             }`}
@@ -367,18 +349,23 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
               {/* Character Portrait */}
               <div className="relative flex-shrink-0">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-indigo-950/90 via-purple-950/90 to-slate-950 border-2 border-purple-500/70 p-1.5 flex items-center justify-center shadow-lg shadow-purple-950/60 ring-2 ring-purple-500/20 -mt-1 sm:-mt-1.5">
-                  <img
-                    src={resolveAssetPath(selectedCharacter.spriteUrl)}
+                  <GameImage
+                    src={selectedCharacter.spriteUrl}
+                    fallbackSrc={
+                      selectedCharacter.id === 'ruby'
+                        ? 'assets/witch.png'
+                        : selectedCharacter.id === 'glowob'
+                        ? 'assets/glowob.png'
+                        : selectedCharacter.id === 'odalia'
+                        ? 'assets/odalia.png'
+                        : selectedCharacter.id === 'geraldo_green'
+                        ? 'assets/geraldo_green.png'
+                        : selectedCharacter.id === 'geraldo_blue'
+                        ? 'assets/geraldo_blue.png'
+                        : 'assets/geraldo.png'
+                    }
+                    alternateFallbacks={[selectedCharacter.fallbackSpriteUrl || 'assets/aistudio/witch.png']}
                     alt={selectedCharacter.name}
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      const fallback = selectedCharacter.fallbackSpriteUrl || 'assets/aistudio/witch.png';
-                      const fallbackUrl = resolveAssetPath(fallback);
-                      if (target.src !== fallbackUrl && target.src !== fallback) {
-                        target.src = fallbackUrl;
-                      }
-                    }}
                     className="w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"
                   />
                 </div>

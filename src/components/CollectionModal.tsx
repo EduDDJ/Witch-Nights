@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { resolveAssetPath } from '../utils/assets';
+import { GameImage } from './GameImage';
 import { ALL_WEAPONS, ALL_STAT_ITEMS, WITCH_DEALS, CHARACTERS } from '../data/gameData';
 import { ShootingType } from '../types/game';
 import {
@@ -102,48 +103,33 @@ const CURSE_ICONS: Record<string, React.ElementType> = {
 };
 
 const PitchforkPeasantIcon: React.FC<any> = (props) => (
-  <img
-    src={resolveAssetPath('assets/aistudio/peasant_pitchfork.png')}
+  <GameImage
+    src="assets/aistudio/peasant_pitchfork.png"
+    fallbackSrc="assets/peasant_pitchfork.png"
+    alternateFallbacks={['https://i.imgur.com/kKhEjFq.png']}
     alt="Pitchfork Peasant"
-    referrerPolicy="no-referrer"
-    onError={(e) => {
-      const target = e.currentTarget;
-      if (!target.src.includes('kKhEjFq.png')) {
-        target.src = 'https://i.imgur.com/kKhEjFq.png';
-      }
-    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
 );
 
 const TorchPeasantIcon: React.FC<any> = (props) => (
-  <img
-    src={resolveAssetPath('assets/aistudio/peasant_torch.png')}
+  <GameImage
+    src="assets/aistudio/peasant_torch.png"
+    fallbackSrc="assets/peasant_torch.png"
+    alternateFallbacks={['https://i.imgur.com/VMPhtDP.png']}
     alt="Torch Peasant"
-    referrerPolicy="no-referrer"
-    onError={(e) => {
-      const target = e.currentTarget;
-      if (!target.src.includes('VMPhtDP.png')) {
-        target.src = 'https://i.imgur.com/VMPhtDP.png';
-      }
-    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
 );
 
 const VillageKnightIcon: React.FC<any> = (props) => (
-  <img
-    src={resolveAssetPath('assets/aistudio/village_knight.png')}
+  <GameImage
+    src="assets/aistudio/village_knight.png"
+    fallbackSrc="assets/village_knight.png"
+    alternateFallbacks={['https://i.imgur.com/iHevmHN.png']}
     alt="Village Knight"
-    referrerPolicy="no-referrer"
-    onError={(e) => {
-      const target = e.currentTarget;
-      if (!target.src.includes('iHevmHN.png')) {
-        target.src = 'https://i.imgur.com/iHevmHN.png';
-      }
-    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
@@ -161,96 +147,66 @@ const createNormalEnemyIcon = (color: string) => {
 };
 
 const CarnivorePlantIcon: React.FC<any> = (props) => (
-  <img
-    src={resolveAssetPath('assets/aistudio/carnivore_plant.png')}
+  <GameImage
+    src="assets/aistudio/carnivore_plant.png"
+    fallbackSrc="assets/carnivore_plant.png"
+    alternateFallbacks={['https://i.imgur.com/kaNPLzb.png']}
     alt="Carnivore Plant"
-    referrerPolicy="no-referrer"
-    onError={(e) => {
-      const target = e.currentTarget;
-      if (!target.src.includes('kaNPLzb.png')) {
-        target.src = 'https://i.imgur.com/kaNPLzb.png';
-      }
-    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
 );
 
 const HauntedEyeIcon: React.FC<any> = (props) => (
-  <img
-    src={resolveAssetPath('assets/aistudio/haunted_eye_closed.png')}
+  <GameImage
+    src="assets/aistudio/haunted_eye_closed.png"
+    fallbackSrc="assets/haunted_eye_closed.png"
+    alternateFallbacks={['assets/haunted_eye_open.png', 'https://i.imgur.com/gK96eW7.png', 'https://i.imgur.com/caqAbHC.png']}
     alt="Haunted Eye"
-    referrerPolicy="no-referrer"
-    onError={(e) => {
-      const target = e.currentTarget;
-      if (!target.src.includes('gK96eW7.png')) {
-        target.src = 'https://i.imgur.com/gK96eW7.png';
-      }
-    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
 );
 
 const MiniEyeIcon: React.FC<any> = (props) => (
-  <img
-    src={resolveAssetPath('assets/aistudio/mini_eye.png')}
+  <GameImage
+    src="assets/aistudio/mini_eye.png"
+    fallbackSrc="assets/mini_eye.png"
+    alternateFallbacks={['https://i.imgur.com/D4Yp6Z4.png', 'https://i.imgur.com/p2eqvL6.png']}
     alt="Mini Eye"
-    referrerPolicy="no-referrer"
-    onError={(e) => {
-      const target = e.currentTarget;
-      if (!target.src.includes('D4Yp6Z4.png')) {
-        target.src = 'https://i.imgur.com/D4Yp6Z4.png';
-      }
-    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
 );
 
 const NightBearIcon: React.FC<any> = (props) => (
-  <img
-    src={resolveAssetPath('assets/aistudio/night_bear.png')}
+  <GameImage
+    src="assets/aistudio/night_bear.png"
+    fallbackSrc="assets/night_bear.png"
+    alternateFallbacks={['https://i.imgur.com/5O8Bf2K.png', 'https://i.imgur.com/Pjkp2on.png']}
     alt="NightBear"
-    referrerPolicy="no-referrer"
-    onError={(e) => {
-      const target = e.currentTarget;
-      if (!target.src.includes('5O8Bf2K.png')) {
-        target.src = 'https://i.imgur.com/5O8Bf2K.png';
-      }
-    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
 );
 
 const ArchmagesIcon: React.FC<any> = (props) => (
-  <img
-    src={resolveAssetPath('assets/aistudio/geraldo_rgb.png')}
+  <GameImage
+    src="assets/aistudio/geraldo_rgb.png"
+    fallbackSrc="assets/geraldo_rgb.png"
+    alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
     alt="The 3 Archmages"
-    referrerPolicy="no-referrer"
-    onError={(e) => {
-      const target = e.currentTarget;
-      if (!target.src.includes('w8qU2F1.png')) {
-        target.src = 'https://i.imgur.com/w8qU2F1.png';
-      }
-    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
 );
 
 const RockThrowerIcon: React.FC<any> = (props) => (
-  <img
-    src={resolveAssetPath('assets/aistudio/rock_thrower.png')}
+  <GameImage
+    src="assets/aistudio/rock_thrower.png"
+    fallbackSrc="assets/rock_thrower.png"
+    alternateFallbacks={['https://i.imgur.com/X4zW2H7.png', 'https://i.imgur.com/ST9LA1d.png']}
     alt="Rock Thrower"
-    referrerPolicy="no-referrer"
-    onError={(e) => {
-      const target = e.currentTarget;
-      if (!target.src.includes('X4zW2H7.png')) {
-        target.src = 'https://i.imgur.com/X4zW2H7.png';
-      }
-    }}
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
@@ -321,12 +277,12 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
     name: 'Carnivore Plant',
     color: '#22c55e',
     damage: 20,
-    maxHp: 1400,
+    maxHp: 1200,
     speed: '0.0x',
     isBoss: true,
     description: 'A stationary botanical nightmare with vicious roots and an insatiable appetite.',
     attacks: [
-      { name: 'Vine Snare', damage: '10', telegraph: '1s', description: 'Spawns roots near the player. Emits a smaller warning circle before striking.' },
+      { name: 'Vine Snare', damage: '10', telegraph: '1.5s', description: 'Spawns roots near the player. Emits a smaller warning circle before striking.' },
       { name: 'Chomp Attack', damage: '25', telegraph: '0.85s', description: 'Massive area-of-effect bite centered on the player. Dash is required to escape.' }
     ]
   },
