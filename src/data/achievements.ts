@@ -41,13 +41,13 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   },
   {
     id: 'alphabet_green',
-    title: 'Out of the whole Alphabet, Green is my Favorite Number',
+    title: 'Your Element is... Green.',
     description: 'Unlock Vine Snare and complete Boss Rush as Geraldo The Red.',
     unlockText: 'Geraldo The Green',
   },
   {
     id: 'feeling_blue',
-    title: 'Feeling Blue',
+    title: 'Out of the whole Alphabet, Blue is my Favorite Number',
     description: 'Complete Boss Rush as Geraldo The Green.',
     unlockText: 'Geraldo The Blue',
   },

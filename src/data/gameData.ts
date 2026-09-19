@@ -133,7 +133,7 @@ export const BOSS_POOL: BossDefinition[] = [
   {
     id: 'archmages',
     name: 'The 3 Archmages',
-    maxHp: 1800,
+    maxHp: 3000,
     damage: 20,
     radius: 32,
     color: '#a855f7',

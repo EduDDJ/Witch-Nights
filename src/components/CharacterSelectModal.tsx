@@ -256,12 +256,12 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                   const unlockHint =
                     skin.id === 'geraldo_green'
                       ? (currentLang === 'en'
-                          ? 'Complete the "Out of the whole Alphabet, Green is my Favorite Number" Achievement to unlock.'
-                          : 'Complete a conquista "De todo o Alfabeto, Verde é o meu Número Favorito" para desbloquear.')
+                          ? 'Complete the "Your Element is... Green." Achievement to unlock.'
+                          : 'Complete a conquista "Seu Elemento é... Verde." para desbloquear.')
                       : skin.id === 'geraldo_blue'
                       ? (currentLang === 'en'
-                          ? 'Complete the "Feeling Blue" Achievement to unlock.'
-                          : 'Complete a conquista "Sentindo-se Azul" para desbloquear.')
+                          ? 'Complete the "Out of the whole Alphabet, Blue is my Favorite Number" Achievement to unlock.'
+                          : 'Complete a conquista "De todo o Alfabeto, Azul é o meu Número Favorito" para desbloquear.')
                       : (currentLang === 'en'
                           ? 'Complete the "Color Me Impressed" Achievement to unlock.'
                           : 'Complete a conquista "Mostre Suas Cores Verdadeiras" para desbloquear.');

@@ -329,7 +329,7 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
     name: 'The 3 Archmages',
     color: '#a855f7',
     damage: 20,
-    maxHp: 1200,
+    maxHp: 3000,
     speed: '1.0x',
     isBoss: true,
     description: 'A trinity of wise Archmages, testing Ruby. Each has their own attack, but, after defeating all 3, something is waiting for you...',
@@ -339,7 +339,7 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
       { name: 'Thunder Beams', damage: '20', telegraph: '1.5s', description: 'Geraldo The Blue fires 4 electric beams that spin clockwise for 10s.' },
       { name: 'Cloning Spell', damage: '25', telegraph: '1.2s', description: 'Geraldo The RGB duplicates you into separate 3x3 boxes with shared movement.' },
       { name: 'RGBeam', damage: '20', telegraph: '1.5s', description: '8 spinning rainbow beams rotate clockwise around Geraldo The RGB.' },
-      { name: 'Rainbow Rain', damage: '20', telegraph: '1.0s', description: 'Tri-directional fireballs, hazard vine tiles, and lightning strikes.' }
+      { name: 'Rainbow Rain', damage: '20', telegraph: '1.0s', description: 'Rainbow fireballs launch from 2 screen sides while lightning strikes telegraphed circles.' }
     ]
   }
 ];

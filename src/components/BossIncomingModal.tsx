@@ -59,11 +59,11 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
           color: '#a855f7',
           accent: 'purple',
           mechanics: isPt ? [
-            'Fase 1 (Trindade): Vermelho (Chuva de Fogo teleguiada), Verde (Caixa de Vinhas e golpes 3x1), Azul (Feixes de Trovão giratórios de 10s).',
+            'Fase 1 (Trindade): Chuva de Fogo teleguiada (Vermelho), Caixa de Vinhas e golpes 3x1 (Verde), Feixes de Trovão giratórios de 10s (Azul).',
             'Defesa de Bolha: Magos nocauteados (0 HP) ficam protegidos no canto inferior esquerdo.',
             'Fase 2: Unem-se (1200 HP) com feitiço de clone sincronizado, 8 feixes de arco-íris e tempestade de relâmpagos.'
           ] : [
-            'Phase 1 (Trinity): Red (Homing fireballs), Green (Vine Box & 3x1 bursts), Blue (10s spinning Thunder Beams).',
+            'Phase 1 (Trinity): Homing fireballs (Red), Vine Box & 3x1 bursts (Green), 10s spinning Thunder Beams (Blue).',
             'Bubble Shield: Knocked-down wizards (0 HP) move to the bottom left wrapped in protective bubbles.',
             'Phase 2: Merge (1200 HP) with synchronized player cloning, 8 spinning rainbow beams, and thunder hazards.'
           ],

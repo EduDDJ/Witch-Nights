@@ -2172,11 +2172,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               const diff = totalWizHp - boss.hp;
               if (activeWiz && !activeWiz.isShielded && activeWiz.hp > 0) {
                 if (activeWiz.isTurnShielded) {
-                  // Active wizard is currently in temporary turn shield (took 200 DMG this attack turn)
+                  // Active wizard is currently in temporary turn shield (took 1/3 of max HP this attack turn)
                   boss.hp = totalWizHp;
                 } else {
+                  const maxHp = activeWiz.maxHp || 600;
+                  const turnDmgLimit = maxHp / 3;
                   const currentTurnDmg = activeWiz.turnDamageTaken || 0;
-                  const allowedTurnDmg = Math.max(0, 200 - currentTurnDmg);
+                  const allowedTurnDmg = Math.max(0, turnDmgLimit - currentTurnDmg);
                   const actualDmg = Math.min(diff, allowedTurnDmg);
 
                   activeWiz.turnDamageTaken = currentTurnDmg + actualDmg;
@@ -2208,8 +2210,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                       archmageSubStepRef.current = 0;
                       archmageFireballsFiredRef.current = 0;
                     }
-                  } else if (activeWiz.turnDamageTaken >= 200) {
-                    // Reached 200 DMG limit for this attack phase! Raise bubble shield for remainder of attack
+                  } else if (activeWiz.turnDamageTaken >= turnDmgLimit) {
+                    // Reached 1/3 max HP DMG limit for this attack phase! Raise bubble shield for remainder of attack
                     activeWiz.isTurnShielded = true;
                     soundEngine.playLevelUp();
                     floatingTextsRef.current.push({
@@ -2721,7 +2723,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 }
               }
             } else if (currentAtk === 1) {
-              // RGBEAM: Geraldo The RGB in center-center of map with slower dodgeable lasers
+              // RGBEAM: Geraldo The RGB in center-center of map with slower dodgeable lasers (lasts 3s less)
               if (archmageSubStepRef.current === 0) {
                 archmageSubStepRef.current = 1;
                 archmageAttackTimerRef.current = 1.0;
@@ -2730,14 +2732,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   spinSpeed: 0.35,
                   beamCount: 8,
                   beamLength: 1000,
-                  duration: 12.0,
+                  duration: 9.0,
                   isRainbow: true,
                 };
                 soundEngine.playShoot('wand');
               } else if (archmageSubStepRef.current === 1) {
                 if (archmageAttackTimerRef.current <= 0) {
                   archmageSubStepRef.current = 2;
-                  archmageAttackTimerRef.current = 11.0;
+                  archmageAttackTimerRef.current = 8.0;
                   soundEngine.playShoot('wand');
                 }
               } else if (archmageSubStepRef.current === 2) {
@@ -2825,8 +2827,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 }
               }
             } else if (currentAtk === 2) {
-              // RAINBOW RAIN
-              if (archmageSubStepRef.current < 6) {
+              // RAINBOW RAIN (Extended by ~2 seconds: 8 volleys & longer lingering fireballs)
+              if (archmageSubStepRef.current < 8) {
                 if (archmageAttackTimerRef.current <= 0) {
                   archmageSubStepRef.current++;
                   archmageAttackTimerRef.current = 0.85;
@@ -2843,8 +2845,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     vx: 70,
                     vy: 75,
                     warningTimer: 0,
-                    activeTimer: 10.0,
-                    duration: 10.0,
+                    activeTimer: 12.0,
+                    duration: 12.0,
                     damage: 22,
                     hasHit: false,
                   });
@@ -2856,8 +2858,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     vx: -70,
                     vy: 75,
                     warningTimer: 0,
-                    activeTimer: 10.0,
-                    duration: 10.0,
+                    activeTimer: 12.0,
+                    duration: 12.0,
                     damage: 22,
                     hasHit: false,
                   });
@@ -2879,7 +2881,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               } else {
                 if (archmageAttackTimerRef.current <= 0) {
                   archmageRGBAttackIndexRef.current = 0;
-                  archmageAttackTimerRef.current = 1.0;
+                  archmageAttackTimerRef.current = 1.2;
                   archmageSubStepRef.current = 0;
                 }
               }
@@ -3065,10 +3067,24 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   if (px + pr >= a.x - halfW && px - pr <= a.x + halfW && py + pr >= a.y - halfH && py - pr <= a.y + halfH) {
                     isPlayerHit = true;
                   }
+                  // Check if the synchronized clone is caught in the vines!
+                  if (archmageCloneRef.current && archmageCloneRef.current.active) {
+                    const cx = archmageCloneRef.current.x;
+                    const cy = archmageCloneRef.current.y;
+                    if (cx + pr >= a.x - halfW && cx - pr <= a.x + halfW && cy + pr >= a.y - halfH && cy - pr <= a.y + halfH) {
+                      isPlayerHit = true;
+                    }
+                  }
                 } else {
                   const pDist = Math.hypot(playerRef.current.x - a.x, playerRef.current.y - a.y);
                   if (pDist <= a.radius + playerRef.current.radius) {
                     isPlayerHit = true;
+                  }
+                  if (archmageCloneRef.current && archmageCloneRef.current.active) {
+                    const cDist = Math.hypot(archmageCloneRef.current.x - a.x, archmageCloneRef.current.y - a.y);
+                    if (cDist <= a.radius + playerRef.current.radius) {
+                      isPlayerHit = true;
+                    }
                   }
                 }
               } else if (a.type === 'ARCHMAGES_THUNDER_STRIKE') {
@@ -3429,8 +3445,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const distToBoss = Math.hypot(p.x - boss.x, p.y - boss.y);
         const contactThreshold = p.radius + boss.radius;
         let isContact = false;
-        if (boss.id === 'archmages' && boss.archmagesPhase === 'PHASE1') {
-          // Phase 1 Archmages float in static positions casting spell attacks; physical body touch contact collision is disabled
+        if (boss.id === 'archmages' && (boss.archmagesPhase === 'PHASE1' || boss.archmagesPhase === 'MERGING')) {
+          // Archmages Phase 1 and Phase 2 transition animation float in positions casting/merging spells; physical body touch contact collision is disabled
           isContact = false;
         } else if (boss.id === 'haunted_eye') {
           const rx = (boss.widthRadius || 155) + p.radius;
@@ -8362,10 +8378,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               const wSize = 64;
 
               ctx.save();
-              ctx.shadowColor = activeWiz.color;
-              ctx.shadowBlur = 18;
 
-              // Elemental Aura
+              // Elemental Aura (Restored without shadow for visibility)
               ctx.fillStyle = activeWiz.color === '#ef4444'
                 ? 'rgba(239, 68, 68, 0.25)'
                 : activeWiz.color === '#22c55e'
@@ -8489,8 +8503,26 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             ctx.shadowColor = '#38bdf8';
             ctx.shadowBlur = 12;
 
-            const rgbImg = geraldoRgbImageRef.current;
-            if (rgbImg && rgbImg.complete && rgbImg.naturalWidth > 0) {
+            // Cycle between Geraldo Sprites every fourth of a second: RGB -> Red -> RGB -> Green -> RGB -> Blue
+            const cycleIndex = Math.floor(survivalTimeRef.current * 4) % 6;
+            let targetImg: HTMLImageElement | null = null;
+            if (cycleIndex === 0 || cycleIndex === 2 || cycleIndex === 4) {
+              targetImg = geraldoRgbImageRef.current;
+            } else if (cycleIndex === 1) {
+              targetImg = geraldoRedImageRef.current;
+            } else if (cycleIndex === 3) {
+              targetImg = geraldoGreenImageRef.current;
+            } else if (cycleIndex === 5) {
+              targetImg = geraldoBlueImageRef.current;
+            }
+
+            const activeSprite = (targetImg && targetImg.complete && targetImg.naturalWidth > 0)
+              ? targetImg
+              : (geraldoRgbImageRef.current && geraldoRgbImageRef.current.complete && geraldoRgbImageRef.current.naturalWidth > 0)
+              ? geraldoRgbImageRef.current
+              : null;
+
+            if (activeSprite) {
               ctx.save();
               ctx.translate(bx, rgbY);
               ctx.imageSmoothingEnabled = false;
@@ -8499,7 +8531,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 ctx.filter = 'brightness(300%)';
               }
 
-              ctx.drawImage(rgbImg, -rSize / 2, -rSize / 2, rSize, rSize);
+              ctx.drawImage(activeSprite, -rSize / 2, -rSize / 2, rSize, rSize);
               ctx.restore();
             } else {
               ctx.fillStyle = isFlashing ? '#ffffff' : '#38bdf8';

@@ -254,8 +254,8 @@ export const UI_TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     // Character Select
     geraldo_unlock_hint: 'Complete the "Color Me Impressed" Achievement to unlock.',
-    geraldo_green_unlock_hint: 'Complete the "Out of the whole Alphabet, Green is my Favorite Number" Achievement to unlock.',
-    geraldo_blue_unlock_hint: 'Complete the "Feeling Blue" Achievement to unlock.',
+    geraldo_green_unlock_hint: 'Complete the "Your Element is... Green." Achievement to unlock.',
+    geraldo_blue_unlock_hint: 'Complete the "Out of the whole Alphabet, Blue is my Favorite Number" Achievement to unlock.',
     skin_select_title: 'Select Skin',
     skin_locked: 'Locked',
 
@@ -478,8 +478,8 @@ export const UI_TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     // Character Select
     geraldo_unlock_hint: 'Complete a conquista "Mostre Suas Cores Verdadeiras" para desbloquear.',
-    geraldo_green_unlock_hint: 'Complete a conquista "De todo o Alfabeto, Verde é o meu Número Favorito" para desbloquear.',
-    geraldo_blue_unlock_hint: 'Complete a conquista "Sentindo-se Azul" para desbloquear.',
+    geraldo_green_unlock_hint: 'Complete a conquista "Seu Elemento é... Verde." para desbloquear.',
+    geraldo_blue_unlock_hint: 'Complete a conquista "De todo o Alfabeto, Azul é o meu Número Favorito" para desbloquear.',
     skin_select_title: 'Selecionar Skin',
     skin_locked: 'Bloqueado',
 
@@ -532,13 +532,13 @@ export const LOCALIZED_ACHIEVEMENTS: Record<Language, Record<string, LocalizedAc
     },
     alphabet_green: {
       id: 'alphabet_green',
-      title: 'Out of the whole Alphabet, Green is my Favorite Number',
+      title: 'Your Element is... Green.',
       description: 'Unlock Vine Snare and complete Boss Rush as Geraldo The Red.',
       unlockText: 'Geraldo The Green',
     },
     feeling_blue: {
       id: 'feeling_blue',
-      title: 'Feeling Blue',
+      title: 'Out of the whole Alphabet, Blue is my Favorite Number',
       description: 'Complete Boss Rush as Geraldo The Green.',
       unlockText: 'Geraldo The Blue',
     },
@@ -582,13 +582,13 @@ export const LOCALIZED_ACHIEVEMENTS: Record<Language, Record<string, LocalizedAc
     },
     alphabet_green: {
       id: 'alphabet_green',
-      title: 'De todo o Alfabeto, Verde é o meu Número Favorito',
+      title: 'Seu Elemento é... Verde.',
       description: 'Desbloqueie a Armadilha de Vinhas e vença a Invasão de Chefes como Geraldo O Vermelho.',
       unlockText: 'Geraldo O Verde',
     },
     feeling_blue: {
       id: 'feeling_blue',
-      title: 'Sentindo-se Azul',
+      title: 'De todo o Alfabeto, Azul é o meu Número Favorito',
       description: 'Vença a Invasão de Chefes como Geraldo O Verde.',
       unlockText: 'Geraldo O Azul',
     },
@@ -1231,7 +1231,7 @@ export const ATTACK_TRANSLATIONS: Record<Language, Record<string, { name: string
     },
     'Rainbow Rain': {
       name: 'Rainbow Rain',
-      telegraph: 'Rainbow fireballs launch from 3 sides, hazard vine tiles sprout, and lightning strikes telegraphed circles every 3 seconds.',
+      telegraph: 'Rainbow fireballs launch from 2 screen sides while lightning strikes telegraphed circles.',
     },
   },
   'pt-BR': {
@@ -1281,7 +1281,7 @@ export const ATTACK_TRANSLATIONS: Record<Language, Record<string, { name: string
     },
     'Rainbow Rain': {
       name: 'Chuva de Arco-Íris',
-      telegraph: 'Bolas de fogo de 3 direções, azulejos de vinhas e raios caindo em círculos a cada 3 segundos.',
+      telegraph: 'Bolas de fogo de arco-íris são disparadas de 2 lados da tela enquanto raios caem em círculos telegrafados.',
     },
   },
 };

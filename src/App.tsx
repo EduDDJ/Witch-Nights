@@ -730,7 +730,7 @@ export default function App() {
   // Reset Run
   const handleRestartRun = () => {
     if (isBossRush) {
-      handleStartBossRush();
+      handleStartBossRush(bossRushQueue);
     } else {
       handleStartGame();
     }
@@ -1153,7 +1153,7 @@ export default function App() {
           completeAchievement('being_a_witch_isnt_a_job');
         }
 
-        // Achievement: "Out of the whole Alphabet, Green is my Favorite Number"
+        // Achievement: "Your Element is... Green."
         // Condition: "Unlock Vine Snare and complete Boss Rush as Geraldo The Red."
         // Unlocks: Geraldo The Green.
         const isVineSnareUnlocked =
@@ -1162,7 +1162,7 @@ export default function App() {
           completeAchievement('alphabet_green');
         }
 
-        // Achievement: "Feeling Blue"
+        // Achievement: "Out of the whole Alphabet, Blue is my Favorite Number"
         // Condition: "Complete Boss Rush as Geraldo The Green."
         // Unlocks: Geraldo The Blue.
         if (selectedCharacter.id === 'geraldo_green') {
