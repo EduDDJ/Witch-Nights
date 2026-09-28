@@ -4,6 +4,7 @@ import { CharacterDefinition } from '../types/game';
 import { BOSS_POOL } from '../data/gameData';
 import { resolveAssetPath } from '../utils/assets';
 import { GameImage } from './GameImage';
+import { GERALDO_RGB_DATA_URI, GOOGOLBRA_HEAD_DATA_URI } from '../utils/localDataUris';
 import { getLanguage, translateCharacterTitle, translateCharacterName, translateBossName } from '../utils/i18n';
 
 interface BossRushModalProps {
@@ -226,18 +227,19 @@ export const BossRushModal: React.FC<BossRushModalProps> = ({
                         fallbackSrc={b.spriteUrl || `assets/${b.id === 'carnivore_plant' ? 'carnivore_plant.png' : b.id === 'haunted_eye' ? 'haunted_eye_open.png' : b.id === 'night_bear' ? 'night_bear.png' : b.id === 'googolbra' ? 'googolbra_head.png' : b.id === 'phiboccion' ? 'phiboccion.png' : b.id === 'pythagoras' ? 'pythagoras.png' : 'geraldo_rgb.png'}`}
                         alternateFallbacks={[
                           b.fallbackSpriteUrl || (
-                            b.id === 'carnivore_plant'
-                              ? 'https://i.imgur.com/kaNPLzb.png'
-                              : b.id === 'haunted_eye'
-                              ? 'https://i.imgur.com/caqAbHC.png'
-                              : b.id === 'night_bear'
-                              ? 'https://i.imgur.com/Pjkp2on.png'
-                              : b.id === 'googolbra'
-                              ? 'https://i.imgur.com/HJ9tJm7.png'
-                              : b.id === 'phiboccion'
-                              ? 'https://i.imgur.com/g0AgJ3Y.png'
-                              : 'https://i.imgur.com/w8qU2F1.png'
-                          )
+                            b.id === 'googolbra' ? GOOGOLBRA_HEAD_DATA_URI : b.id === 'archmages' ? GERALDO_RGB_DATA_URI : 'assets/geraldo_rgb.png'
+                          ),
+                          b.id === 'carnivore_plant'
+                            ? 'https://i.imgur.com/kaNPLzb.png'
+                            : b.id === 'haunted_eye'
+                            ? 'https://i.imgur.com/caqAbHC.png'
+                            : b.id === 'night_bear'
+                            ? 'https://i.imgur.com/Pjkp2on.png'
+                            : b.id === 'googolbra'
+                            ? 'https://i.imgur.com/HJ9tJm7.png'
+                            : b.id === 'phiboccion'
+                            ? 'https://i.imgur.com/g0AgJ3Y.png'
+                            : 'https://i.imgur.com/w8qU2F1.png'
                         ]}
                         alt={b.name}
                         className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform [image-rendering:pixelated]"

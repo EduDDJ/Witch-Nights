@@ -33,6 +33,14 @@ import {
 } from '../data/gameData';
 import { soundEngine } from '../utils/audio';
 import { resolveAssetPath } from '../utils/assets';
+import {
+  GERALDO_RED_DATA_URI,
+  GERALDO_GREEN_DATA_URI,
+  GERALDO_BLUE_DATA_URI,
+  GERALDO_RGB_DATA_URI,
+  GOOGOLBRA_HEAD_DATA_URI,
+  GOOGOLBRA_BODY_DATA_URI,
+} from '../utils/localDataUris';
 import { getLanguage, translateBossName, translateMapName, UI_TRANSLATIONS } from '../utils/i18n';
 
 export const BUNNARY_MESSAGES = [
@@ -469,6 +477,11 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
         if (fallbackRelativePath.includes('assets/aistudio/')) {
           candidates.push(resolveAssetPath(fallbackRelativePath.replace('assets/aistudio/', 'assets/')));
         }
+        const fileName = fallbackRelativePath.split('/').pop();
+        if (fileName) {
+          candidates.push(resolveAssetPath(fileName));
+          candidates.push(resolveAssetPath(`sprites/characters/${fileName}`));
+        }
       }
       if (primarySrc) {
         candidates.push(resolveAssetPath(primarySrc));
@@ -482,7 +495,9 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
         if (currentIndex >= candidates.length) return;
         const src = candidates[currentIndex++];
         const img = new Image();
-        img.crossOrigin = 'anonymous';
+        if (src.startsWith('http://') || src.startsWith('https://')) {
+          img.crossOrigin = 'anonymous';
+        }
         img.onload = () => {
           targetRef.current = img;
         };
@@ -568,18 +583,18 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
     const greenCharUri = CHARACTERS.find((c) => c.id === 'geraldo_green')?.fallbackSpriteUrl;
     const blueCharUri = CHARACTERS.find((c) => c.id === 'geraldo_blue')?.fallbackSpriteUrl;
 
-    loadImage('https://i.imgur.com/v80iCki.png', 'assets/aistudio/geraldo.png', geraldoRedImageRef, redCharUri);
-    loadImage('https://i.imgur.com/k6tO808.png', 'assets/aistudio/geraldo_green.png', geraldoGreenImageRef, greenCharUri);
-    loadImage('https://i.imgur.com/f9W9M5Z.png', 'assets/aistudio/geraldo_blue.png', geraldoBlueImageRef, blueCharUri);
-    loadImage('https://i.imgur.com/w8qU2F1.png', 'assets/aistudio/geraldo_rgb.png', geraldoRgbImageRef, redCharUri);
+    loadImage('https://i.imgur.com/v80iCki.png', 'assets/aistudio/geraldo.png', geraldoRedImageRef, GERALDO_RED_DATA_URI);
+    loadImage('https://i.imgur.com/k6tO808.png', 'assets/aistudio/geraldo_green.png', geraldoGreenImageRef, GERALDO_GREEN_DATA_URI);
+    loadImage('https://i.imgur.com/f9W9M5Z.png', 'assets/aistudio/geraldo_blue.png', geraldoBlueImageRef, GERALDO_BLUE_DATA_URI);
+    loadImage('https://i.imgur.com/w8qU2F1.png', 'assets/aistudio/geraldo_rgb.png', geraldoRgbImageRef, GERALDO_RGB_DATA_URI);
 
     loadImage('https://i.imgur.com/g0AgJ3Y.png', 'assets/aistudio/phiboccion.png', phiboccionImageRef);
     loadImage('https://i.imgur.com/7gN6fD5.png', 'assets/aistudio/phiboccion_kicking.png', phiboccionKickingImageRef);
     loadImage('https://i.imgur.com/ioiFCOw.png', 'assets/aistudio/land_phi_ne.png', landPhineImageRef);
     loadImage('https://i.imgur.com/0TT8WLi.png', 'assets/aistudio/land_phi_ne_blinking.png', landPhineBlinkingImageRef);
 
-    loadImage('https://i.imgur.com/HJ9tJm7.png', 'assets/aistudio/googolbra_head.png', googolbraHeadImageRef);
-    loadImage('https://i.imgur.com/4Kvs0qj.png', 'assets/aistudio/googolbra_body.png', googolbraBodyImageRef);
+    loadImage('https://i.imgur.com/HJ9tJm7.png', 'assets/aistudio/googolbra_head.png', googolbraHeadImageRef, GOOGOLBRA_HEAD_DATA_URI);
+    loadImage('https://i.imgur.com/4Kvs0qj.png', 'assets/aistudio/googolbra_body.png', googolbraBodyImageRef, GOOGOLBRA_BODY_DATA_URI);
 
     loadImage('https://i.imgur.com/APbtbDS.png', 'assets/aistudio/pythagoras.png', pythagorasImageRef);
     loadImage('https://i.imgur.com/NGSgVv0.png', 'assets/aistudio/ruler.png', rulerImageRef);

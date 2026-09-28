@@ -1,4 +1,11 @@
 import { WeaponDefinition, StatItemDefinition, CurseChoice, BossDefinition, CharacterDefinition } from '../types/game';
+import {
+  GERALDO_RED_DATA_URI,
+  GERALDO_GREEN_DATA_URI,
+  GERALDO_BLUE_DATA_URI,
+  GERALDO_RGB_DATA_URI,
+  GOOGOLBRA_HEAD_DATA_URI,
+} from '../utils/localDataUris';
 
 export const CHARACTERS: CharacterDefinition[] = [
   {
@@ -60,7 +67,7 @@ export const CHARACTERS: CharacterDefinition[] = [
     speedLabel: '1.1x',
     description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
     spriteUrl: 'assets/aistudio/geraldo.png',
-    fallbackSpriteUrl: 'https://i.imgur.com/v80iCki.png',
+    fallbackSpriteUrl: GERALDO_RED_DATA_URI,
     color: '#ef4444',
   },
   {
@@ -76,7 +83,7 @@ export const CHARACTERS: CharacterDefinition[] = [
     startingLevelBonus: 1,
     description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
     spriteUrl: 'assets/aistudio/geraldo_green.png',
-    fallbackSpriteUrl: 'https://i.imgur.com/k6tO808.png',
+    fallbackSpriteUrl: GERALDO_GREEN_DATA_URI,
     color: '#22c55e',
   },
   {
@@ -91,7 +98,7 @@ export const CHARACTERS: CharacterDefinition[] = [
     speedLabel: '1.1x',
     description: 'A wise Archmage that teaches his knowledges to only a very small group, selected by hand.',
     spriteUrl: 'assets/aistudio/geraldo_blue.png',
-    fallbackSpriteUrl: 'https://i.imgur.com/f9W9M5Z.png',
+    fallbackSpriteUrl: GERALDO_BLUE_DATA_URI,
     color: '#3b82f6',
   },
 ];
@@ -141,7 +148,7 @@ export const BOSS_POOL: BossDefinition[] = [
     radius: 32,
     color: '#a855f7',
     spriteUrl: 'assets/aistudio/geraldo_rgb.png',
-    fallbackSpriteUrl: 'https://i.imgur.com/w8qU2F1.png',
+    fallbackSpriteUrl: GERALDO_RGB_DATA_URI,
     mapId: 'village_outskirts',
   },
   {
@@ -152,7 +159,7 @@ export const BOSS_POOL: BossDefinition[] = [
     radius: 40,
     color: '#06b6d4',
     spriteUrl: 'assets/aistudio/googolbra_head.png',
-    fallbackSpriteUrl: 'https://i.imgur.com/HJ9tJm7.png',
+    fallbackSpriteUrl: GOOGOLBRA_HEAD_DATA_URI,
     mapId: 'mathematical_realm',
   },
   {

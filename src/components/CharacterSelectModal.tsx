@@ -3,6 +3,12 @@ import { CharacterDefinition } from '../types/game';
 import { CHARACTERS } from '../data/gameData';
 import { resolveAssetPath } from '../utils/assets';
 import { GameImage } from './GameImage';
+import {
+  GERALDO_RED_DATA_URI,
+  GERALDO_GREEN_DATA_URI,
+  GERALDO_BLUE_DATA_URI,
+  GERALDO_RGB_DATA_URI,
+} from '../utils/localDataUris';
 import { 
   Play, 
   X, 
@@ -225,7 +231,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                       <GameImage
                         src="assets/aistudio/geraldo_rgb.png"
                         fallbackSrc="assets/geraldo_rgb.png"
-                        alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
+                        alternateFallbacks={[GERALDO_RGB_DATA_URI, GERALDO_RED_DATA_URI, 'https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
                         alt="Geraldo"
                         className="w-full h-full object-contain [image-rendering:pixelated] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]"
                       />
@@ -307,8 +313,8 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                           ) : (
                             <GameImage
                               src={skin.spriteUrl}
-                              fallbackSrc={`assets/${skin.id === 'geraldo' ? 'geraldo.png' : skin.id === 'geraldo_green' ? 'geraldo_green.png' : 'geraldo_blue.png'}`}
-                              alternateFallbacks={[skin.fallbackSpriteUrl || 'https://i.imgur.com/v80iCki.png']}
+                              fallbackSrc={skin.id === 'geraldo' ? GERALDO_RED_DATA_URI : skin.id === 'geraldo_green' ? GERALDO_GREEN_DATA_URI : GERALDO_BLUE_DATA_URI}
+                              alternateFallbacks={[skin.fallbackSpriteUrl || 'https://i.imgur.com/v80iCki.png', `assets/${skin.id}.png`]}
                               alt={skinName}
                               className="w-full h-full object-contain [image-rendering:pixelated]"
                             />

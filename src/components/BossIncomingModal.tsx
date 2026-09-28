@@ -3,6 +3,7 @@ import { ShieldAlert, Sword, Heart, Zap, AlertTriangle, CheckCircle, Skull, Flam
 import { BossDefinition } from '../types/game';
 import { resolveAssetPath } from '../utils/assets';
 import { GameImage } from './GameImage';
+import { GERALDO_RGB_DATA_URI, GOOGOLBRA_HEAD_DATA_URI } from '../utils/localDataUris';
 import { getLanguage, t, translateBossName } from '../utils/i18n';
 
 interface BossIncomingModalProps {
@@ -192,7 +193,7 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
               <GameImage
                 src="assets/aistudio/geraldo_rgb.png"
                 fallbackSrc="assets/geraldo_rgb.png"
-                alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
+                alternateFallbacks={[GERALDO_RGB_DATA_URI, 'https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
                 alt="The 3 Archmages"
                 className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
               />
@@ -200,7 +201,7 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
               <GameImage
                 src="assets/aistudio/googolbra_head.png"
                 fallbackSrc="assets/googolbra_head.png"
-                alternateFallbacks={['https://i.imgur.com/HJ9tJm7.png']}
+                alternateFallbacks={[GOOGOLBRA_HEAD_DATA_URI, 'https://i.imgur.com/HJ9tJm7.png']}
                 alt="Googolbra"
                 className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
               />

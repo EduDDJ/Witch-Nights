@@ -3,6 +3,7 @@ import { BossDefinition } from '../types/game';
 import { Eye, Swords, Sparkles, AlertTriangle, Wrench, X, MapPin } from 'lucide-react';
 import { resolveAssetPath } from '../utils/assets';
 import { GameImage } from './GameImage';
+import { GERALDO_RGB_DATA_URI, GOOGOLBRA_HEAD_DATA_URI } from '../utils/localDataUris';
 import { getLanguage, t, translateBossName, translateMapName } from '../utils/i18n';
 
 interface BossSelectModalProps {
@@ -210,7 +211,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                         <GameImage
                           src="assets/aistudio/geraldo_rgb.png"
                           fallbackSrc="assets/geraldo_rgb.png"
-                          alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
+                          alternateFallbacks={[GERALDO_RGB_DATA_URI, 'https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
                           alt="The 3 Archmages Visual"
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
                         />
@@ -220,7 +221,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                         <GameImage
                           src="assets/aistudio/googolbra_head.png"
                           fallbackSrc="assets/googolbra_head.png"
-                          alternateFallbacks={['https://i.imgur.com/HJ9tJm7.png']}
+                          alternateFallbacks={[GOOGOLBRA_HEAD_DATA_URI, 'https://i.imgur.com/HJ9tJm7.png']}
                           alt="Googolbra Visual"
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
                         />

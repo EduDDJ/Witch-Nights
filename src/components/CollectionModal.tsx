@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { resolveAssetPath } from '../utils/assets';
+import { GERALDO_RGB_DATA_URI, GOOGOLBRA_HEAD_DATA_URI } from '../utils/localDataUris';
 import { GameImage } from './GameImage';
 import { ALL_WEAPONS, ALL_STAT_ITEMS, WITCH_DEALS, CHARACTERS } from '../data/gameData';
 import { ShootingType } from '../types/game';
@@ -229,7 +230,7 @@ const ArchmagesIcon: React.FC<any> = (props) => (
   <GameImage
     src="assets/aistudio/geraldo_rgb.png"
     fallbackSrc="assets/geraldo_rgb.png"
-    alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
+    alternateFallbacks={[GERALDO_RGB_DATA_URI, 'https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
     alt="The 3 Archmages"
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
@@ -240,7 +241,7 @@ const GoogolbraIcon: React.FC<any> = (props) => (
   <GameImage
     src="assets/aistudio/googolbra_head.png"
     fallbackSrc="assets/googolbra_head.png"
-    alternateFallbacks={['https://i.imgur.com/HJ9tJm7.png']}
+    alternateFallbacks={[GOOGOLBRA_HEAD_DATA_URI, 'https://i.imgur.com/HJ9tJm7.png']}
     alt="Googolbra"
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
