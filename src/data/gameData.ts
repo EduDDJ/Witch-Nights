@@ -107,6 +107,7 @@ export const BOSS_POOL: BossDefinition[] = [
     color: '#22c55e',
     spriteUrl: 'assets/aistudio/carnivore_plant.png',
     fallbackSpriteUrl: 'https://i.imgur.com/kaNPLzb.png',
+    mapId: 'village_outskirts',
   },
   {
     id: 'haunted_eye',
@@ -119,6 +120,7 @@ export const BOSS_POOL: BossDefinition[] = [
     color: '#dc2626',
     spriteUrl: 'assets/aistudio/haunted_eye_open.png',
     fallbackSpriteUrl: 'https://i.imgur.com/caqAbHC.png',
+    mapId: 'village_outskirts',
   },
   {
     id: 'night_bear',
@@ -129,6 +131,7 @@ export const BOSS_POOL: BossDefinition[] = [
     color: '#3b2f2f', // Dark brown/black bear color
     spriteUrl: 'assets/aistudio/night_bear.png',
     fallbackSpriteUrl: 'https://i.imgur.com/Pjkp2on.png',
+    mapId: 'village_outskirts',
   },
   {
     id: 'archmages',
@@ -139,8 +142,49 @@ export const BOSS_POOL: BossDefinition[] = [
     color: '#a855f7',
     spriteUrl: 'assets/aistudio/geraldo_rgb.png',
     fallbackSpriteUrl: 'https://i.imgur.com/w8qU2F1.png',
+    mapId: 'village_outskirts',
+  },
+  {
+    id: 'googolbra',
+    name: 'Googolbra',
+    maxHp: 2000,
+    damage: 28,
+    radius: 40,
+    color: '#06b6d4',
+    spriteUrl: 'assets/aistudio/googolbra_head.png',
+    fallbackSpriteUrl: 'https://i.imgur.com/HJ9tJm7.png',
+    mapId: 'mathematical_realm',
+  },
+  {
+    id: 'phiboccion',
+    name: 'Phiboccion',
+    maxHp: 1600,
+    damage: 25,
+    radius: 45,
+    color: '#eab308',
+    spriteUrl: 'assets/aistudio/phiboccion.png',
+    fallbackSpriteUrl: 'https://i.imgur.com/g0AgJ3Y.png',
+    mapId: 'mathematical_realm',
+  },
+  {
+    id: 'pythagoras',
+    name: 'Pythagoras The MatheMagician',
+    maxHp: 2200,
+    damage: 20,
+    radius: 45,
+    color: '#8b5cf6',
+    spriteUrl: 'assets/aistudio/pythagoras.png',
+    fallbackSpriteUrl: 'https://i.imgur.com/APbtbDS.png',
+    mapId: 'mathematical_realm',
   }
 ];
+
+export const getBossHomeMap = (bossId: string): string => {
+  const boss = BOSS_POOL.find((b) => b.id === bossId);
+  if (boss && boss.mapId) return boss.mapId;
+  if (bossId === 'googolbra' || bossId === 'phiboccion' || bossId === 'pythagoras') return 'mathematical_realm';
+  return 'village_outskirts';
+};
 
 export const ALL_WEAPONS: WeaponDefinition[] = [
   {
@@ -156,6 +200,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     basePierce: 1,
     baseCount: 1,
     bulletColor: '#a855f7',
+    iconColor: '#94a3b8',
     tiers: [
       { tier: 1, name: 'Stellar Beam', description: 'Fires 1 arcane shard toward cursor.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: '', description: 'Fires 2 additional smaller shards on the sides and deals 30% more damage.', damageBonus: 6, fireRateBonus: 1.0, countBonus: 2, sizeBonus: 0, pierceBonus: 0 },
@@ -179,7 +224,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     basePierce: 1,
     baseCount: 3,
     bulletColor: '#22c55e',
-    iconColor: '#a855f7',
+    iconColor: '#94a3b8',
     tiers: [
       { tier: 1, name: 'Acid Pellets', description: 'Fires 3 acid pellets, with the middle pellet aiming directly at your cursor.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: '', description: 'Every shot fires another 3 pellets right after the first 3 in quick succession.', damageBonus: 4, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 1, pierceBonus: 0 },
@@ -203,6 +248,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     basePierce: 999,
     baseCount: 1,
     bulletColor: '#a855f7',
+    iconColor: '#94a3b8',
     tiers: [
       { tier: 1, name: 'Astral Blade', description: 'Swings an ethereal blade in a 90° cone towards cursor in short range.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: '', description: 'Increases swing cone to 108° and deals +6 damage.', damageBonus: 6, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 5, pierceBonus: 0 },
@@ -211,6 +257,29 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
       { tier: 5, name: '', description: 'Increases swing cone to 162° and deals +12 damage.', damageBonus: 36, fireRateBonus: 0.80, countBonus: 0, sizeBonus: 20, pierceBonus: 0 },
       { tier: 6, name: '', description: 'Increases swing cone to 180° (full frontal half-circle) and deals +15 damage.', damageBonus: 51, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
       { tier: 7, name: 'Astral Transformation', description: 'Blade is always on screen aiming at cursor. Fast movement slashes foes with big damage & knockback, with 50% chance for Burn or Acid.', damageBonus: 65, fireRateBonus: 0.70, countBonus: 0, sizeBonus: 30, pierceBonus: 998 },
+    ]
+  },
+  {
+    id: 'spectral_arrow',
+    name: 'Elfic Bow / Spectral Arrow',
+    shootingType: 'MOUSE_DIRECTION',
+    icon: 'Crosshair',
+    description: 'Fires spectral arrows toward your cursor that pierce and home into nearby targets upon impact.',
+    baseDamage: 50,
+    baseInterval: 2.0,
+    baseSpeed: 800,
+    baseSize: 22,
+    basePierce: 1,
+    baseCount: 1,
+    bulletColor: '#38bdf8',
+    iconColor: '#94a3b8',
+    tiers: [
+      { tier: 1, name: 'Elfic Bow / Spectral Arrow', description: 'Slow fire rate (2s cooldown), but fires spectral arrows dealing 50 damage.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: '+1 penetration (2 pierce total).', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 1 },
+      { tier: 3, name: '', description: 'After hitting the first enemy, the arrow homes into the closest remaining enemy (50% damage).', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 1 },
+      { tier: 4, name: '', description: '+1 penetration (3 pierce total). Homes into a third enemy after hitting the second (50% damage).', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 2 },
+      { tier: 5, name: '', description: 'Removes damage falloff on chained target hits (full damage on all targets).', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 2 },
+      { tier: 6, name: '', description: 'Shoots 2 spectral arrows at once.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 1, sizeBonus: 0, pierceBonus: 2 },
     ]
   },
   {
@@ -226,6 +295,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     basePierce: 999,
     baseCount: 1,
     bulletColor: '#22c55e',
+    iconColor: '#94a3b8',
     tiers: [
       { tier: 1, name: 'Acid Pools', description: 'Splashes 1 small corrosive acid pool at nearby ground.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: '', description: 'Pools deal +2 damage and expand +10 radius.', damageBonus: 2, fireRateBonus: 0.9, countBonus: 0, sizeBonus: 10, pierceBonus: 0 },
@@ -248,6 +318,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     basePierce: 999,
     baseCount: 1,
     bulletColor: '#22c55e',
+    iconColor: '#94a3b8',
     tiers: [
       { tier: 1, name: 'Orbiting Grimoire', description: '1 cursed grimoire spins around the witch at steady speed.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: '', description: 'Grimoire rotation speed (r.p.m.) increases by 35%.', damageBonus: 4, fireRateBonus: 0.74, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
@@ -270,6 +341,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     basePierce: 999,
     baseCount: 1,
     bulletColor: '#22c55e',
+    iconColor: '#94a3b8',
     tiers: [
       { tier: 1, name: 'Pentagram', description: 'Emits a 130px circular pulse and glowing star around the witch.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: '', description: 'Pulse radius expands (+25px) and deals +8 damage.', damageBonus: 8, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 25, pierceBonus: 0 },
@@ -277,6 +349,31 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
       { tier: 4, name: '', description: 'Pulse radius expands (+30px) and deals +16 damage.', damageBonus: 16, fireRateBonus: 0.85, countBonus: 0, sizeBonus: 30, pierceBonus: 0 },
       { tier: 5, name: '', description: 'Pulse blast knocks back foes strongly and deals +22 damage.', damageBonus: 22, fireRateBonus: 0.80, countBonus: 0, sizeBonus: 35, pierceBonus: 0 },
       { tier: 6, name: '', description: 'Unleashes an apocalyptic 290px circular pulse and pentagram incinerating all nearby foes.', damageBonus: 36, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 50, pierceBonus: 0 },
+    ]
+  },
+  {
+    id: 'protractor',
+    name: 'Protractor',
+    shootingType: 'AREA_OF_EFFECT',
+    icon: 'Protractor',
+    description: 'Throws protractors that travel in a big circular motion and return to the player, slicing through all enemies in their path.',
+    unlockCondition: 'Defeat Pythagoras The MatheMagician to unlock.',
+    isLegendary: true,
+    baseDamage: 24,
+    baseInterval: 1.8,
+    baseSpeed: 420,
+    baseSize: 15,
+    basePierce: 999,
+    baseCount: 1,
+    bulletColor: '#38bdf8',
+    iconColor: '#94a3b8',
+    tiers: [
+      { tier: 1, name: 'Protractor', description: 'Throws 1 protractor towards where you are moving that travels in a big circular loop and returns.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: 'Shoots another protractor behind you (2 protractors total).', damageBonus: 0, fireRateBonus: 1.0, countBonus: 1, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'Shoots an additional protractor above you (3 protractors total).', damageBonus: 0, fireRateBonus: 1.0, countBonus: 2, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 4, name: '', description: 'Shoots an additional protractor underneath you (4 protractors total in 4 directions).', damageBonus: 0, fireRateBonus: 1.0, countBonus: 3, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 5, name: '', description: 'Protractors deal +50% more damage.', damageBonus: 12, fireRateBonus: 1.0, countBonus: 3, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 6, name: '', description: 'Protractors become significantly larger.', damageBonus: 12, fireRateBonus: 1.0, countBonus: 3, sizeBonus: 9, pierceBonus: 0 },
     ]
   },
   {
@@ -292,6 +389,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     basePierce: 1,
     baseCount: 1,
     bulletColor: '#3b82f6',
+    iconColor: '#94a3b8',
     tiers: [
       { tier: 1, name: 'Fire Wisp', description: 'Launches 1 blazing homing fire wisp seeking the nearest monster.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: '', description: 'Launches +1 homing fire wisp per volley (2 wisps total) and deals +4 damage.', damageBonus: 4, fireRateBonus: 1.0, countBonus: 1, sizeBonus: 2, pierceBonus: 0 },
@@ -317,6 +415,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     basePierce: 1,
     baseCount: 1,
     bulletColor: '#3b82f6',
+    iconColor: '#94a3b8',
     tiers: [
       { tier: 1, name: 'Vine Snare', description: 'Traps 1 nearest enemy in thorny vines for 2.0s. High cooldown.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: '', description: 'Decreases vine cooldown by 22%.', damageBonus: 4, fireRateBonus: 0.78, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
@@ -340,7 +439,7 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
     basePierce: 1,
     baseCount: 1,
     bulletColor: '#3b82f6',
-    iconColor: '#3b82f6',
+    iconColor: '#94a3b8',
     tiers: [
       { tier: 1, name: 'Thunderstrike', description: 'Shoots a Thunderstrike at the closest enemy, dealing 30 damage. High cooldown.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
       { tier: 2, name: '', description: 'Thunderstrike freezes enemies hit by 0.5 second.', damageBonus: 6, fireRateBonus: 0.95, countBonus: 0, sizeBonus: 2, pierceBonus: 0 },
@@ -349,6 +448,29 @@ export const ALL_WEAPONS: WeaponDefinition[] = [
       { tier: 5, name: '', description: 'Thunderstrike now freezes the enemy hit for 0.75s.', damageBonus: 25, fireRateBonus: 0.80, countBonus: 0, sizeBonus: 8, pierceBonus: 0 },
       { tier: 6, name: '', description: 'Chained off Thunderstrikes now freeze the enemy hit for 0.5s.', damageBonus: 34, fireRateBonus: 0.75, countBonus: 0, sizeBonus: 10, pierceBonus: 0 },
       { tier: 7, name: 'Thunderstorm', description: 'Shoots 2 Thunderstrikes simultaneously. Creates an area around the player that slows down enemies by 10%.', damageBonus: 45, fireRateBonus: 0.65, countBonus: 1, sizeBonus: 14, pierceBonus: 1 },
+    ]
+  },
+  {
+    id: 'sickle',
+    name: 'Sickle',
+    shootingType: 'NEAREST_ENEMY',
+    icon: 'Sickle',
+    description: 'Throws a spinning sickle towards the nearest enemy that returns like a boomerang after reaching its maximum distance.',
+    baseDamage: 15,
+    baseInterval: 1.5,
+    baseSpeed: 450,
+    baseSize: 10,
+    basePierce: 999,
+    baseCount: 1,
+    bulletColor: '#38bdf8',
+    iconColor: '#94a3b8',
+    tiers: [
+      { tier: 1, name: 'Sickle', description: '1.5s cooldown, 15 damage.', damageBonus: 0, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 2, name: '', description: '+50% Damage.', damageBonus: 7.5, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 3, name: '', description: 'When a Sickle is at its maximum distance, the player throws another (essentially double fire rate).', damageBonus: 7.5, fireRateBonus: 1.0, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 4, name: '', description: '+50% fire rate.', damageBonus: 7.5, fireRateBonus: 0.667, countBonus: 0, sizeBonus: 0, pierceBonus: 0 },
+      { tier: 5, name: '', description: 'Sickles get 50% bigger.', damageBonus: 7.5, fireRateBonus: 0.667, countBonus: 0, sizeBonus: 5, pierceBonus: 0 },
+      { tier: 6, name: '', description: 'Sickles give a slight knockback to enemies hit.', damageBonus: 7.5, fireRateBonus: 0.667, countBonus: 0, sizeBonus: 5, pierceBonus: 0 },
     ]
   }
 ];
@@ -578,11 +700,13 @@ export const DEFAULT_UNLOCKED_ITEM_IDS: string[] = [
   'arcane_wand',
   'brimstone_shotgun',
   'astral_sword',
+  'spectral_arrow',
   'toxic_cauldron',
   'grimoire_orbit',
   'hellfire_nova',
   'seeking_wisp',
   'thunderstrike',
+  'sickle',
   'shield_of_protection',
   'astral_lens',
   'repulsion_talisman',

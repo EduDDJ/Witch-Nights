@@ -35,6 +35,42 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
           ],
           strategy: isPt ? 'Mantenha distância e circule o perímetro. Use sua habilidade de Investida para esquivar da mordida.' : 'Keep your distance and circle around the perimeter. Use your Dash ability to evade the Chomp Attack and escape when cornered.'
         };
+      case 'pythagoras':
+        return {
+          title: isPt ? 'Pitágoras O Matemágico' : 'Pythagoras The MatheMagician',
+          subtitle: isPt ? 'Mestre das Formas e Paradoxo' : 'Master of Forms and Paradox',
+          color: '#8b5cf6',
+          accent: 'purple',
+          mechanics: isPt ? [
+            'Geometry? Dash!: Lança réguas dividindo a tela ao meio, enquanto transferidores orbitam as metades e esquadros giratórios miram em você.',
+            'Problema de (Mont)SEU (hall): Três portas misteriosas aparecem. Escolha uma, veja uma porta vazia se abrir, e decida se troca ou mantém!',
+            'GeoMento Mori: 5 equações matemáticas surgem no canto superior esquerdo e são traçadas no plano cartesiano com centro em (0,0). Desvie das curvas letais!'
+          ] : [
+            'Geometry? Dash!: Throws rulers straight down dividing the arena, while protractors circle both halves and spinning set-squares target you.',
+            '(Mont)YOUR (hall) Problem: 3 mysterious doors appear. Pick one, an empty door opens, then choose to switch or stay!',
+            'GeoMento Mori: 5 mathematical equations appear on the top-left, then graph onto the Cartesian plane with (0,0) at screen center. Dodge the deadly plotted curves!'
+          ],
+          strategy: isPt ? 'Fique atento aos gráficos de GeoMento Mori em vermelho, desvie das réguas no Geometry Dash e use probabilidades nas portas de Monty Hall!' : 'Watch out for GeoMento Mori red graphs, avoid center rulers in Geometry Dash, and pick wisely in Monty Hall!'
+        };
+      case 'phiboccion':
+        return {
+          title: 'Phiboccion',
+          subtitle: isPt ? 'Phi Encarnado' : 'Phi Incarnate',
+          color: '#eab308',
+          accent: 'amber',
+          mechanics: isPt ? [
+            'x Elevado ao Poder DESTE CHUTE: Chuta de forma lenta e deliberada, deixando Phi-nas em seu caminho.',
+            'Phi-X-Plosion: Dispara 5 Phi-nas espalhadas pelo mapa e mira no jogador com feixes teleguiados, seguidos por uma explosão concentrada sob seus pés.',
+            'A Raiz da Força: Fica invulnerável. Digite a resposta de 3 raízes quadradas no teclado numérico em até 10s cada para remover 1/5 de sua vida máxima!',
+            'SAY. SOME. FIBONACCI!!!: Ao ser derrotado, exige a sequência de Fibonacci (até o 50º número) com cronômetros decrescentes (5s a 1s) para ganhar orbes de EXP bônus!'
+          ] : [
+            'x to the Power of THIS KICK: Kicks slowly and deliberately, leaving Land Phi-nes behind.',
+            'Phi-X-Plosion: Drops 5 Land Phi-nes across the map and aims homing laser bursts at you, followed by a targeted explosion under your feet.',
+            'The Root of Strength: Gains invulnerability. Input the answer to 3 square root problems on the keypad within 10s each to shave off 20% of his Max HP!',
+            'SAY. SOME. FIBONACCI!!!: When defeated, demands the Fibonacci sequence (up to the 50th number) with decreasing timers (5s down to 1s) for bonus EXP orbs!'
+          ],
+          strategy: isPt ? 'Mantenha-se em movimento para desviar dos feixes e corra assim que o círculo de aviso aparecer sob seus pés. Digite as respostas no teclado numérico e aperte ENTER!' : 'Keep moving to avoid the laser bursts, and dash away as soon as the warning circle appears under your feet. Type your answers on the keypad and press ENTER!'
+        };
       case 'haunted_eye':
         return {
           title: isPt ? 'Olho Assombrado' : 'Haunted Eye',
@@ -68,6 +104,23 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
             'Phase 2: Merge (1200 HP) with synchronized player cloning, 8 spinning rainbow beams, and thunder hazards.'
           ],
           strategy: isPt ? 'Na Fase 1, foque o dano no Mago ativo. Na Fase 2, posicione-se em áreas seguras tanto para você quanto para seu clone!' : 'In Phase 1, burst down whichever Wizard is currently active. In Phase 2, navigate tiles that are safe for BOTH you and your synchronized clone!'
+        };
+      case 'googolbra':
+        return {
+          title: 'Googolbra',
+          subtitle: isPt ? 'A Serpente de 100 Zeros' : 'The 100-Zero Serpent',
+          color: '#06b6d4',
+          accent: 'cyan',
+          mechanics: isPt ? [
+            'Constrição em cONE: Enrola-se para dentro da arena em espiral veloz. Ataque a cabeça com 1/5 da vida máxima para forçá-la a recuar!',
+            'Ataque em Padrão Zebra: Ocupa todas as pistas simultaneamente com uma serpente contínua e gigante em alta velocidade duas vezes!',
+            'Ataque Sssurpresa: Emerge de fora da tela e agarra o jogador! Não causa dano por 5s, passando a causar 10 DPS; aperte ESPAÇO 30 vezes para se libertar!'
+          ] : [
+            'Snake cONEstriction: Swiftly spirals inward around the arena. Attack its head for 1/5 Max HP to force it backwards off-screen!',
+            'Zebra Pattern Strike: Rushes twice at extreme speed with telegraphed lanes fully occupied simultaneously by a giant continuous serpentine body!',
+            'Sssneak Attack: Ambushes from off-screen and coils tightly around the player! Deals no damage for 5s, then 10 DPS; spam Spacebar 30 times to break free!'
+          ],
+          strategy: isPt ? 'Cuidado com a Constrição em cONE enquanto ela espirala para dentro, posicione-se nas faixas seguras durante o Ataque em Padrão Zebra e lute freneticamente antes dos 5s se for pego no Ataque Sssurpresa!' : 'Watch out for cONEstriction as it spirals inward, position yourself in safe lanes during Zebra Pattern Strike, and spam Struggle if caught in Sssneak Attack!'
         };
       case 'night_bear':
       default:
@@ -141,6 +194,22 @@ export const BossIncomingModal: React.FC<BossIncomingModalProps> = ({
                 fallbackSrc="assets/geraldo_rgb.png"
                 alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
                 alt="The 3 Archmages"
+                className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
+              />
+            ) : boss.id === 'googolbra' ? (
+              <GameImage
+                src="assets/aistudio/googolbra_head.png"
+                fallbackSrc="assets/googolbra_head.png"
+                alternateFallbacks={['https://i.imgur.com/HJ9tJm7.png']}
+                alt="Googolbra"
+                className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
+              />
+            ) : boss.id === 'phiboccion' ? (
+              <GameImage
+                src="assets/aistudio/phiboccion.png"
+                fallbackSrc="assets/phiboccion.png"
+                alternateFallbacks={['https://i.imgur.com/g0AgJ3Y.png']}
+                alt="Phiboccion"
                 className="w-14 h-14 sm:w-16 sm:h-16 object-contain [image-rendering:pixelated] drop-shadow-md"
               />
             ) : (

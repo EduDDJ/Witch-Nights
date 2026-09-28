@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { PlayerStats, OwnedWeapon, OwnedStatItem } from '../types/game';
+import React, { useState, useEffect } from 'react';
+import { PlayerStats, OwnedWeapon, OwnedStatItem, CurseChoice } from '../types/game';
 import { ALL_WEAPONS, ALL_STAT_ITEMS, getEnemyLevel } from '../data/gameData';
 import { WitchPortrait } from './WitchPortrait';
 import { RunningPersonIcon } from './RunningPersonIcon';
 import { VampireFangsIcon } from './VampireFangsIcon';
-import { PentagramIcon } from './PentagramIcon';
+import { WEAPON_ICONS } from './WeaponIcons';
 import { BroomIcon } from './BroomIcon';
 import { VirtualJoystick } from './VirtualJoystick';
 import {
@@ -28,15 +28,25 @@ import {
   Eye,
   FlaskConical,
   Sprout,
+  RotateCcw,
 } from 'lucide-react';
 
 import { BossInstance, CharacterDefinition, MobileAimMode } from '../types/game';
-import { getLanguage, translateCharacterName, translateBossName, t } from '../utils/i18n';
+import {
+  getLanguage,
+  translateCharacterName,
+  translateBossName,
+  translateCurseTitle,
+  translateCurseSubtitle,
+  translateCurseDescription,
+  t,
+} from '../utils/i18n';
 
 interface GameHUDProps {
   player: PlayerStats;
   weapons: OwnedWeapon[];
   statItems: OwnedStatItem[];
+  activeWitchDeals?: CurseChoice[];
   character?: CharacterDefinition;
   maxWeapons?: number;
   survivalTime: number; // in seconds
@@ -56,22 +66,20 @@ interface GameHUDProps {
   mobileMode?: boolean;
   mobileAimMode?: MobileAimMode;
   instaKill?: boolean;
+  invincibility?: boolean;
   isBossRush?: boolean;
   isTrueWitchMode?: boolean;
 }
 
-const WEAPON_ICONS: Record<string, React.ElementType> = {
+
+
+const CURSE_ICONS: Record<string, React.ElementType> = {
   Sparkles,
-  Flame,
-  Skull,
-  BookOpen,
-  Crosshair,
-  Zap,
-  Radio,
-  Pentagram: PentagramIcon,
   Sword,
-  FlaskConical,
-  Sprout,
+  Skull,
+  Flame,
+  Wind,
+  RotateCcw,
 };
 
 const STAT_ICONS: Record<string, React.ElementType> = {
@@ -90,10 +98,11 @@ const STAT_ICONS: Record<string, React.ElementType> = {
   Sprout,
 };
 
-export const GameHUD: React.FC<GameHUDProps> = ({
+const GameHUDComponent: React.FC<GameHUDProps> = ({
   player,
   weapons,
   statItems,
+  activeWitchDeals = [],
   character,
   maxWeapons,
   survivalTime,
@@ -113,6 +122,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   mobileMode = false,
   mobileAimMode = 'JOYSTICK',
   instaKill = false,
+  invincibility = false,
   isBossRush = false,
   isTrueWitchMode = false,
 }) => {
@@ -143,15 +153,55 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   const [hoveredItem, setHoveredItem] = useState<{
     id: string;
     name: string;
-    type: 'WEAPON' | 'STAT';
+    type: 'WEAPON' | 'STAT' | 'CURSE';
     tier: number;
     description: string;
+    subtitle?: string;
     shootingType?: string;
     icon: React.ElementType;
     color: string;
   } | null>(null);
 
   const [isDashHovered, setIsDashHovered] = useState<boolean>(false);
+
+  const [googolbraGrasp, setGoogolbraGrasp] = useState<{
+    active: boolean;
+    struggles: number;
+    maxStruggles: number;
+    graceTimer: number;
+    inDamagePhase: boolean;
+  }>({
+    active: false,
+    struggles: 0,
+    maxStruggles: 30,
+    graceTimer: 5.0,
+    inDamagePhase: false,
+  });
+
+  useEffect(() => {
+    const handleGraspState = (e: Event) => {
+      const custom = e as CustomEvent<{
+        active: boolean;
+        struggles: number;
+        maxStruggles: number;
+        graceTimer: number;
+        inDamagePhase: boolean;
+      }>;
+      if (custom.detail) {
+        setGoogolbraGrasp(custom.detail);
+      }
+    };
+    window.addEventListener('googolbra-grasp-state', handleGraspState);
+    return () => window.removeEventListener('googolbra-grasp-state', handleGraspState);
+  }, []);
+
+  const handleStruggleClick = (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    window.dispatchEvent(new CustomEvent('trigger-struggle'));
+  };
 
   const handleDashTrigger = (e?: React.PointerEvent | React.MouseEvent) => {
     if (e) {
@@ -171,7 +221,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         <div className="w-full flex items-start justify-between gap-1.5 sm:gap-4">
           {/* Top Left: Compact Player HUD */}
           <div id="player-hud" className="relative pointer-events-auto flex items-start gap-1.5 sm:gap-2.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] pt-0.5 sm:pt-0 shrink min-w-0">
-            {instaKill && (
+            {(instaKill || invincibility) && (
               <div className="absolute -top-1 sm:-top-4 left-0 bg-rose-950/95 border border-rose-500 text-rose-300 font-extrabold text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded shadow animate-pulse tracking-wider uppercase whitespace-nowrap z-20">
                 {t('cheats_enabled', getLanguage())}
               </div>
@@ -432,15 +482,17 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           {/* Hover Tooltip Card (Appears ONLY when cursor hovers over an item image outside boss fights) */}
           {hoveredItem && !isBossFight && (
             <div
-              className={`absolute bottom-full left-0 mb-3 w-64 p-3 rounded-xl bg-slate-950/95 backdrop-blur-md border shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 ${
-                hoveredItem.type === 'STAT'
+              className={`absolute bottom-full left-0 mb-3 w-64 sm:w-72 p-3 rounded-xl bg-slate-950/95 backdrop-blur-md border shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 ${
+                hoveredItem.type === 'CURSE'
+                  ? 'border-rose-600/80 shadow-rose-950/90'
+                  : hoveredItem.type === 'STAT'
                   ? 'border-amber-600/80 shadow-amber-950/90'
                   : 'border-purple-600/80 shadow-purple-950/90'
               }`}
             >
               <div className="flex items-center gap-2.5 mb-1.5">
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center border"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center border shrink-0"
                   style={{ backgroundColor: `${hoveredItem.color}22`, borderColor: hoveredItem.color }}
                 >
                   <hoveredItem.icon className="w-4 h-4" style={{ color: hoveredItem.color }} />
@@ -449,10 +501,19 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                   <h4 className="text-xs font-bold text-slate-100 font-serif leading-tight">
                     {hoveredItem.name}
                   </h4>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[10px] font-mono font-bold text-amber-400">
-                      {hoveredItem.tier >= 7 ? 'Mega Evolved' : `Rank ${hoveredItem.tier}`}
+                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    <span className="text-[10px] font-mono font-bold text-rose-400">
+                      {hoveredItem.type === 'CURSE'
+                        ? (getLanguage() === 'en' ? "Witch's Deal" : "Pacto da Bruxa")
+                        : hoveredItem.tier >= 7
+                        ? 'Mega Evolved'
+                        : `Rank ${hoveredItem.tier}`}
                     </span>
+                    {hoveredItem.subtitle && (
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-950/80 border border-rose-800/80 text-rose-300">
+                        {hoveredItem.subtitle}
+                      </span>
+                    )}
                     {hoveredItem.shootingType && (
                       <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-950 border border-purple-800 text-purple-300">
                         {hoveredItem.shootingType === 'MOUSE_DIRECTION'
@@ -471,9 +532,60 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             </div>
           )}
 
-          {/* Acquired Weapons & Stat Items List (Disabled during Boss fights) */}
+          {/* Acquired Weapons, Stat Items & Witch's Deals List (Disabled during Boss fights) */}
           {!isBossFight && (
             <>
+              {/* WITCH'S DEAL HUD INDICATOR ON TOP OF CURRENT ITEMS */}
+              {activeWitchDeals && activeWitchDeals.length > 0 && (
+                <div className="flex items-center gap-1 p-1 px-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-rose-500/80 shadow-lg shadow-rose-950/50 w-fit pointer-events-auto">
+                  {activeWitchDeals.map((curse, cIdx) => {
+                    const IconComp = CURSE_ICONS[curse.icon] || Skull;
+                    const title = translateCurseTitle(curse.id, curse.title, getLanguage());
+                    const subtitle = translateCurseSubtitle(curse.id, curse.subtitle || '', getLanguage());
+                    const description = translateCurseDescription(curse.id, curse.description, getLanguage());
+
+                    return (
+                      <button
+                        key={`witch-deal-hud-${curse.id}-${cIdx}`}
+                        id={`hud-curse-icon-${curse.id}`}
+                        onClick={() => {
+                          setHoveredItem((prev) =>
+                            prev?.id === `curse-${curse.id}`
+                              ? null
+                              : {
+                                  id: `curse-${curse.id}`,
+                                  name: title,
+                                  type: 'CURSE',
+                                  tier: 1,
+                                  subtitle,
+                                  description,
+                                  icon: IconComp,
+                                  color: curse.color || '#ef4444',
+                                }
+                          );
+                        }}
+                        onMouseEnter={() => {
+                          setHoveredItem({
+                            id: `curse-${curse.id}`,
+                            name: title,
+                            type: 'CURSE',
+                            tier: 1,
+                            subtitle,
+                            description,
+                            icon: IconComp,
+                            color: curse.color || '#ef4444',
+                          });
+                        }}
+                        onMouseLeave={() => setHoveredItem(null)}
+                        className="group relative w-8 h-8 rounded-lg border-2 border-rose-500/80 hover:border-amber-400 bg-rose-950/80 hover:bg-rose-900/90 flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-95"
+                        title={`${title}: ${description}`}
+                      >
+                        <IconComp className="w-4 h-4 text-rose-300 group-hover:text-amber-300 transition-colors" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               {/* TOP ROW: Acquired Artifacts (Passives) - Displayed in a row ON TOP of weapons (Hidden in Boss Rush where max is 0) */}
               {!isBossRush && (
                 <div className="flex items-center gap-1.5 p-1 px-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-amber-900/60 shadow-lg w-fit">
@@ -578,13 +690,13 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                     >
                       {/* Weapon Image Tile - 20% smaller (w-9 h-9 instead of w-11 h-11) */}
                       <div
-                        className="w-9 h-9 rounded-lg flex items-center justify-center border-2 transition-all duration-150 hover:scale-110 hover:shadow-md shadow-purple-950/50"
+                        className="w-9 h-9 rounded-lg flex items-center justify-center border-2 transition-all duration-150 hover:scale-110 hover:shadow-md shadow-slate-950/50"
                         style={{
-                          backgroundColor: `${def.iconColor || def.bulletColor}22`,
-                          borderColor: def.iconColor || def.bulletColor,
+                          backgroundColor: `${def.iconColor || '#94a3b8'}22`,
+                          borderColor: def.iconColor ? '#64748b' : def.bulletColor,
                         }}
                       >
-                        <IconComp className="w-4 h-4 transition-transform group-hover:rotate-6" style={{ color: def.iconColor || def.bulletColor }} />
+                        <IconComp className="w-4 h-4 transition-transform group-hover:rotate-6" style={{ color: def.iconColor || '#94a3b8' }} />
                       </div>
 
                       {/* Tier indicator pips at bottom edge of image */}
@@ -678,6 +790,60 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           </button>
         </div>
       </div>
+
+      {/* GOOGOLBRA SSSNEAK ATTACK STRUGGLE BUTTON & PROGRESS OVERLAY */}
+      {googolbraGrasp.active && (
+        <div
+          id="googolbra-struggle-overlay"
+          onPointerDown={handleStruggleClick}
+          className="fixed inset-0 z-50 pointer-events-auto flex flex-col items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] transition-all duration-150 animate-in fade-in cursor-pointer select-none"
+        >
+          <div className="flex flex-col items-center gap-3.5 max-w-sm w-full bg-slate-950/90 border-2 border-cyan-400/80 rounded-3xl p-5 shadow-[0_0_50px_rgba(6,182,212,0.45)] text-center pointer-events-auto">
+            {/* Warning Phase Banner */}
+            {googolbraGrasp.inDamagePhase ? (
+              <div className="bg-red-950/90 border border-red-500 text-red-300 px-3.5 py-1 rounded-full text-xs sm:text-sm font-black tracking-wider uppercase animate-bounce flex items-center gap-1.5 shadow-[0_0_15px_rgba(239,68,68,0.6)]">
+                {t('struggle_taking_damage', getLanguage())}
+              </div>
+            ) : (
+              <div className="bg-amber-950/90 border border-amber-500 text-amber-300 px-3.5 py-1 rounded-full text-xs sm:text-sm font-black tracking-wider uppercase animate-pulse flex items-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+                <span>⚠️</span>
+                <span>{t('struggle_damage_in', getLanguage())}: {googolbraGrasp.graceTimer.toFixed(1)}s</span>
+              </div>
+            )}
+
+            {/* Giant Struggle Button */}
+            <button
+              id="googolbra-struggle-button"
+              onPointerDown={handleStruggleClick}
+              className="relative w-40 h-40 sm:w-44 sm:h-44 rounded-full bg-gradient-to-tr from-cyan-600 via-teal-500 to-emerald-400 border-4 border-cyan-200 text-slate-950 font-black shadow-[0_0_40px_rgba(6,182,212,0.85)] flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-75 active:scale-90 hover:scale-105 select-none ring-4 ring-cyan-500/50"
+            >
+              <span className="text-2xl sm:text-3xl tracking-wider font-extrabold uppercase drop-shadow-sm">
+                {t('struggle_btn', getLanguage())}
+              </span>
+              <span className="text-[11px] sm:text-xs tracking-wide bg-slate-950 text-cyan-300 px-2.5 py-0.5 rounded-full font-bold uppercase shadow">
+                {googolbraGrasp.struggles} / {googolbraGrasp.maxStruggles}
+              </span>
+            </button>
+
+            {/* Progress Bar & Instructions */}
+            <div className="w-full flex flex-col items-center gap-1.5 mt-1">
+              <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-cyan-500/40 p-0.5">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-full transition-all duration-75 shadow-[0_0_12px_rgba(52,211,153,0.8)]"
+                  style={{
+                    width: `${Math.min(100, (googolbraGrasp.struggles / googolbraGrasp.maxStruggles) * 100)}%`,
+                  }}
+                />
+              </div>
+              <p className="text-cyan-200 text-xs sm:text-sm font-extrabold tracking-wide uppercase">
+                {t('struggle_prompt', getLanguage())}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export const GameHUD = React.memo(GameHUDComponent);

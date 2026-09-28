@@ -174,7 +174,7 @@ export const UI_TRANSLATIONS: Record<Language, Record<string, string>> = {
     passive_artifact: 'Passive Artifact',
     new_tag: 'NEW',
     nearest_enemy: 'Nearest Enemy',
-    mouse_aim: 'Mouse Aim',
+    mouse_aim: 'Cursor Aim',
     aoe_label: 'Area of Effect (AoE)',
     weapon_label: 'Weapon',
 
@@ -192,6 +192,37 @@ export const UI_TRANSLATIONS: Record<Language, Record<string, string>> = {
     foe_level: 'FOE LV',
     destiny_control_activated: 'Destiny Control Activated',
     boss_incoming_banner: '⚠️ BOSS INCOMING ⚠️',
+
+    // Math Keypad / The Root of Strength
+    math_root_of_strength: 'THE ROOT OF STRENGTH',
+    math_solve_root: 'SOLVE THE SQUARE ROOT',
+    math_problem: 'Problem',
+    math_time_left: 'Time Left',
+    math_enter: 'ENTER',
+    math_del: 'DEL',
+    math_correct: 'CORRECT!',
+    math_incorrect: 'INCORRECT!',
+    math_time_up: "TIME'S UP!",
+    math_damage_dealt: '-20% BOSS MAX HP!',
+
+    // Pythagoras / Monty Hall & GeoMento Mori
+    monty_hall_title: '(Mont)YOUR (hall) Problem',
+    monty_pick_instruction: 'Pythagoras challenges you! Pick one of the three doors below.',
+    monty_revealing: 'Opening an empty door...',
+    monty_choice_instruction: 'Door {door} is EMPTY! Will you STAY or SWITCH?',
+    monty_door_label: 'Door {door}',
+    monty_stay_btn: 'STAY (Door {door})',
+    monty_switch_btn: 'SWITCH (Door {door})',
+    monty_empty_label: 'EMPTY',
+    monty_prize_label: 'PRIZE!',
+    monty_win_msg: 'WINNER! -20% PYTHAGORAS MAX HP!',
+    monty_lose_msg: 'EMPTY DOOR! -20% CURRENT HP!',
+    geomento_mori_title: 'GeoMento Mori',
+    geomento_mori_subtitle: 'Cartesian Coordinate Doom',
+    geomento_graphing_in: 'Graphing in {sec}s...',
+    geomento_curves_active: 'CURVES GRAPHED! DODGE!',
+    geomento_center_origin: 'Center of Screen: (0;0)',
+    geomento_dodge_tip: 'Avoid the plotted equation curves!',
 
     // Tutorial Modal
     witch_training: "Witch's Training",
@@ -233,6 +264,9 @@ export const UI_TRANSLATIONS: Record<Language, Record<string, string>> = {
     bestiary: 'Bestiary',
     unlocked_items: 'Unlocked',
     locked_item: 'Locked',
+    village_outskirts_enemies: "Witchs' Swamp",
+    mathematical_realm_enemies: 'Math Realm',
+    black_honey_forest_enemies: 'Black Honey Forest',
 
     // Boss Rush Modal
     boss_rush_title: 'Boss Rush Challenge',
@@ -263,8 +297,16 @@ export const UI_TRANSLATIONS: Record<Language, Record<string, string>> = {
     dev_fight_boss: 'Fight Boss',
     dev_fight_boss_desc: 'Set boss timer to 0 and choose a Boss to fight',
     dev_choose_boss_title: 'Choose a Boss to Fight',
-    dev_choose_boss_desc: 'Timer set to 00:00. Select which Boss you want to challenge:',
+    dev_choose_boss_desc: 'Timer set to 00:00. Select which Boss of this map you want to challenge:',
     dev_tools_badge: 'Dev Tools • Fight Boss',
+
+    // Googolbra Sssneak Attack & Struggle
+    struggle_btn: 'STRUGGLE!',
+    struggle_prompt: 'SPAM [SPACEBAR] OR TAP!',
+    struggle_damage_in: 'Damage in',
+    struggle_taking_damage: '⚡ CRUSH DAMAGE ACTIVE! ⚡',
+    struggle_freed: 'BROKE FREE!',
+    zebra_wave: 'ZEBRA STRIKE',
   },
   'pt-BR': {
     // Main Menu
@@ -398,7 +440,7 @@ export const UI_TRANSLATIONS: Record<Language, Record<string, string>> = {
     passive_artifact: 'Artefato Passivo',
     new_tag: 'NOVO',
     nearest_enemy: 'Inimigo Mais Próximo',
-    mouse_aim: 'Mira do Mouse',
+    mouse_aim: 'Mira com Cursor',
     aoe_label: 'Área de Efeito (AoE)',
     weapon_label: 'Arma',
 
@@ -416,6 +458,37 @@ export const UI_TRANSLATIONS: Record<Language, Record<string, string>> = {
     foe_level: 'NÍV INIMIGO',
     destiny_control_activated: 'Controle do Destino Ativado',
     boss_incoming_banner: '⚠️ CHEFE SE APROXIMANDO ⚠️',
+
+    // Math Keypad / The Root of Strength
+    math_root_of_strength: 'A RAIZ DA FORÇA',
+    math_solve_root: 'RESOLVA A RAIZ QUADRADA',
+    math_problem: 'Problema',
+    math_time_left: 'Tempo Restante',
+    math_enter: 'ENTRAR',
+    math_del: 'APAGAR',
+    math_correct: 'CORRETO!',
+    math_incorrect: 'INCORRETO!',
+    math_time_up: 'TEMPO ESGOTADO!',
+    math_damage_dealt: '-20% DA VIDA MÁX DO CHEFE!',
+
+    // Pythagoras / Monty Hall & GeoMento Mori
+    monty_hall_title: 'Problema de (Mont)SEU (hall)',
+    monty_pick_instruction: 'Pitágoras desafia você! Escolha uma das três portas abaixo.',
+    monty_revealing: 'Abrindo uma porta vazia...',
+    monty_choice_instruction: 'A Porta {door} está VAZIA! Vai MANTER ou TROCAR?',
+    monty_door_label: 'Porta {door}',
+    monty_stay_btn: 'MANTER (Porta {door})',
+    monty_switch_btn: 'TROCAR (Porta {door})',
+    monty_empty_label: 'VAZIA',
+    monty_prize_label: 'PRÊMIO!',
+    monty_win_msg: 'PORTA CORRETA! -20% DA VIDA MÁXIMA DE PITÁGORAS!',
+    monty_lose_msg: 'PORTA VAZIA! -20% DA SUA VIDA ATUAL!',
+    geomento_mori_title: 'GeoMento Mori',
+    geomento_mori_subtitle: 'Perdição Cartesiana',
+    geomento_graphing_in: 'Traçando em {sec}s...',
+    geomento_curves_active: 'CURVAS TRAÇADAS! DESVIE!',
+    geomento_center_origin: 'Centro da Tela: (0;0)',
+    geomento_dodge_tip: 'Evite as curvas das equações traçadas!',
 
     // Tutorial Modal
     witch_training: 'Treinamento da Bruxa',
@@ -457,6 +530,9 @@ export const UI_TRANSLATIONS: Record<Language, Record<string, string>> = {
     bestiary: 'Bestiário',
     unlocked_items: 'Desbloqueado',
     locked_item: 'Bloqueado',
+    village_outskirts_enemies: 'Pântano das Bruxas',
+    mathematical_realm_enemies: 'Reino Matemático',
+    black_honey_forest_enemies: 'Floresta do Mel Negro',
 
     // Boss Rush Modal
     boss_rush_title: 'Desafio Invasão de Chefes',
@@ -487,8 +563,16 @@ export const UI_TRANSLATIONS: Record<Language, Record<string, string>> = {
     dev_fight_boss: 'Lutar contra Chefe',
     dev_fight_boss_desc: 'Define o cronômetro para 0 e escolha um Chefe para lutar',
     dev_choose_boss_title: 'Escolha um Chefe para Lutar',
-    dev_choose_boss_desc: 'Cronômetro definido para 00:00. Selecione qual Chefe você deseja enfrentar:',
+    dev_choose_boss_desc: 'Cronômetro definido para 00:00. Selecione qual Chefe deste mapa você deseja enfrentar:',
     dev_tools_badge: 'Ferramentas Dev • Lutar contra Chefe',
+
+    // Googolbra Sssneak Attack & Struggle
+    struggle_btn: 'RESISTIR!',
+    struggle_prompt: 'APERTE [ESPAÇO] OU TOQUE!',
+    struggle_damage_in: 'Dano em',
+    struggle_taking_damage: '⚡ DANO DE ESMAGAMENTO ATIVO! ⚡',
+    struggle_freed: 'LIBERTOU-SE!',
+    zebra_wave: 'GOLPE ZEBRA',
   },
 };
 
@@ -509,25 +593,25 @@ export const LOCALIZED_ACHIEVEMENTS: Record<Language, Record<string, LocalizedAc
     plants_vs_witches: {
       id: 'plants_vs_witches',
       title: 'Plants Vs. Witches',
-      description: 'Defeat the Carnivore Plant Boss in a run.',
+      description: "Defeat the Carnivore Plant Boss (Witchs' Swamp) in a run.",
       unlockText: 'Vine Attack',
     },
     eye_see_you: {
       id: 'eye_see_you',
       title: 'EYE See You',
-      description: 'Defeat the Haunted Eye Boss in a run.',
+      description: "Defeat the Haunted Eye Boss (Witchs' Swamp) in a run.",
       unlockText: "Medusa's Eye",
     },
     bearely_any_trouble: {
       id: 'bearely_any_trouble',
       title: 'BEARely Any Trouble',
-      description: 'Defeat the NightBear Boss in a run.',
+      description: "Defeat the NightBear Boss (Witchs' Swamp) in a run.",
       unlockText: "NightBear's Claws Artifact",
     },
     color_me_impressed: {
       id: 'color_me_impressed',
       title: 'Color Me Impressed',
-      description: 'Defeat the 3 Archmages in a run.',
+      description: "Defeat the 3 Archmages Boss (Witchs' Swamp) in a run.",
       unlockText: 'Geraldo The Red',
     },
     alphabet_green: {
@@ -554,30 +638,36 @@ export const LOCALIZED_ACHIEVEMENTS: Record<Language, Record<string, LocalizedAc
       description: 'Win Boss Rush in True Witch Mode.',
       unlockText: 'Diamond Trophy',
     },
+    making_donuts: {
+      id: 'making_donuts',
+      title: 'Making Donuts',
+      description: 'Defeat Pythagoras The MatheMagician in a normal run.',
+      unlockText: 'Protractor',
+    },
   },
   'pt-BR': {
     plants_vs_witches: {
       id: 'plants_vs_witches',
       title: 'Plantas Vs. Bruxas',
-      description: 'Derrote o chefe Planta Carnívora em uma partida.',
+      description: 'Derrote o chefe Planta Carnívora (Pântano das Bruxas) em uma partida.',
       unlockText: 'Armadilha de Vinhas',
     },
     eye_see_you: {
       id: 'eye_see_you',
       title: 'De Olho em Você',
-      description: 'Derrote o chefe Olho Assombrado em uma partida.',
+      description: 'Derrote o chefe Olho Assombrado (Pântano das Bruxas) em uma partida.',
       unlockText: 'Olho de Medusa',
     },
     bearely_any_trouble: {
       id: 'bearely_any_trouble',
       title: 'Urso MELéfico',
-      description: 'Derrote o chefe NightBear em uma partida.',
+      description: 'Derrote o chefe NightBear (Pântano das Bruxas) em uma partida.',
       unlockText: 'Artefato Garras de NightBear',
     },
     color_me_impressed: {
       id: 'color_me_impressed',
       title: 'Mostre Suas Cores Verdadeiras',
-      description: 'Derrote os 3 Arquemagos em uma partida.',
+      description: 'Derrote o chefe 3 Arquemagos (Pântano das Bruxas) em uma partida.',
       unlockText: 'Geraldo O Vermelho',
     },
     alphabet_green: {
@@ -604,6 +694,12 @@ export const LOCALIZED_ACHIEVEMENTS: Record<Language, Record<string, LocalizedAc
       description: 'Vença a Invasão de Chefes no Modo Bruxa Verdadeira.',
       unlockText: 'Troféu de Diamante',
     },
+    making_donuts: {
+      id: 'making_donuts',
+      title: 'Fazendo Rosquinhas',
+      description: 'Derrote Pythagoras O Matemágico em uma partida normal.',
+      unlockText: 'Transferidor',
+    },
   },
 };
 
@@ -619,6 +715,7 @@ export function translateAchievement(id: string, field: 'title' | 'description' 
 
 export const WEAPON_TRANSLATIONS: Record<Language, Record<string, { name: string; description: string }>> = {
   en: {
+    spectral_arrow: { name: 'Elfic Bow / Spectral Arrow', description: 'Fires spectral arrows toward your cursor that pierce and home into nearby targets upon impact.' },
     arcane_wand: { name: 'Stellar Beam', description: 'Direct fire magical arcane shards toward your mouse cursor.' },
     brimstone_shotgun: { name: 'Acid Pellets', description: 'Fires corrosive acid pellets toward your cursor in rapid bursts.' },
     astral_sword: { name: 'Astral Blade', description: 'Swings an ethereal blade in a sweeping cone towards the cursor, expanding from 90° to 180° with upgrades.' },
@@ -628,8 +725,11 @@ export const WEAPON_TRANSLATIONS: Record<Language, Record<string, { name: string
     seeking_wisp: { name: 'Fire Wisp', description: 'Launches blazing fire wisps that autonomously seek out the nearest enemy.' },
     vine_snare: { name: 'Vine Snare', description: 'Attacks the nearest enemy, dealing damage and trapping them in a visible vine for a few seconds. Defeat the Carnivore Plant Boss to unlock.' },
     thunderstrike: { name: 'Thunderstrike', description: 'A strong homing lightning weapon with high cooldown that strikes the nearest enemy with a crackling beam extending from the witch.' },
+    sickle: { name: 'Sickle', description: 'Throws a spinning sickle towards the nearest enemy that returns like a boomerang after reaching its maximum distance.' },
+    protractor: { name: 'Protractor', description: 'Throws protractors that travel in a big circular motion and return to the player, slicing through all enemies in their path.' },
   },
   'pt-BR': {
+    spectral_arrow: { name: 'Arco Élfico / Flecha Espectral', description: 'Dispara flechas espectrais em direção ao cursor que perfuram e se teleguiam para alvos próximos ao impactar.' },
     arcane_wand: { name: 'Feixe Estelar', description: 'Dispare fragmentos arcanos mágicos diretamente em direção ao cursor do mouse.' },
     brimstone_shotgun: { name: 'Bolotas Ácidas', description: 'Dispara bolotas de ácido corrosivo em rajadas rápidas em direção ao cursor.' },
     astral_sword: { name: 'Lâmina Astral', description: 'Goleia com uma lâmina etérea em um cone de varredura em direção ao cursor, expandindo de 90° para 180° com melhorias.' },
@@ -639,11 +739,21 @@ export const WEAPON_TRANSLATIONS: Record<Language, Record<string, { name: string
     seeking_wisp: { name: 'Fogo Fátuo', description: 'Lança fogos fátuos ardentes que buscam autonomamente o inimigo mais próximo.' },
     vine_snare: { name: 'Armadilha de Vinhas', description: 'Ataca o inimigo mais próximo, causando dano e prendendo-o em vinhas visíveis por alguns segundos. Derrote o chefe Planta Carnívora para desbloquear.' },
     thunderstrike: { name: 'Golpe do Trovão', description: 'Uma arma teleguiada de raio forte e alto tempo de recarga que atinge o inimigo mais próximo com um feixe elétrico estendido a partir da bruxa.' },
+    sickle: { name: 'Foice', description: 'Arremessa uma foice giratória em direção ao inimigo mais próximo que retorna como um bumerangue após atingir sua distância máxima.' },
+    protractor: { name: 'Transferidor', description: 'Arremessa transferidores que percorrem um amplo movimento circular e retornam ao jogador, fatiando todos os inimigos no caminho.' },
   },
 };
 
 export const WEAPON_TIER_TRANSLATIONS: Record<Language, Record<string, Record<number, { name?: string; description: string }>>> = {
   en: {
+    spectral_arrow: {
+      1: { name: 'Elfic Bow / Spectral Arrow', description: 'Slow fire rate (2s cooldown), but fires spectral arrows dealing 50 damage.' },
+      2: { description: '+1 penetration (2 pierce total).' },
+      3: { description: 'After hitting the first enemy, the arrow homes into the closest remaining enemy (50% damage).' },
+      4: { description: '+1 penetration (3 pierce total). Homes into a third enemy after hitting the second (50% damage).' },
+      5: { description: 'Removes damage falloff on chained target hits (full damage on all targets).' },
+      6: { description: 'Shoots 2 spectral arrows at once.' },
+    },
     arcane_wand: {
       1: { name: 'Stellar Beam', description: 'Fires 1 arcane shard toward cursor.' },
       2: { description: 'Fires 2 additional smaller shards on the sides and deals 30% more damage.' },
@@ -722,8 +832,32 @@ export const WEAPON_TIER_TRANSLATIONS: Record<Language, Record<string, Record<nu
       6: { description: 'Chained off Thunderstrikes now freeze the enemy hit for 0.5s.' },
       7: { name: 'Thunderstorm', description: 'Shoots 2 Thunderstrike beams simultaneously and creates a aura around player that slows down enemies by 10%.' },
     },
+    sickle: {
+      1: { name: 'Sickle', description: '1.5s cooldown, 15 damage.' },
+      2: { description: '+50% Damage.' },
+      3: { description: 'When a Sickle is at its maximum distance, the player throws another (essentially double fire rate).' },
+      4: { description: '+50% fire rate.' },
+      5: { description: 'Sickles get 50% bigger.' },
+      6: { description: 'Sickles give a slight knockback to enemies hit.' },
+    },
+    protractor: {
+      1: { name: 'Protractor', description: 'Throws 1 protractor towards where you are moving that travels in a big circular loop and returns.' },
+      2: { description: 'Shoots another protractor behind you (2 protractors total).' },
+      3: { description: 'Shoots an additional protractor above you (3 protractors total).' },
+      4: { description: 'Shoots an additional protractor underneath you (4 protractors total in 4 directions).' },
+      5: { description: 'Protractors deal +50% more damage.' },
+      6: { description: 'Protractors become significantly larger.' },
+    },
   },
   'pt-BR': {
+    spectral_arrow: {
+      1: { name: 'Arco Élfico / Flecha Espectral', description: 'Baixa velocidade de disparo (2s de recarga), mas dispara flechas espectrais causando 50 de dano.' },
+      2: { description: '+1 de penetração (2 de perfuração no total).' },
+      3: { description: 'Após atingir o primeiro inimigo, a flecha se teleguia para o inimigo mais próximo (50% de dano).' },
+      4: { description: '+1 de penetração (3 de perfuração no total). Se teleguia para um terceiro inimigo após o segundo (50% de dano).' },
+      5: { description: 'Remove a redução de dano em acertos secundários (dano total em todos os alvos).' },
+      6: { description: 'Dispara 2 flechas espectrais de uma vez.' },
+    },
     arcane_wand: {
       1: { name: 'Feixe Estelar', description: 'Dispara 1 fragmento arcano em direção ao cursor.' },
       2: { description: 'Dispara 2 fragmentos menores adicionais nas laterais e causa 30% a mais de dano.' },
@@ -801,6 +935,22 @@ export const WEAPON_TIER_TRANSLATIONS: Record<Language, Record<string, Record<nu
       5: { description: 'Golpe do Trovão agora congela o inimigo atingido por 0,75s.' },
       6: { description: 'Raios encadeados agora congelam o inimigo atingido por 0,5s.' },
       7: { name: 'Tempestade de Trovões', description: 'Dispara 2 feixes elétricos simultaneamente e cria uma aura ao redor do jogador que desacelera inimigos em 10%.' },
+    },
+    sickle: {
+      1: { name: 'Foice', description: '1,5s de tempo de recarga, 15 de dano.' },
+      2: { description: '+50% de Dano.' },
+      3: { description: 'Quando uma Foice atinge sua distância máxima, o jogador arremessa outra (essencialmente o dobro de cadência de tiro).' },
+      4: { description: '+50% de cadência de tiro.' },
+      5: { description: 'As Foices ficam 50% maiores.' },
+      6: { description: 'As Foices aplicam uma leve repulsão aos inimigos atingidos.' },
+    },
+    protractor: {
+      1: { name: 'Transferidor', description: 'Arremessa 1 transferidor na direção do movimento que faz um grande movimento circular e retorna.' },
+      2: { description: 'Dispara outro transferidor atrás de você (2 transferidores no total).' },
+      3: { description: 'Dispara um transferidor adicional acima de você (3 transferidores no total).' },
+      4: { description: 'Dispara um transferidor adicional abaixo de você (4 transferidores em 4 direções).' },
+      5: { description: 'Os transferidores causam +50% de dano adicional.' },
+      6: { description: 'Os transferidores ficam consideravelmente maiores.' },
     },
   },
 };
@@ -1059,6 +1209,9 @@ export const BOSS_TRANSLATIONS: Record<Language, Record<string, string>> = {
     geraldo_red: 'Geraldo The Red',
     geraldo_green: 'Geraldo The Green',
     geraldo_blue: 'Geraldo The Blue',
+    googolbra: 'Googolbra',
+    phiboccion: 'Phiboccion',
+    pythagoras: 'Pythagoras The MatheMagician',
   },
   'pt-BR': {
     carnivore_plant: 'Planta Carnívora',
@@ -1069,6 +1222,9 @@ export const BOSS_TRANSLATIONS: Record<Language, Record<string, string>> = {
     geraldo_red: 'Geraldo O Vermelho',
     geraldo_green: 'Geraldo O Verde',
     geraldo_blue: 'Geraldo O Azul',
+    googolbra: 'Googolbra',
+    phiboccion: 'Phiboccion',
+    pythagoras: 'Pitágoras O Matemágico',
   },
 };
 
@@ -1076,6 +1232,10 @@ export const ENEMY_TRANSLATIONS: Record<Language, Record<string, string>> = {
   en: {
     BAT: 'Pitchfork Peasant',
     GHOUL: 'Village Knight',
+    OBMOOSE: 'ObMoose',
+    UNOCONDA: 'Unoconda',
+    VIIIPER: 'VIIIper',
+    BUNNARY: 'Bunnary',
     WRAITH: 'Torch Peasant',
     MINI_EYE: 'Mini Eye',
     ROCK_THROWER: 'Rock Thrower',
@@ -1083,6 +1243,10 @@ export const ENEMY_TRANSLATIONS: Record<Language, Record<string, string>> = {
   'pt-BR': {
     BAT: 'Camponês com Forca',
     GHOUL: 'Cavaleiro da Vila',
+    OBMOOSE: 'ObtAlce',
+    UNOCONDA: 'Unoconda',
+    VIIIPER: 'VIIIper',
+    BUNNARY: 'c0e1ho',
     WRAITH: 'Camponês com Tocha',
     MINI_EYE: 'Olhinho',
     ROCK_THROWER: 'Lançador de Pedras',
@@ -1154,32 +1318,63 @@ export function translateBossName(id: string, defaultVal: string, lang: Language
   return BOSS_TRANSLATIONS[lang]?.[id] ?? defaultVal;
 }
 
+export const MAP_TRANSLATIONS: Record<Language, Record<string, string>> = {
+  en: {
+    village_outskirts: "Witchs' Swamp",
+    mathematical_realm: 'Mathematical Realm',
+    black_honey_forest: 'Black Honey Forest',
+  },
+  'pt-BR': {
+    village_outskirts: 'Pântano das Bruxas',
+    mathematical_realm: 'Reino Matemático',
+    black_honey_forest: 'Floresta do Mel Negro',
+  },
+};
+
+export function translateMapName(id: string, lang: Language = currentLanguage): string {
+  return MAP_TRANSLATIONS[lang]?.[id] ?? id;
+}
+
 export function translateEnemyName(type: string, defaultVal: string, lang: Language = currentLanguage): string {
   return ENEMY_TRANSLATIONS[lang]?.[type] ?? defaultVal;
 }
 
 export const ENEMY_DESC_TRANSLATIONS: Record<Language, Record<string, string>> = {
   en: {
-    wraith: 'A peasant carrying a flickering torch through the shadows. The baseline villager moving at standard speed.',
-    bat: 'A maddened villager wielding an iron pitchfork. Hardier, swifter, and more aggressive than torch-bearing peasants.',
-    rock_thrower: 'A cunning villager who maintains a safe distance from the Witch, telegraphing and hurling heavy rocks every few seconds.',
+    wraith: 'A peasant carrying a flickering torch through the shadows. Swifter and more aggressive, rushing forward with fire.',
+    bat: 'A maddened villager wielding an iron pitchfork. Hardier, moving at standard speed.',
+    rock_thrower: 'A cunning villager who maintains a safe distance from the Witch, telegraphing and hurling heavy rocks at her.',
     ghoul: 'A resilient elite knight of the village that drops high-value Red EXP Orbs.',
     carnivore_plant: 'A stationary botanical nightmare with vicious roots and an insatiable appetite.',
     mini_eye: 'A tiny, swift ocular minion spawned when the Haunted Eye reveals its true gaze. They relentlessly pursue the witch and self-destruct upon contact.',
     haunted_eye: 'A colossal panoramic ocular terror that stays open until its trio of Mini Eye minions are defeated.',
     night_bear: 'A dark, hulking beast that alternates between relentless charges and a devastating arena-wide biting frenzy called "THE Bite".',
     archmages: 'A trinity of wise Archmages, testing Ruby. Each has their own attack, but, after defeating all 3, something is waiting for you...',
+    googolbra: 'The number Googol, brought to life by the magic of this Universe the Archmages call "Math Realm".',
+    phiboccion: 'Phiboccion is the personification of the Golden Ratio, Phi, and everything related. Due to his supernatural existence, he has no weight and floats around.',
+    pythagoras: 'Crazy? Pythagoras was crazy once, consumed by the power of Geometry. He was banished to a Realm. A Mathematical Realm. A Mathematical Realm full of Geometry. The power of Geometry drove him crazy.',
+    obmoose: 'A formidable moose entity roaming the Math Realm that drops high-value Red EXP Orbs.',
+    unoconda: "A snake in the shape of the number one. Or is it THE number one? No one really knows, but there IS a rumor that its Ancestor can be found.",
+    viiiper: "A slithery figure eight, or VIII, as the romans would've said.",
+    bunnary: 'A bunny made up entirely of ones and zeros. Legends say misterious messages can be captured by those with keen eyes.',
   },
   'pt-BR': {
-    wraith: 'Um camponês carregando uma tocha bruxuleante pelas sombras. O habitante básico da vila que se move em velocidade padrão.',
-    bat: 'Um camponês enlouquecido empunhando uma forca de ferro. Mais resistente, veloz e agressivo do que os camponeses com tochas.',
-    rock_thrower: 'Um aldeão astuto que mantém uma distância segura da Bruxa, sinalizando e arremessando pedras pesadas a cada poucos segundos.',
+    wraith: 'Um camponês carregando uma tocha bruxuleante pelas sombras. Mais veloz e agressivo, avançando com fogo.',
+    bat: 'Um camponês enlouquecido empunhando uma forca de ferro. Mais resistente, movendo-se em velocidade padrão.',
+    rock_thrower: 'Um aldeão astuto que mantém uma distância segura da Bruxa, sinalizando e arremessando pedras pesadas.',
     ghoul: 'Um cavaleiro de elite resiliente da vila que deixa cair Orbes de EXP Vermelhas de alto valor.',
     carnivore_plant: 'Um pesadelo botânico estacionário com raízes cruéis e um apetite insaciável.',
     mini_eye: 'Um pequeno e veloz servo ocular gerado quando o Olho Assombrado revela seu verdadeiro olhar. Eles perseguem implacavelmente a bruxa e se autodestroem ao contato.',
     haunted_eye: 'Um colossal terror ocular panorâmico que permanece aberto até que seu trio de servos Olhinho seja derrotado.',
     night_bear: 'Uma fera sombria e robusta que alterna entre investidas implacáveis e um ataque de mordida devastador em toda a arena chamado "A Mordida".',
     archmages: 'Uma trindade de sábios Arquemagos testando Ruby. Cada um tem seu próprio ataque, mas, após derrotar os 3, algo está esperando por você...',
+    googolbra: 'O número Googol, trazido à vida pela magia deste Universo que os Arquimagos chamam de "Reino da Matemática".',
+    phiboccion: 'Phiboccion é a personificação da Proporção Áurea, Phi, e tudo relacionado a ela. Devido à sua existência sobrenatural, ele não possui peso e flutua pelo ar.',
+    pythagoras: 'Louco? Pitágoras foi louco uma vez, consumido pelo poder da Geometria. Ele foi banido para um Reino. Um Reino Matemático. Um Reino Matemático cheio de Geometria. O poder da Geometria o deixou louco.',
+    obmoose: 'Uma entidade formidável de alce vagando pelo Reino Matemático que deixa cair Orbes de EXP Vermelhas de alto valor.',
+    unoconda: 'Uma cobra no formato do número um. Ou seria O número um? Ninguém sabe ao certo, mas HÁ um rumor de que seu Ancestral pode ser encontrado.',
+    viiiper: 'Um escorregadio número oito, ou VIII, como diriam os romanos.',
+    bunnary: 'Um coelho feito inteiramente de uns e zeros. Lendas dizem que mensagens misteriosas podem ser capturadas por aqueles com olhos atentos.',
   },
 };
 
@@ -1233,6 +1428,46 @@ export const ATTACK_TRANSLATIONS: Record<Language, Record<string, { name: string
       name: 'Rainbow Rain',
       telegraph: 'Rainbow fireballs launch from 2 screen sides while lightning strikes telegraphed circles.',
     },
+    'x to the Power of THIS KICK': {
+      name: 'x to the Power of THIS KICK',
+      telegraph: 'Phiboccion rapidly kicks 5 times across the screen, leaving Land Phi-nes behind. Touching him while kicking deals 25 damage.',
+    },
+    'Phi-X-Plosion': {
+      name: 'Phi-X-Plosion',
+      telegraph: 'Phiboccion flies to a corner and fires rapid lasers from his feet at the player, dropping 5 Land Phi-nes across the map, and finishes with a cataclysmic 2s charged explosion.',
+    },
+    'The Root of Strenght': {
+      name: 'The Root of Strenght',
+      telegraph: 'Phiboccion floats to top-center and gains invulnerability. Solve 3 square root problems on the keypad within 10s each to deal 1/5 of his Max HP!',
+    },
+    'SAY. SOME. FIBONACCI!!!': {
+      name: 'SAY. SOME. FIBONACCI!!!',
+      telegraph: 'When defeated, Phiboccion demands the Fibonacci sequence (up to the 50th number) with decreasing timers (5s down to 1s) to earn bonus EXP orbs!',
+    },
+    'Snake cONEstriction': {
+      name: 'Snake cONEstriction',
+      telegraph: 'Googolbra wraps around the arena inward from top-right. Attack its head for 1/5 of its Max HP to force it to retreat off-screen!',
+    },
+    'Zebra Pattern Strike': {
+      name: 'Zebra Pattern Strike',
+      telegraph: 'Telegraphs alternating zebra lanes across the arena for 1.2s, then surges through twice with all lanes fully occupied simultaneously by one long continuous snake!',
+    },
+    'Sssneak Attack': {
+      name: 'Sssneak Attack',
+      telegraph: 'Googolbra suddenly emerges from off-screen and grasps the player. Deals no damage for 5s, then deals 10 DPS; spam the spacebar 30 times or tap Struggle to break free!',
+    },
+    'Geometry? Dash!': {
+      name: 'Geometry? Dash!',
+      telegraph: 'Pythagoras throws rulers underneath him to divide the arena, launches orbiting protractors, and throws spinning set-squares at the player.',
+    },
+    '(Mont)YOUR (hall) Problem': {
+      name: '(Mont)YOUR (hall) Problem',
+      telegraph: '3 doors appear with buttons beneath each. Pick one, an empty door is revealed, then switch or stay. Two doors deal 20% of your current HP; the other deals 20% of Pythagoras\' Max HP!',
+    },
+    'GeoMento Mori': {
+      name: 'GeoMento Mori',
+      telegraph: '5 mathematical equations appear on the top-left, then graph onto the screen with (0,0) at the center. Dodge the deadly plotted curves!',
+    },
   },
   'pt-BR': {
     'Vine Snare': {
@@ -1282,6 +1517,46 @@ export const ATTACK_TRANSLATIONS: Record<Language, Record<string, { name: string
     'Rainbow Rain': {
       name: 'Chuva de Arco-Íris',
       telegraph: 'Bolas de fogo de arco-íris são disparadas de 2 lados da tela enquanto raios caem em círculos telegrafados.',
+    },
+    'x to the Power of THIS KICK': {
+      name: 'x Elevado ao PODER DESTE CHUTE',
+      telegraph: 'Phiboccion chuta rapidamente 5 vezes pela tela, deixando Phi-nas para trás. Tocar nele durante o chute causa 25 de dano.',
+    },
+    'Phi-X-Plosion': {
+      name: 'Phi-X-Plosão',
+      telegraph: 'Phiboccion voa para um canto e dispara lasers velozes dos pés em direção ao jogador, soltando 5 Phi-nas pelo mapa, e finaliza com uma explosão cataclísmica de 2s carregados.',
+    },
+    'The Root of Strenght': {
+      name: 'A Raiz da Força',
+      telegraph: 'Phiboccion flutua ao centro superior e torna-se invulnerável. Resolva 3 problemas de raiz quadrada no teclado numérico em 10s cada para causar 1/5 de sua Vida Máxima!',
+    },
+    'SAY. SOME. FIBONACCI!!!': {
+      name: 'SAY. SOME. FIBONACCI!!!',
+      telegraph: 'Ao ser derrotado, Phiboccion exige a sequência de Fibonacci (até o 50º número) com cronômetros decrescentes (5s a 1s) para ganhar orbes de EXP bônus!',
+    },
+    'Snake cONEstriction': {
+      name: 'Constrição em cONE',
+      telegraph: 'Googolbra envolve a arena de fora para dentro a partir do canto superior direito. Cause 1/5 da Vida Máxima à sua cabeça para forçá-la a recuar para fora da tela!',
+    },
+    'Zebra Pattern Strike': {
+      name: 'Ataque em Padrão Zebra',
+      telegraph: 'Sinaliza pistas alternadas na arena por 1,2s, e então avança duas vezes com todas as pistas ocupadas simultaneamente por uma serpente contínua e gigante!',
+    },
+    'Sssneak Attack': {
+      name: 'Ataque Sssurpresa',
+      telegraph: 'Googolbra surge repentinamente de fora da tela e agarra você. Não causa dano por 5s, passando a causar 10 DPS; aperte espaço 30 vezes ou toque em Resistir para se libertar!',
+    },
+    'Geometry? Dash!': {
+      name: 'Geometry? Dash!',
+      telegraph: 'Pitágoras lança réguas debaixo de si para dividir a arena, dispara transferidores em órbita e arremessa esquadros giratórios contra o jogador.',
+    },
+    '(Mont)YOUR (hall) Problem': {
+      name: 'Problema de (Mont)SEU (hall)',
+      telegraph: 'Surgem 3 portas com botões abaixo. Escolha uma, uma porta vazia é revelada, depois troque ou mantenha. Duas portas causam 20% da sua vida atual; a outra causa 20% da vida máxima de Pitágoras!',
+    },
+    'GeoMento Mori': {
+      name: 'GeoMento Mori',
+      telegraph: '5 equações matemáticas surgem no canto superior esquerdo e são traçadas na tela com centro em (0,0). Desvie das curvas letais!',
     },
   },
 };

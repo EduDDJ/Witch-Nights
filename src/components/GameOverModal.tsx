@@ -25,22 +25,10 @@ import {
 import { OwnedWeapon, OwnedStatItem } from '../types/game';
 import { ALL_WEAPONS, ALL_STAT_ITEMS } from '../data/gameData';
 import { VampireFangsIcon } from './VampireFangsIcon';
-import { PentagramIcon } from './PentagramIcon';
+import { WEAPON_ICONS } from './WeaponIcons';
 import { BroomIcon } from './BroomIcon';
 
-const WEAPON_ICONS: Record<string, React.ElementType> = {
-  Sparkles,
-  Flame,
-  Skull,
-  BookOpen,
-  Crosshair,
-  Zap,
-  Radio,
-  Pentagram: PentagramIcon,
-  Sword,
-  Sprout,
-  FlaskConical,
-};
+
 
 const STAT_ICONS: Record<string, React.ElementType> = {
   Fangs: VampireFangsIcon,
@@ -98,11 +86,11 @@ const ItemIcon: React.FC<{
         w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-2xl
         border-2 transition-all duration-200 cursor-help
         ${isWeapon 
-          ? 'bg-purple-950/40 border-purple-500/50 group-hover:border-purple-400 group-hover:bg-purple-900/60' 
+          ? 'bg-slate-800/60 border-slate-600 group-hover:border-slate-400 group-hover:bg-slate-800/80' 
           : 'bg-amber-950/40 border-amber-500/50 group-hover:border-amber-400 group-hover:bg-amber-900/60'}
       `}>
         {IconComponent ? (
-          <IconComponent className={isWeapon ? "w-6 h-6 text-purple-300" : "w-6 h-6 text-amber-300"} />
+          <IconComponent className={isWeapon ? "w-6 h-6 text-slate-400" : "w-6 h-6 text-amber-300"} />
         ) : (
           def.icon
         )}
@@ -112,9 +100,18 @@ const ItemIcon: React.FC<{
       {isHovered && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50 animate-in fade-in zoom-in duration-200 pointer-events-none">
           <div className="bg-stone-900 border border-stone-700 rounded-xl p-3 shadow-2xl min-w-[140px]">
-            <div className={`text-sm font-bold mb-1 ${isWeapon ? 'text-purple-300' : 'text-amber-300'}`}>
+            <div className={`text-sm font-bold mb-1 ${isWeapon ? 'text-slate-200' : 'text-amber-300'}`}>
               {def.name}
             </div>
+            {(def as any).shootingType && (
+              <div className="text-[9px] font-semibold text-slate-300 bg-slate-800 border border-slate-600 px-1.5 py-0.5 rounded w-fit mb-1.5">
+                {(def as any).shootingType === 'MOUSE_DIRECTION'
+                  ? 'Cursor Aim'
+                  : (def as any).shootingType === 'NEAREST_ENEMY'
+                  ? 'Nearest Enemy'
+                  : 'Area of Effect'}
+              </div>
+            )}
             <div className="flex flex-col gap-1.5 text-[10px] uppercase font-bold tracking-wider">
               <div className="flex items-center gap-2 text-sky-400">
                 <Sparkles className="w-3 h-3" />

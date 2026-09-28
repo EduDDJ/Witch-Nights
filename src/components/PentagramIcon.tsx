@@ -1,31 +1,26 @@
 import React from 'react';
+import { GameImage } from './GameImage';
 
 interface PentagramIconProps {
   className?: string;
   style?: React.CSSProperties;
+  [key: string]: any;
 }
 
 export const PentagramIcon: React.FC<PentagramIconProps> = ({
   className = 'w-5 h-5',
   style,
+  ...props
 }) => {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
+    <GameImage
+      src="assets/aistudio/pentagram.png"
+      fallbackSrc="assets/pentagram.png"
+      alternateFallbacks={['https://i.imgur.com/DikcnTS.png']}
+      alt="Pentagram"
+      className={`${className || "w-full h-full object-contain"} [image-rendering:pixelated] drop-shadow-md`}
       style={style}
-    >
-      {/* Outer Circle */}
-      <circle cx="12" cy="12" r="10" />
-      {/* Pentagram Star (Right side up) */}
-      <path 
-        d="M12 3.5 L17 18.88 L3.92 9.37 L20.08 9.37 L7 18.88 Z" 
-      />
-    </svg>
+      {...props}
+    />
   );
 };

@@ -3,7 +3,7 @@
  * Built with React, TypeScript & HTML5 Canvas.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   PlayerStats,
   OwnedWeapon,
@@ -33,6 +33,7 @@ import { AchievementBanner, AchievementNotificationData } from './components/Ach
 import { ACHIEVEMENTS } from './data/achievements';
 import { CollectionModal, ENEMIES_DATA } from './components/CollectionModal';
 import { CharacterSelectModal } from './components/CharacterSelectModal';
+import { MapSelectModal } from './components/MapSelectModal';
 import { GameOverModal } from './components/GameOverModal';
 import { OptionsModal } from './components/OptionsModal';
 import { PauseMenuModal } from './components/PauseMenuModal';
@@ -46,7 +47,7 @@ import { BossIncomingModal } from './components/BossIncomingModal';
 import { soundEngine } from './utils/audio';
 import { setLanguage, getLanguage, translateAchievement, t } from './utils/i18n';
 
-type GameScreen = 'MENU' | 'PLAYING' | 'COLLECTION' | 'CHARACTER_SELECT';
+type GameScreen = 'MENU' | 'PLAYING' | 'COLLECTION' | 'CHARACTER_SELECT' | 'MAP_SELECT';
 
 const DEFAULT_OPTIONS: GameOptions = {
   soundEnabled: true,
@@ -86,6 +87,11 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
 export default function App() {
   const [screen, setScreen] = useState<GameScreen>('MENU');
   const [selectedCharacter, setSelectedCharacter] = useState<CharacterDefinition>(CHARACTERS[0]);
+  const [selectedMap, setSelectedMap] = useState<string>('village_outskirts');
+  const selectedMapRef = useRef<string>(selectedMap);
+  useEffect(() => {
+    selectedMapRef.current = selectedMap;
+  }, [selectedMap]);
 
   // Gameplay Run State
   const [player, setPlayer] = useState<PlayerStats>(INITIAL_PLAYER_STATS);
@@ -108,7 +114,7 @@ export default function App() {
   const [isBossRushModalOpen, setIsBossRushModalOpen] = useState<boolean>(false);
   const [isGameModeSelectOpen, setIsGameModeSelectOpen] = useState<boolean>(false);
   const [isBossRush, setIsBossRush] = useState<boolean>(false);
-  const [bossRushQueue, setBossRushQueue] = useState<string[]>(['carnivore_plant', 'haunted_eye', 'night_bear', 'archmages']);
+  const [bossRushQueue, setBossRushQueue] = useState<string[]>(['carnivore_plant', 'haunted_eye', 'night_bear', 'archmages', 'googolbra', 'phiboccion', 'pythagoras']);
 
   // Boss fight state
   const [boss, setBoss] = useState<BossInstance | null>(null);
@@ -135,6 +141,7 @@ export default function App() {
   const [isWeaponSelectorOpen, setIsWeaponSelectorOpen] = useState<boolean>(false);
   const [isCollectionFromPause, setIsCollectionFromPause] = useState<boolean>(false);
   const [instaKill, setInstaKill] = useState<boolean>(false);
+  const [invincibility, setInvincibility] = useState<boolean>(false);
   const [hasUsedRerollThisLevel, setHasUsedRerollThisLevel] = useState<boolean>(false);
   const [incomingBoss, setIncomingBoss] = useState<BossDefinition | null>(null);
   const [isDevBossSelect, setIsDevBossSelect] = useState<boolean>(false);
@@ -304,6 +311,33 @@ export default function App() {
     }
   });
 
+  const [mapBestTimes, setMapBestTimes] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('witch_nights_map_best_times');
+      let parsed = saved ? JSON.parse(saved) : {};
+      if (!parsed || typeof parsed !== 'object') parsed = {};
+
+      // One-time sanitization: fix previously leaked best time from village_outskirts into mathematical_realm
+      const hasFixedSeparation = localStorage.getItem('witch_nights_map_times_separated_v2');
+      if (!hasFixedSeparation) {
+        if (
+          parsed.village_outskirts &&
+          parsed.mathematical_realm &&
+          parsed.village_outskirts === parsed.mathematical_realm
+        ) {
+          parsed.mathematical_realm = 0;
+          localStorage.setItem('witch_nights_map_best_times', JSON.stringify(parsed));
+        }
+        localStorage.setItem('witch_nights_map_times_separated_v2', 'true');
+      }
+      return parsed;
+    } catch {
+      return {};
+    }
+  });
+
+  const [activeWitchDeals, setActiveWitchDeals] = useState<CurseChoice[]>([]);
+
   const [isBossRushCharSelectOpen, setIsBossRushCharSelectOpen] = useState<boolean>(false);
 
   const [isTrueWitchUnlocked, setIsTrueWitchUnlocked] = useState<boolean>(() => {
@@ -350,6 +384,9 @@ export default function App() {
       }
       if (itemIds.includes('nightbears_claws') && !ids.includes('bearely_any_trouble')) {
         ids.push('bearely_any_trouble');
+      }
+      if (itemIds.includes('protractor') && !ids.includes('making_donuts')) {
+        ids.push('making_donuts');
       }
       if (
         (localStorage.getItem('witch_nights_true_witch_unlocked') === 'true' ||
@@ -490,6 +527,12 @@ export default function App() {
   }, []);
 
   const handleBossDefeated = useCallback((bossId: string) => {
+    const effectiveBossId = selectedMapRef.current === 'black_honey_forest' ? `${bossId}_black_honey` : bossId;
+    setUnlockedEnemies((prev) => (prev.includes(effectiveBossId) ? prev : [...prev, effectiveBossId]));
+    setEnemyKills((prev) => ({
+      ...prev,
+      [effectiveBossId]: (prev[effectiveBossId] || 0) + 1,
+    }));
     if (isBossRush) return;
     if (bossId === 'carnivore_plant') {
       completeAchievement('plants_vs_witches');
@@ -502,6 +545,8 @@ export default function App() {
       completeAchievement('bearely_any_trouble');
     } else if (bossId === 'archmages') {
       completeAchievement('color_me_impressed');
+    } else if (bossId === 'pythagoras') {
+      completeAchievement('making_donuts');
     }
   }, [completeAchievement, isBossRush, bossRushCharBestTimes]);
 
@@ -614,7 +659,7 @@ export default function App() {
   }, [selectedCharacter, isTrueWitchMode]);
 
   // Start a new run (Normal Game) with selected character
-  const handleStartGame = (character: CharacterDefinition = selectedCharacter) => {
+  const handleStartGame = (character: CharacterDefinition = selectedCharacter, restartOnSameMap: boolean = false) => {
     let finalChar = character;
     if (['geraldo', 'geraldo_green', 'geraldo_blue'].includes(character.id)) {
       if (!isGeraldoUnlocked) {
@@ -652,6 +697,7 @@ export default function App() {
     setLevelUpOptions(null);
     setPendingLevelUps(0);
     setWitchDealCurses(null);
+    setActiveWitchDeals([]);
     setGameOverStats(null);
     setBoss(null);
     setIsBossFight(false);
@@ -663,7 +709,8 @@ export default function App() {
     setIsOptionsOpen(false);
     setIsCollectionFromPause(false);
     setInstaKill(false);
-    setScreen('PLAYING');
+    setInvincibility(false);
+    setScreen(restartOnSameMap ? 'PLAYING' : 'MAP_SELECT');
 
     // If character starts with bonus levels (e.g. Geraldo The Green), trigger level up selection right after Start Run
     if (character.startingLevelBonus && character.startingLevelBonus > 0) {
@@ -674,7 +721,7 @@ export default function App() {
   };
 
   const handleStartBossRush = (queue?: string[]) => {
-    const selectedQueue = queue || ['carnivore_plant', 'haunted_eye', 'night_bear', 'archmages'];
+    const selectedQueue = queue || ['carnivore_plant', 'haunted_eye', 'night_bear', 'archmages', 'googolbra', 'phiboccion', 'pythagoras'];
     setBossRushQueue(selectedQueue);
     setIsBossRush(true);
     handleItemUnlocked('WEAPON', selectedCharacter.startingWeaponId);
@@ -706,6 +753,7 @@ export default function App() {
     setLevelUpOptions(null);
     setPendingLevelUps(0);
     setWitchDealCurses(null);
+    setActiveWitchDeals([]);
     setGameOverStats(null);
     setBoss(null);
     setIsBossFight(true);
@@ -717,6 +765,7 @@ export default function App() {
     setIsOptionsOpen(false);
     setIsCollectionFromPause(false);
     setInstaKill(false);
+    setInvincibility(false);
     setScreen('PLAYING');
 
     // Starting level bonus for Boss Rush mode as well
@@ -732,7 +781,7 @@ export default function App() {
     if (isBossRush) {
       handleStartBossRush(bossRushQueue);
     } else {
-      handleStartGame();
+      handleStartGame(selectedCharacter, true);
     }
   };
 
@@ -799,7 +848,8 @@ export default function App() {
     setBossCountdown(0);
     window.dispatchEvent(new CustomEvent('set-boss-timer-zero'));
     setIsDevBossSelect(true);
-    setBossSelectOptions(BOSS_POOL);
+    const mapBosses = BOSS_POOL.filter((b) => (selectedMap === 'black_honey_forest' ? (b.mapId === 'village_outskirts' || !b.mapId) : (b.mapId || 'village_outskirts') === selectedMap));
+    setBossSelectOptions(mapBosses.length > 0 ? mapBosses : BOSS_POOL);
   };
 
   const handleTriggerWitchDeal = (curses: CurseChoice[]) => {
@@ -973,6 +1023,7 @@ export default function App() {
   // Apply chosen Witch Deal (Minute 7:30 Curse)
   const handleSelectCurse = (curse: CurseChoice | null) => {
     if (curse) {
+      setActiveWitchDeals((prev) => [...prev, curse]);
       handleItemUnlocked('CURSE', curse.id);
 
       switch (curse.effect) {
@@ -1143,8 +1194,45 @@ export default function App() {
     });
   }, []);
 
+  // Update survival time and record best survived time for the active map
+  const handleUpdateSurvivalTime = useCallback((time: number, mapId?: string) => {
+    setSurvivalTime(time);
+    if (!isBossRush && time > 0) {
+      const currentMapKey = mapId || selectedMapRef.current || 'village_outskirts';
+      setMapBestTimes((prev) => {
+        const oldBest = prev[currentMapKey] || 0;
+        if (time > oldBest) {
+          const updated = { ...prev, [currentMapKey]: time };
+          try {
+            localStorage.setItem('witch_nights_map_best_times', JSON.stringify(updated));
+          } catch {
+            // safe ignore
+          }
+          return updated;
+        }
+        return prev;
+      });
+    }
+  }, [isBossRush]);
+
   const handleGameOver = useCallback((stats: any) => {
     setGameOverStats(stats);
+    if (stats && typeof stats.time === 'number' && stats.time > 0 && !isBossRush) {
+      const currentMapKey = stats.mapId || selectedMapRef.current || 'village_outskirts';
+      setMapBestTimes((prev) => {
+        const oldBest = prev[currentMapKey] || 0;
+        if (stats.time > oldBest) {
+          const updated = { ...prev, [currentMapKey]: stats.time };
+          try {
+            localStorage.setItem('witch_nights_map_best_times', JSON.stringify(updated));
+          } catch {
+            // safe ignore
+          }
+          return updated;
+        }
+        return prev;
+      });
+    }
     if (isBossRush && stats.isVictory) {
       const isFullBossRush = stats.isFullBossRush ?? (bossRushQueue.length > 1);
       if (isFullBossRush) {
@@ -1215,6 +1303,7 @@ export default function App() {
     setAchievementQueue([]);
     setHasTrueWitchTrophy(false);
     setBestBossRushTime(null);
+    setMapBestTimes({});
     setIsTrueWitchUnlocked(false);
     setIsTrueWitchMode(false);
     try {
@@ -1228,6 +1317,8 @@ export default function App() {
       localStorage.removeItem('witch_nights_completed_achievements');
       localStorage.removeItem('witch_nights_true_witch_conquered');
       localStorage.removeItem('witch_nights_boss_rush_best_time');
+      localStorage.removeItem('witch_nights_map_best_times');
+      localStorage.removeItem('witch_nights_map_times_separated_v2');
       localStorage.removeItem('witch_nights_true_witch_unlocked');
       localStorage.removeItem('witch_nights_true_witch_enabled');
       localStorage.removeItem('witch_nights_geraldo_unlocked');
@@ -1289,6 +1380,22 @@ export default function App() {
         />
       )}
 
+      {/* 2.5. MAP SELECT SCREEN */}
+      {screen === 'MAP_SELECT' && (
+        <MapSelectModal
+          mapBestTimes={mapBestTimes}
+          onSelectMap={(mapId) => {
+            selectedMapRef.current = mapId;
+            setSelectedMap(mapId);
+            setSurvivalTime(0);
+            setScreen('PLAYING');
+          }}
+          onClose={() => {
+            setScreen('CHARACTER_SELECT');
+          }}
+        />
+      )}
+
       {/* 3. COLLECTION MODAL (FROM MAIN MENU) */}
       {screen === 'COLLECTION' && (
         <CollectionModal
@@ -1312,6 +1419,7 @@ export default function App() {
             weapons={weapons}
             statItems={statItems}
             character={selectedCharacter}
+            selectedMap={selectedMap}
             survivalTime={survivalTime}
             bossCountdown={bossCountdown}
             gameSpeed={1}
@@ -1335,9 +1443,10 @@ export default function App() {
             screenShakeEnabled={options.screenShake}
             damageNumbersEnabled={options.damageNumbers}
             instaKill={instaKill}
+            invincibility={invincibility}
             onTogglePause={() => setIsPauseMenuOpen((prev) => !prev)}
             onUpdatePlayer={handleUpdatePlayer}
-            onUpdateSurvivalTime={setSurvivalTime}
+            onUpdateSurvivalTime={handleUpdateSurvivalTime}
             onUpdateBossCountdown={setBossCountdown}
             onTriggerLevelUp={handleTriggerLevelUp}
             onTriggerWitchDeal={handleTriggerWitchDeal}
@@ -1346,12 +1455,13 @@ export default function App() {
             onGameOver={handleGameOver}
             onItemUnlocked={handleItemUnlocked}
             onEnemyDefeated={(enemyId) => {
+              const effectiveEnemyId = selectedMapRef.current === 'black_honey_forest' ? `${enemyId}_black_honey` : enemyId;
               if (!isBossRush) {
-                setUnlockedEnemies((prev) => (prev.includes(enemyId) ? prev : [...prev, enemyId]));
+                setUnlockedEnemies((prev) => (prev.includes(effectiveEnemyId) ? prev : [...prev, effectiveEnemyId]));
               }
               setEnemyKills((prev) => ({
                 ...prev,
-                [enemyId]: (prev[enemyId] || 0) + 1,
+                [effectiveEnemyId]: (prev[effectiveEnemyId] || 0) + 1,
               }));
             }}
             onBossDefeated={handleBossDefeated}
@@ -1363,6 +1473,7 @@ export default function App() {
             player={player}
             weapons={weapons}
             statItems={statItems}
+            activeWitchDeals={activeWitchDeals}
             character={selectedCharacter}
             maxWeapons={maxWeapons}
             survivalTime={survivalTime}
@@ -1377,6 +1488,7 @@ export default function App() {
             mobileMode={options.mobileMode}
             mobileAimMode={options.mobileAimMode}
             instaKill={instaKill}
+            invincibility={invincibility}
             isBossRush={isBossRush}
             isTrueWitchMode={isBossRush && isTrueWitchMode}
           />
@@ -1398,6 +1510,7 @@ export default function App() {
               onReturnToMainMenu={() => {
                 setIsBossRush(false);
                 setIsPauseMenuOpen(false);
+                setSurvivalTime(0);
                 setScreen('MENU');
               }}
             />
@@ -1410,10 +1523,12 @@ export default function App() {
               survivalTime={survivalTime}
               mobileMode={options.mobileMode}
               instaKill={instaKill}
+              invincibility={invincibility}
               onInstantLevelUp={handleDevInstantLevelUp}
               onSkipToMinute730={handleSkipToMinute730}
               onFightBoss={handleDevFightBoss}
               onToggleInstaKill={() => setInstaKill((prev) => !prev)}
+              onToggleInvincibility={() => setInvincibility((prev) => !prev)}
               onOpenWeaponSelector={() => setIsWeaponSelectorOpen(true)}
               onClose={() => setIsDevToolsOpen(false)}
             />
@@ -1452,6 +1567,7 @@ export default function App() {
           {bossSelectOptions && (
             <BossSelectModal
               bosses={bossSelectOptions}
+              currentMap={selectedMap}
               mobileMode={options.mobileMode}
               isDevChoice={isDevBossSelect}
               onClose={() => {
@@ -1459,15 +1575,11 @@ export default function App() {
                 setIsDevBossSelect(false);
               }}
               onSelectBoss={(bossId) => {
-                const wasDev = isDevBossSelect;
                 setBossSelectOptions(null);
                 setIsDevBossSelect(false);
                 setBossCountdown(0);
-                if (wasDev) {
-                  window.dispatchEvent(new CustomEvent('spawn-boss-fight', { detail: { bossId } }));
-                } else {
-                  window.dispatchEvent(new CustomEvent('trigger-test-boss', { detail: { bossId } }));
-                }
+                const chosen = BOSS_POOL.find((b) => b.id === bossId) || BOSS_POOL[0];
+                setIncomingBoss(chosen);
               }}
             />
           )}
@@ -1506,6 +1618,7 @@ export default function App() {
               onRestart={handleRestartRun}
               onReturnToMenu={() => {
                 setIsBossRush(false);
+                setSurvivalTime(0);
                 setScreen('MENU');
               }}
             />

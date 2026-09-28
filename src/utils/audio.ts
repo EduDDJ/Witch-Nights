@@ -258,6 +258,10 @@ class SoundEngine {
     }
   }
 
+  public playWhoosh() {
+    this.playDash();
+  }
+
   public playExpPickup() {
     if (!this.enabled || this.volume <= 0.01) return;
     try {

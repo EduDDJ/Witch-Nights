@@ -112,7 +112,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
                 {/* Center Content: Title, Description, and Unlock */}
                 <div className="flex-1 min-w-0 pr-1">
                   <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0 sm:gap-x-2 sm:gap-y-0.5">
-                    <span className={`font-serif font-bold text-[11px] sm:text-sm truncate ${
+                    <span className={`font-serif font-bold text-[11px] sm:text-sm ${
                       isCompleted ? 'text-purple-100' : 'text-stone-300'
                     }`}>
                       {localizedTitle}
@@ -140,7 +140,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
                     </span>
                   </div>
 
-                  <p className="text-[9px] sm:text-xs text-stone-400 truncate sm:line-clamp-1 leading-tight mt-0.2 sm:mt-0.5">
+                  <p className="text-[10px] sm:text-xs text-stone-400 leading-snug mt-0.5 break-words whitespace-normal">
                     {localizedDesc}
                   </p>
                 </div>
@@ -169,17 +169,6 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
               </div>
             );
           })}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-1.5 pt-1.5 sm:mt-3 sm:pt-2.5 border-t border-purple-900/40 flex justify-end shrink-0">
-          <button
-            id="close-achievements-bottom-button"
-            onClick={onClose}
-            className="w-full sm:w-auto px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl bg-purple-900/60 hover:bg-purple-800/80 border border-purple-600/50 hover:border-purple-400 text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer"
-          >
-            {currentLang === 'en' ? 'Close' : 'Fechar'}
-          </button>
         </div>
       </div>
     </div>

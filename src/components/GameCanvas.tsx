@@ -29,10 +29,164 @@ import {
   WITCH_DEALS,
   BOSS_POOL,
   CHARACTERS,
+  getBossHomeMap,
 } from '../data/gameData';
 import { soundEngine } from '../utils/audio';
 import { resolveAssetPath } from '../utils/assets';
-import { getLanguage, translateBossName } from '../utils/i18n';
+import { getLanguage, translateBossName, translateMapName, UI_TRANSLATIONS } from '../utils/i18n';
+
+export const BUNNARY_MESSAGES = [
+  "01000011 01100001 01101110 01101111 01101110 01010100 00110100 01010100 01011001 01110101 01000010 01111001",
+  "01001100 01100101 01110011 01100010 01101001 01100001 01101110 01110011",
+  "01010000 01101001 01001001 01110011 01000011 01101111 01101111 01101100",
+  "01001110 01100101 01110010 01100100",
+];
+
+function generateGoogolbraSpiralPath(camX: number, camY: number, width: number, height: number) {
+  const tileSize = 80;
+  const cols = Math.floor(width / tileSize);
+  const rows = Math.floor(height / tileSize);
+  const path: { x: number; y: number; col: number; row: number; dirX: number; dirY: number }[] = [];
+
+  let top = 0;
+  let bottom = rows - 1;
+  let left = 0;
+  let right = cols - 1;
+
+  while (top <= bottom && left <= right) {
+    // 1. Moving top-right to top-left
+    for (let c = right; c >= left; c--) {
+      path.push({
+        col: c,
+        row: top,
+        x: camX + c * tileSize + tileSize / 2,
+        y: camY + top * tileSize + tileSize / 2,
+        dirX: -1,
+        dirY: 0,
+      });
+    }
+    top++;
+    if (top > bottom) break;
+
+    // 2. Moving top-left to bottom-left
+    for (let r = top; r <= bottom; r++) {
+      path.push({
+        col: left,
+        row: r,
+        x: camX + left * tileSize + tileSize / 2,
+        y: camY + r * tileSize + tileSize / 2,
+        dirX: 0,
+        dirY: 1,
+      });
+    }
+    left++;
+    if (left > right) break;
+
+    // 3. Moving bottom-left to bottom-right
+    for (let c = left; c <= right; c++) {
+      path.push({
+        col: c,
+        row: bottom,
+        x: camX + c * tileSize + tileSize / 2,
+        y: camY + bottom * tileSize + tileSize / 2,
+        dirX: 1,
+        dirY: 0,
+      });
+    }
+    bottom--;
+    if (top > bottom) break;
+
+    // 4. Moving bottom-right to top-right
+    for (let r = bottom; r >= top; r--) {
+      path.push({
+        col: right,
+        row: r,
+        x: camX + right * tileSize + tileSize / 2,
+        y: camY + r * tileSize + tileSize / 2,
+        dirX: 0,
+        dirY: -1,
+      });
+    }
+    right--;
+  }
+
+  return path;
+}
+
+function getPathPointAtProgress(
+  path: { x: number; y: number; dirX: number; dirY: number }[],
+  progress: number
+): { x: number; y: number; dirX: number; dirY: number; angle: number } | null {
+  if (!path || path.length === 0) return null;
+
+  if (progress <= 0) {
+    const first = path[0];
+    const tileSteps = Math.floor(-progress);
+    const distBack = tileSteps * 80;
+    const x = first.x - first.dirX * distBack;
+    const y = first.y - first.dirY * distBack;
+    const angle = Math.atan2(first.dirY, first.dirX);
+    return { x, y, dirX: first.dirX, dirY: first.dirY, angle };
+  }
+
+  if (progress >= path.length - 1) {
+    const last = path[path.length - 1];
+    const tileSteps = Math.floor(progress - (path.length - 1));
+    const distForward = tileSteps * 80;
+    const x = last.x + last.dirX * distForward;
+    const y = last.y + last.dirY * distForward;
+    const angle = Math.atan2(last.dirY, last.dirX);
+    return { x, y, dirX: last.dirX, dirY: last.dirY, angle };
+  }
+
+  // Classic Snake Game discrete tile snapping:
+  // Snaps head and body segments to exact 80px tile centers instead of smooth sub-pixel sliding
+  const idx = Math.min(path.length - 1, Math.max(0, Math.floor(progress)));
+  const p1 = path[idx];
+  const nextIdx = Math.min(path.length - 1, idx + 1);
+  const p2 = path[nextIdx];
+
+  const x = p1.x;
+  const y = p1.y;
+  const dirX = p2.x !== p1.x ? Math.sign(p2.x - p1.x) : p1.dirX;
+  const dirY = p2.y !== p1.y ? Math.sign(p2.y - p1.y) : p1.dirY;
+  const angle = Math.atan2(p2.y !== p1.y ? p2.y - p1.y : dirY, p2.x !== p1.x ? p2.x - p1.x : dirX);
+
+  return { x, y, dirX, dirY, angle };
+}
+
+function getFibonacciNumber(n: number): bigint {
+  if (n <= 0) return 0n;
+  if (n === 1 || n === 2) return 1n;
+  let a = 1n, b = 1n;
+  for (let i = 3; i <= n; i++) {
+    const c = a + b;
+    a = b;
+    b = c;
+  }
+  return b;
+}
+
+function getFibonacciQuestionText(n: number, lang: string): string {
+  const ordinalsEn = ['', 'First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth',
+    'Eleventh', 'Twelfth', 'Thirteenth', 'Fourteenth', 'Fifteenth', 'Sixteenth', 'Seventeenth', 'Eighteenth', 'Nineteenth', 'Twentieth',
+    'Twenty-First', 'Twenty-Second', 'Twenty-Third', 'Twenty-Fourth', 'Twenty-Fifth', 'Twenty-Sixth', 'Twenty-Seventh', 'Twenty-Eighth', 'Twenty-Ninth', 'Thirtieth',
+    'Thirty-First', 'Thirty-Second', 'Thirty-Third', 'Thirty-Fourth', 'Thirty-Fifth', 'Thirty-Sixth', 'Thirty-Seventh', 'Thirty-Eighth', 'Thirty-Ninth', 'Fortieth',
+    'Forty-First', 'Forty-Second', 'Forty-Third', 'Forty-Fourth', 'Forty-Fifth', 'Forty-Sixth', 'Forty-Seventh', 'Forty-Eighth', 'Forty-Ninth', 'Fiftieth'];
+  const ordinalsPt = ['', 'Primeiro', 'Segundo', 'Terceiro', 'Quarto', 'Quinto', 'Sexto', 'Sétimo', 'Oitavo', 'Nono', 'Décimo',
+    'Décimo Primeiro', 'Décimo Segundo', 'Décimo Terceiro', 'Décimo Quarto', 'Décimo Quinto', 'Décimo Sexto', 'Décimo Sétimo', 'Décimo Oitavo', 'Décimo Nono', 'Vigésimo',
+    'Vigésimo Primeiro', 'Vigésimo Segundo', 'Vigésimo Terceiro', 'Vigésimo Quarto', 'Vigésimo Quinto', 'Vigésimo Sexto', 'Vigésimo Sétimo', 'Vigésimo Oitavo', 'Vigésimo Nono', 'Trigésimo',
+    'Trigésimo Primeiro', 'Trigésimo Segundo', 'Trigésimo Terceiro', 'Trigésimo Quarto', 'Trigésimo Quinto', 'Trigésimo Sexto', 'Trigésimo Sétimo', 'Trigésimo Oitavo', 'Trigésimo Nono', 'Quadragésimo',
+    'Quadragésimo Primeiro', 'Quadragésimo Segundo', 'Quadragésimo Terceiro', 'Quadragésimo Quarto', 'Quadragésimo Quinto', 'Quadragésimo Sexto', 'Quadragésimo Sétimo', 'Quadragésimo Oitavo', 'Quadragésimo Nono', 'Quinquagésimo'];
+  
+  if (lang === 'pt-BR') {
+    const ord = ordinalsPt[n] || `${n}º`;
+    return `${ord} Número de Fibonacci`;
+  } else {
+    const ord = ordinalsEn[n] || `${n}th`;
+    return `${ord} Fibonacci Number`;
+  }
+}
 
 function distToSegment(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
   const dx = x2 - x1;
@@ -161,16 +315,17 @@ interface GameCanvasProps {
   mobileMode?: boolean;
   mobileAimMode?: MobileAimMode;
   instaKill?: boolean;
+  invincibility?: boolean;
   isBossRush?: boolean;
   bossRushQueue?: string[];
   isTrueWitchMode?: boolean;
   onTogglePause?: () => void;
   onUpdatePlayer: (stats: Partial<PlayerStats>) => void;
-  onUpdateSurvivalTime: (time: number) => void;
+  onUpdateSurvivalTime: (time: number, mapId?: string) => void;
   onUpdateBossCountdown?: (countdown: number) => void;
   onTriggerLevelUp: (extraLevels?: number) => void;
   onTriggerWitchDeal: (curses: CurseChoice[]) => void;
-  onGameOver: (finalStats: { time: number; level: number; kills: number; bossesKilled: number; totalDamage?: number; killerName?: string; isVictory?: boolean }) => void;
+  onGameOver: (finalStats: { time: number; level: number; kills: number; bossesKilled: number; totalDamage?: number; killerName?: string; isVictory?: boolean; mapId?: string; isFullBossRush?: boolean }) => void;
   onItemUnlocked: (type: 'WEAPON' | 'STAT' | 'CURSE', id: string) => void;
   onEnemyDefeated?: (enemyId: string) => void;
   onUnlockItem?: (itemId: string) => void;
@@ -178,9 +333,10 @@ interface GameCanvasProps {
   onBossUpdate?: (boss: BossInstance | null, isFight: boolean, timer: number, hp: number) => void;
   onTriggerBossSelection?: (bosses: BossDefinition[]) => void;
   onBossIncoming?: (boss: BossDefinition) => void;
+  selectedMap?: string;
 }
 
-export const GameCanvas: React.FC<GameCanvasProps> = ({
+export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
   player,
   weapons,
   statItems,
@@ -196,16 +352,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   mobileMode = false,
   mobileAimMode = 'JOYSTICK',
   instaKill = false,
+  invincibility = false,
   isBossRush = false,
   bossRushQueue,
   isTrueWitchMode = false,
+  selectedMap = 'village_outskirts',
   onTogglePause,
   onUpdatePlayer,
   onUpdateSurvivalTime,
   onUpdateBossCountdown,
   onTriggerLevelUp,
   onTriggerWitchDeal,
-  onGameOver,
+  onGameOver: rawOnGameOver,
   onItemUnlocked,
   onEnemyDefeated,
   onUnlockItem,
@@ -218,8 +376,21 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const witchImageRef = useRef<HTMLImageElement | null>(null);
   const peasantImageRef = useRef<HTMLImageElement | null>(null);
   const peasantTorchImageRef = useRef<HTMLImageElement | null>(null);
+  const unocondaImageRef = useRef<HTMLImageElement | null>(null);
+  const viiiperImageRef = useRef<HTMLImageElement | null>(null);
   const villageKnightImageRef = useRef<HTMLImageElement | null>(null);
+  const obMooseImageRef = useRef<HTMLImageElement | null>(null);
+  const spectralArrowImageRef = useRef<HTMLImageElement | null>(null);
+  const sickleImageRef = useRef<HTMLImageElement | null>(null);
+  const stellarBeamImageRef = useRef<HTMLImageElement | null>(null);
+  const pentagramImageRef = useRef<HTMLImageElement | null>(null);
   const groundTileImageRef = useRef<HTMLImageElement | HTMLCanvasElement | null>(null);
+  const mathTile1Ref = useRef<HTMLImageElement | null>(null);
+  const mathTile2Ref = useRef<HTMLImageElement | null>(null);
+  const mathTile3Ref = useRef<HTMLImageElement | null>(null);
+  const mathTile4Ref = useRef<HTMLImageElement | null>(null);
+  const mathTileBlankRef = useRef<HTMLImageElement | null>(null);
+  const blackHoneyTileImageRef = useRef<HTMLImageElement | null>(null);
   const miniEyeImageRef = useRef<HTMLImageElement | null>(null);
   const hauntedEyeOpenImageRef = useRef<HTMLImageElement | null>(null);
   const hauntedEyeOpeningImageRef = useRef<HTMLImageElement | null>(null);
@@ -230,12 +401,30 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const nightBearDizzyImageRef = useRef<HTMLImageElement | null>(null);
   const rockThrowerImageRef = useRef<HTMLImageElement | null>(null);
   const rockProjectileImageRef = useRef<HTMLImageElement | null>(null);
+  const bunnary0ImageRef = useRef<HTMLImageElement | null>(null);
+  const bunnary1ImageRef = useRef<HTMLImageElement | null>(null);
+  const bunnaryBlankImageRef = useRef<HTMLImageElement | null>(null);
+  const bunnaryEndImageRef = useRef<HTMLImageElement | null>(null);
+  const bunnaryPelletImageRef = useRef<HTMLImageElement | null>(null);
   const grimoireImageRef = useRef<HTMLImageElement | null>(null);
   const astralBladeImageRef = useRef<HTMLImageElement | null>(null);
   const geraldoRedImageRef = useRef<HTMLImageElement | null>(null);
   const geraldoGreenImageRef = useRef<HTMLImageElement | null>(null);
   const geraldoBlueImageRef = useRef<HTMLImageElement | null>(null);
   const geraldoRgbImageRef = useRef<HTMLImageElement | null>(null);
+
+  const phiboccionImageRef = useRef<HTMLImageElement | null>(null);
+  const phiboccionKickingImageRef = useRef<HTMLImageElement | null>(null);
+  const landPhineImageRef = useRef<HTMLImageElement | null>(null);
+  const landPhineBlinkingImageRef = useRef<HTMLImageElement | null>(null);
+
+  const googolbraHeadImageRef = useRef<HTMLImageElement | null>(null);
+  const googolbraBodyImageRef = useRef<HTMLImageElement | null>(null);
+
+  const pythagorasImageRef = useRef<HTMLImageElement | null>(null);
+  const rulerImageRef = useRef<HTMLImageElement | null>(null);
+  const setsquareImageRef = useRef<HTMLImageElement | null>(null);
+  const protractorImageRef = useRef<HTMLImageElement | null>(null);
 
   // Load Character Sprite dynamically based on selected character (prioritizing local bundled assets)
   useEffect(() => {
@@ -308,7 +497,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     loadImage('https://i.imgur.com/kKhEjFq.png', 'assets/aistudio/peasant_pitchfork.png', peasantImageRef);
     loadImage('https://i.imgur.com/VMPhtDP.png', 'assets/aistudio/peasant_torch.png', peasantTorchImageRef);
+    loadImage('https://i.imgur.com/KncCJpG.png', 'assets/aistudio/unoconda.png', unocondaImageRef);
+    loadImage('https://i.imgur.com/eKjiE6b.png', 'assets/aistudio/viiiper.png', viiiperImageRef);
     loadImage('https://i.imgur.com/iHevmHN.png', 'assets/aistudio/village_knight.png', villageKnightImageRef);
+    loadImage('https://i.imgur.com/AbmtRP2.png', 'assets/aistudio/obmoose.png', obMooseImageRef);
+    loadImage('https://i.imgur.com/Xn8yFcZ.png', 'assets/aistudio/spectral_arrow.png', spectralArrowImageRef);
+    loadImage('https://i.imgur.com/3Op1go9.png', 'assets/aistudio/stellar_beam.png', stellarBeamImageRef);
+    loadImage('https://i.imgur.com/DikcnTS.png', 'assets/aistudio/pentagram.png', pentagramImageRef);
+    loadImage('https://i.imgur.com/TYQ1jE7.png', 'assets/aistudio/sickle.png', sickleImageRef);
 
     // Procedural stone tile texture for instant seamless display with no network delay or CORS seams
     const createProceduralGround = (): HTMLCanvasElement => {
@@ -344,6 +540,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       };
     };
 
+    loadImage('https://i.imgur.com/w1wX8hT.png', 'assets/math_tile_1.png', mathTile1Ref);
+    loadImage('https://i.imgur.com/4LZqEmj.png', 'assets/math_tile_2.png', mathTile2Ref);
+    loadImage('https://i.imgur.com/BPzzv1Y.png', 'assets/math_tile_3.png', mathTile3Ref);
+    loadImage('https://i.imgur.com/oKggJ2g.png', 'assets/math_tile_4.png', mathTile4Ref);
+    loadImage('https://i.imgur.com/G1XlFzU.png', 'assets/math_tile_blank.png', mathTileBlankRef);
+    loadImage('https://i.imgur.com/ZrLFBRE.png', 'assets/black_honey_tile.png', blackHoneyTileImageRef);
+
     loadImage('https://i.imgur.com/p2eqvL6.png', 'assets/aistudio/mini_eye.png', miniEyeImageRef);
     loadImage('https://i.imgur.com/caqAbHC.png', 'assets/aistudio/haunted_eye_open.png', hauntedEyeOpenImageRef);
     loadImage('https://i.imgur.com/hGKp8kz.png', 'assets/aistudio/haunted_eye_opening.png', hauntedEyeOpeningImageRef);
@@ -354,6 +557,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     loadImage('https://i.imgur.com/urcHgH1.png', 'assets/aistudio/night_bear_dizzy.png', nightBearDizzyImageRef);
     loadImage('https://i.imgur.com/ST9LA1d.png', 'assets/aistudio/rock_thrower.png', rockThrowerImageRef);
     loadImage('https://i.imgur.com/UTAWfui.png', 'assets/aistudio/rock_projectile.png', rockProjectileImageRef);
+    loadImage('https://i.imgur.com/90lSZbP.png', 'assets/aistudio/bunnary_0.png', bunnary0ImageRef);
+    loadImage('https://i.imgur.com/QzUsisb.png', 'assets/aistudio/bunnary_1.png', bunnary1ImageRef);
+    loadImage('https://i.imgur.com/FgtlESH.png', 'assets/aistudio/bunnary_blank.png', bunnaryBlankImageRef);
+    loadImage('https://i.imgur.com/jGKPWKu.png', 'assets/aistudio/bunnary_end_sentence.png', bunnaryEndImageRef);
+    loadImage('https://i.imgur.com/mPFgOY7.png', 'assets/aistudio/bunnary_pellet.png', bunnaryPelletImageRef);
     loadImage('https://i.imgur.com/VqRnYzc.png', 'assets/aistudio/grimoire.png', grimoireImageRef);
     loadImage('https://i.imgur.com/wP5Mlu1.png', 'assets/aistudio/astral_blade.png', astralBladeImageRef);
     const redCharUri = CHARACTERS.find((c) => c.id === 'geraldo')?.fallbackSpriteUrl;
@@ -364,6 +572,19 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     loadImage('https://i.imgur.com/k6tO808.png', 'assets/aistudio/geraldo_green.png', geraldoGreenImageRef, greenCharUri);
     loadImage('https://i.imgur.com/f9W9M5Z.png', 'assets/aistudio/geraldo_blue.png', geraldoBlueImageRef, blueCharUri);
     loadImage('https://i.imgur.com/w8qU2F1.png', 'assets/aistudio/geraldo_rgb.png', geraldoRgbImageRef, redCharUri);
+
+    loadImage('https://i.imgur.com/g0AgJ3Y.png', 'assets/aistudio/phiboccion.png', phiboccionImageRef);
+    loadImage('https://i.imgur.com/7gN6fD5.png', 'assets/aistudio/phiboccion_kicking.png', phiboccionKickingImageRef);
+    loadImage('https://i.imgur.com/ioiFCOw.png', 'assets/aistudio/land_phi_ne.png', landPhineImageRef);
+    loadImage('https://i.imgur.com/0TT8WLi.png', 'assets/aistudio/land_phi_ne_blinking.png', landPhineBlinkingImageRef);
+
+    loadImage('https://i.imgur.com/HJ9tJm7.png', 'assets/aistudio/googolbra_head.png', googolbraHeadImageRef);
+    loadImage('https://i.imgur.com/4Kvs0qj.png', 'assets/aistudio/googolbra_body.png', googolbraBodyImageRef);
+
+    loadImage('https://i.imgur.com/APbtbDS.png', 'assets/aistudio/pythagoras.png', pythagorasImageRef);
+    loadImage('https://i.imgur.com/NGSgVv0.png', 'assets/aistudio/ruler.png', rulerImageRef);
+    loadImage('https://i.imgur.com/7pECiy3.png', 'assets/aistudio/setsquare.png', setsquareImageRef);
+    loadImage('https://i.imgur.com/txF73Vo.png', 'assets/aistudio/protractor.png', protractorImageRef);
   }, []);
 
   // Mutable Game State refs for high-performance 60fps loop
@@ -377,17 +598,34 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const screenShakeEnabledRef = useRef<boolean>(screenShakeEnabled);
   const damageNumbersEnabledRef = useRef<boolean>(damageNumbersEnabled);
   const instaKillRef = useRef<boolean>(instaKill);
+  const invincibilityRef = useRef<boolean>(invincibility);
 
   useEffect(() => {
     instaKillRef.current = instaKill;
-  }, [instaKill]);
+    invincibilityRef.current = invincibility;
+  }, [instaKill, invincibility]);
+
+  const selectedMapRef = useRef<string>(selectedMap);
+  useEffect(() => {
+    selectedMapRef.current = selectedMap;
+  }, [selectedMap]);
+
+  const onGameOver = useCallback(
+    (finalStats: any) => {
+      rawOnGameOver({
+        mapId: selectedMapRef.current,
+        ...finalStats,
+      });
+    },
+    [rawOnGameOver]
+  );
   const screenShakeRef = useRef<number>(0);
   const lastMoveDirRef = useRef<{ dx: number; dy: number }>({ dx: 0, dy: -1 });
 
   // Entities
   const enemiesRef = useRef<Enemy[]>([]);
   const projectilesRef = useRef<Projectile[]>([]);
-  const rockProjectilesRef = useRef<{ id: number; x: number; y: number; vx: number; vy: number; damage: number; radius: number; life: number; maxLife: number }[]>([]);
+  const rockProjectilesRef = useRef<{ id: number; x: number; y: number; vx: number; vy: number; damage: number; radius: number; life: number; maxLife: number; isPellet?: boolean }[]>([]);
   const aoeZonesRef = useRef<AreaZone[]>([]);
   const novaPulsesRef = useRef<NovaPulse[]>([]);
   const astralSlashesRef = useRef<{
@@ -495,7 +733,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const lastBossEpochRef = useRef<number>(0);
   const bossFightDurationRef = useRef<number>(0);
   const lockedCameraRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const bossRushQueueRef = useRef<string[]>(bossRushQueue || ['carnivore_plant', 'haunted_eye', 'night_bear', 'archmages']);
+  const bossRushQueueRef = useRef<string[]>(bossRushQueue || ['carnivore_plant', 'haunted_eye', 'night_bear', 'archmages', 'googolbra', 'phiboccion']);
   const bossRushIndexRef = useRef<number>(0);
   const bossRushPauseTimerRef = useRef<number>(5.0);
   const totalDamageDealtRef = useRef<number>(0);
@@ -529,6 +767,114 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const archmageCloneStrikeCountRef = useRef<number>(0);
   const archmageSpinningBeamsRef = useRef<{ baseAngle: number; spinSpeed: number; beamCount: number; beamLength: number; duration: number; isRainbow?: boolean } | null>(null);
   const archmageBlueTelegraphTimerRef = useRef<number>(0);
+
+  const phiboccionAttackIndexRef = useRef<number>(0);
+  const phiboccionTimerRef = useRef<number>(0);
+  const phiboccionKickCountRef = useRef<number>(0);
+  const phiboccionKickPhaseRef = useRef<'PREP' | 'DASH' | 'REST'>('PREP');
+  const phiboccionDashStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const phiboccionDashTargetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const phiboccionCornerRef = useRef<number>(0);
+  const phiboccionLaserFireRateRef = useRef<number>(0);
+  const phiboccionLaserTimerRef = useRef<number>(0);
+  const phiboccionMineDroppedRef = useRef<boolean>(false);
+  const phiboccionKeypadActiveRef = useRef<boolean>(false);
+  const phiboccionKeypadStageRef = useRef<number>(1);
+  const phiboccionKeypadAnswersCorrectRef = useRef<number>(0);
+  const phiboccionKeypadTimerRef = useRef<number>(10.0);
+  const phiboccionKeypadQuestionRef = useRef<{ q: string; a: string; difficulty: number } | null>(null);
+  const phiboccionKeypadInputRef = useRef<string>("");
+  const phiboccionKeypadResultTextRef = useRef<string>("");
+  const phiboccionKeypadResultTimerRef = useRef<number>(0);
+  const phiboccionKeypadPendingAdvanceRef = useRef<boolean>(false);
+  const phiboccionKeypadModeRef = useRef<'ROOT' | 'FIBONACCI'>('ROOT');
+  const phiboccionFibIntroStepRef = useRef<number>(0);
+  const phiboccionFibIntroTimerRef = useRef<number>(1.0);
+  const phiboccionKeypadLastAnswerCorrectRef = useRef<boolean>(true);
+
+  const googolbraStateRef = useRef<'CONSTRICTION' | 'RETREATING' | 'ZEBRA_TELEGRAPH' | 'ZEBRA_ATTACK' | 'SNEAK_APPROACH' | 'SNEAK_GRASP' | 'COOLDOWN'>('CONSTRICTION');
+  const googolbraProgressRef = useRef<number>(0);
+  const googolbraConstrictionDamageTakenRef = useRef<number>(0);
+  const googolbraSpiralPathRef = useRef<{ x: number; y: number; col: number; row: number; dirX: number; dirY: number }[]>([]);
+  const googolbraCurrentSegmentsRef = useRef<{ x: number; y: number; dirX: number; dirY: number; angle: number }[]>([]);
+  const googolbraZebraStateRef = useRef<{
+    isVertical: boolean;
+    stripes: number[];
+    timer: number;
+    progress: number;
+    lanes: {
+      startX: number;
+      startY: number;
+      dirX: number;
+      dirY: number;
+      angle: number;
+      length: number;
+      delay: number;
+    }[];
+  }>({
+    isVertical: true,
+    stripes: [],
+    timer: 1.2,
+    progress: 0,
+    lanes: [],
+  });
+  const googolbraZebraAttackCountRef = useRef<number>(0);
+  const googolbraSneakStateRef = useRef<{
+    approachTimer: number;
+    startX: number;
+    startY: number;
+    targetX: number;
+    targetY: number;
+    graspTimer: number;
+    damageTickTimer: number;
+    struggles: number;
+    maxStruggles: number;
+  }>({
+    approachTimer: 0,
+    startX: 0,
+    startY: 0,
+    targetX: 0,
+    targetY: 0,
+    graspTimer: 0,
+    damageTickTimer: 0,
+    struggles: 0,
+    maxStruggles: 30,
+  });
+  const googolbraCooldownTimerRef = useRef<number>(0);
+  const googolbraHeadAngleRef = useRef<number>(0);
+  const lastStruggleTriggerTimeRef = useRef<number>(0);
+  const googolbraGraspLastTenthsRef = useRef<number>(-1);
+  const googolbraGraspLastStrugglesRef = useRef<number>(-1);
+  const googolbraGraspLastInDamageRef = useRef<boolean>(false);
+  const bossPreviousHpRef = useRef<number>(-1);
+
+  const pythagorasPhaseRef = useRef<'GEOMETRY_DASH' | 'REST' | 'MONTY_HALL' | 'GEOMENTO_MORI'>('GEOMETRY_DASH');
+  const pythagorasTimerRef = useRef<number>(0);
+  const pythagorasRulerTimerRef = useRef<number>(0);
+  const pythagorasProtractorWaveRef = useRef<number>(0);
+  const pythagorasProtractorTimerRef = useRef<number>(0);
+  const pythagorasSetSquareTimerRef = useRef<number>(0);
+  const pythagorasMoveDirRef = useRef<number>(1);
+  const pythagorasLastAttackRef = useRef<'GEOMETRY_DASH' | 'MONTY_HALL' | 'GEOMENTO_MORI'>('GEOMENTO_MORI');
+
+  const pythagorasMontyHallActiveRef = useRef<boolean>(false);
+  const pythagorasMontyStepRef = useRef<'PICK' | 'REVEAL_ANIM' | 'CHOICE' | 'RESULT'>('PICK');
+  const pythagorasMontyPrizeDoorRef = useRef<number>(0);
+  const pythagorasMontyPlayerPickRef = useRef<number>(-1);
+  const pythagorasMontyRevealedEmptyDoorRef = useRef<number>(-1);
+  const pythagorasMontyFinalPickRef = useRef<number>(-1);
+  const pythagorasMontyTimerRef = useRef<number>(0);
+  const pythagorasMontyResultTypeRef = useRef<'WIN' | 'LOSE' | null>(null);
+
+  // GeoMento Mori Attack Refs
+  const pythagorasGeoMoriActiveRef = useRef<boolean>(false);
+  const pythagorasGeoMoriEquationsRef = useRef<{ id: string; formula: string; color: string; fn: (x: number) => number | null }[]>([]);
+  const pythagorasGeoMoriStateRef = useRef<'TELEGRAPH' | 'ACTIVE' | 'DONE'>('TELEGRAPH');
+  const pythagorasGeoMoriTimerRef = useRef<number>(0);
+  const pythagorasGeoMoriHitCooldownRef = useRef<number>(0);
+  const pythagorasGeoMoriCastCountRef = useRef<number>(0);
+  const pythagorasGeoMoriRoundRef = useRef<number>(1);
+
   const playerInvincibleTimerRef = useRef<number>(0);
   const lastVineAttackKeyRef = useRef<string | null>(null);
   const lastFacingDirectionRef = useRef<'left' | 'right'>('right');
@@ -553,6 +899,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const lastReportedCountdownRef = useRef<number>(-1);
   const lastReportedBossTimerRef = useRef<number>(-1);
   const lastReportedBossHpRef = useRef<number>(-1);
+  const lastDashReportTimeRef = useRef<number>(0);
+  const groundPatternRef = useRef<CanvasPattern | null>(null);
+  const groundPatternImgRef = useRef<HTMLImageElement | null>(null);
+  const blackHoneyPatternRef = useRef<CanvasPattern | null>(null);
+  const blackHoneyPatternImgRef = useRef<HTMLImageElement | null>(null);
   const prevSurvivalTimeRef = useRef<number>(survivalTime);
   const weaponTimeRef = useRef<number>(0);
   const lastBossReportTimeRef = useRef<number>(0);
@@ -638,11 +989,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     isBossPendingRef.current = false;
     bossTimerRef.current = 90; // 1m 30s countdown
 
-    const selectedBoss = (forcedBossId ? BOSS_POOL.find((b) => b.id === forcedBossId) : null)
-      || BOSS_POOL[Math.floor(Math.random() * BOSS_POOL.length)];
+    let selectedBoss = forcedBossId ? BOSS_POOL.find((b) => b.id === forcedBossId) : null;
+    if (!selectedBoss) {
+      if (selectedMapRef.current === 'mathematical_realm') {
+        const mathBosses = BOSS_POOL.filter((b) => b.id === 'googolbra' || b.id === 'phiboccion');
+        selectedBoss = mathBosses[Math.floor(Math.random() * mathBosses.length)] || BOSS_POOL[0];
+      } else {
+        const availableBosses = BOSS_POOL.filter((b) => b.id !== 'phiboccion' && b.id !== 'googolbra');
+        selectedBoss = availableBosses[Math.floor(Math.random() * availableBosses.length)] || BOSS_POOL[0];
+      }
+    }
 
     // Boss scales relative to current player level
-    const levelMult = 1 + ((p.level - 1) * 0.12);
+    let levelMult = 1 + ((p.level - 1) * 0.12);
+    if (selectedMapRef.current === 'black_honey_forest') {
+      levelMult *= 1.2;
+    }
     const scaledMaxHp = Math.round(selectedBoss.maxHp * levelMult);
 
     // Boss spawns directly at the top center of the locked screen
@@ -659,6 +1021,28 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       eyeState: 'CLOSED',
       eyeTimer: 3.5,
     };
+
+    if (selectedBoss.id === 'googolbra') {
+      bossInstance.googolbraState = 'CONSTRICTION';
+      googolbraStateRef.current = 'CONSTRICTION';
+      googolbraProgressRef.current = 0;
+      googolbraConstrictionDamageTakenRef.current = 0;
+      const cam = lockedCameraRef.current;
+      googolbraSpiralPathRef.current = generateGoogolbraSpiralPath(cam.x, cam.y, canvas.width, canvas.height);
+      if (googolbraSpiralPathRef.current.length > 0) {
+        bossInstance.x = googolbraSpiralPathRef.current[0].x;
+        bossInstance.y = googolbraSpiralPathRef.current[0].y;
+      }
+      bossInstance.radius = 40;
+      bossPreviousHpRef.current = scaledMaxHp;
+    }
+
+    if (selectedBoss.id === 'phiboccion') {
+      bossInstance.phiboccionState = 'FLOATING';
+      bossInstance.phiboccionAngle = 0;
+      bossInstance.isKicking = false;
+      bossInstance.isInvincible = false;
+    }
 
     if (selectedBoss.id === 'archmages') {
       const wizardMaxHp = Math.round(600 * levelMult);
@@ -729,6 +1113,53 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     archmageSpinningBeamsRef.current = null;
     lastVineAttackKeyRef.current = null;
 
+    phiboccionAttackIndexRef.current = 0;
+    phiboccionTimerRef.current = 0;
+    phiboccionKickCountRef.current = 0;
+    phiboccionKickPhaseRef.current = 'PREP';
+    phiboccionDashStartRef.current = { x: 0, y: 0 };
+    phiboccionDashTargetRef.current = { x: 0, y: 0 };
+    phiboccionCornerRef.current = 0;
+    phiboccionLaserFireRateRef.current = 0;
+    phiboccionLaserTimerRef.current = 0;
+    phiboccionMineDroppedRef.current = false;
+    phiboccionKeypadActiveRef.current = false;
+    phiboccionKeypadStageRef.current = 1;
+    phiboccionKeypadAnswersCorrectRef.current = 0;
+    phiboccionKeypadTimerRef.current = 10.0;
+    phiboccionKeypadQuestionRef.current = null;
+    phiboccionKeypadInputRef.current = "";
+    phiboccionKeypadResultTextRef.current = "";
+    phiboccionKeypadResultTimerRef.current = 0;
+    phiboccionKeypadPendingAdvanceRef.current = false;
+    phiboccionKeypadModeRef.current = 'ROOT';
+    phiboccionFibIntroStepRef.current = 0;
+    phiboccionFibIntroTimerRef.current = 1.0;
+    phiboccionKeypadLastAnswerCorrectRef.current = true;
+    pythagorasPhaseRef.current = 'GEOMETRY_DASH';
+    pythagorasTimerRef.current = 0;
+    pythagorasRulerTimerRef.current = 0;
+    pythagorasProtractorWaveRef.current = 0;
+    pythagorasProtractorTimerRef.current = 0.5;
+    pythagorasSetSquareTimerRef.current = 0.5;
+    pythagorasMoveDirRef.current = 1;
+    pythagorasLastAttackRef.current = 'MONTY_HALL';
+    pythagorasMontyHallActiveRef.current = false;
+    pythagorasMontyStepRef.current = 'PICK';
+    pythagorasMontyPrizeDoorRef.current = 0;
+    pythagorasMontyPlayerPickRef.current = -1;
+    pythagorasMontyRevealedEmptyDoorRef.current = -1;
+    pythagorasMontyFinalPickRef.current = -1;
+    pythagorasMontyTimerRef.current = 0;
+    pythagorasMontyResultTypeRef.current = null;
+    pythagorasGeoMoriActiveRef.current = false;
+    pythagorasGeoMoriEquationsRef.current = [];
+    pythagorasGeoMoriStateRef.current = 'TELEGRAPH';
+    pythagorasGeoMoriTimerRef.current = 0;
+    pythagorasGeoMoriHitCooldownRef.current = 0;
+    pythagorasGeoMoriCastCountRef.current = 0;
+    pythagorasGeoMoriRoundRef.current = 1;
+
     lastReportedBossTimerRef.current = 90;
     lastReportedBossHpRef.current = scaledMaxHp;
     if (onBossUpdate) {
@@ -790,7 +1221,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       nextEntityId.current = 1;
       enemyTimeOffsetRef.current = 0;
       lastReportedHpRef.current = playerRef.current.hp;
-      bossRushQueueRef.current = bossRushQueue || ['carnivore_plant', 'haunted_eye', 'night_bear', 'archmages'];
+      bossRushQueueRef.current = bossRushQueue || ['carnivore_plant', 'haunted_eye', 'night_bear', 'archmages', 'googolbra', 'phiboccion'];
       bossRushIndexRef.current = 0;
       bossRushPauseTimerRef.current = 5.0;
       totalDamageDealtRef.current = 0;
@@ -804,6 +1235,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             x: Math.round((p.x - canvas.width / 2) / tileSize) * tileSize,
             y: Math.round((p.y - canvas.height / 2) / tileSize) * tileSize,
           };
+          p.x = Math.max(lockedCameraRef.current.x + 50, Math.min(lockedCameraRef.current.x + canvas.width - 50, p.x));
+          p.y = Math.max(lockedCameraRef.current.y + 50, Math.min(lockedCameraRef.current.y + canvas.height - 50, p.y));
+          if (p.y < lockedCameraRef.current.y + 240) {
+            p.y = lockedCameraRef.current.y + 360;
+          }
         }
       } else {
         isBossFightRef.current = false;
@@ -888,8 +1324,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       enemyTimeOffsetRef.current = survivalTimeRef.current;
       enemiesRef.current.forEach((enemy) => {
         enemy.level = 1;
-        const baseHp = getEnemyBaseHp(1);
-        enemy.maxHp = enemy.isRed ? Math.round(baseHp * 2.5) : baseHp;
+        let baseHp = getEnemyBaseHp(1);
+        if (selectedMapRef.current === 'black_honey_forest') {
+          baseHp = Math.round(baseHp * 1.2);
+        }
+        enemy.maxHp = enemy.isRed ? Math.round(baseHp * 3.0) : baseHp;
         enemy.hp = Math.min(enemy.hp, enemy.maxHp);
         enemy.damage = enemy.isRed ? 25 : 10;
       });
@@ -916,6 +1355,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Dash Action: Dash in movement direction (default), joystick vector, or toward cursor
   const triggerDash = useCallback(() => {
+    if (phiboccionKeypadActiveRef.current || pythagorasMontyHallActiveRef.current) return;
+
     const p = playerRef.current;
     if (p.dashTimer > 0 || p.isDashing) return;
 
@@ -1044,10 +1485,547 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     onUpdatePlayer({ dashTimer: p.dashCooldown, isDashing: true });
   }, [onUpdatePlayer]);
 
+  // Equations generator for Pythagoras "GeoMento Mori" attack
+  const getRandomGeoMoriEquations = () => {
+    // 5 Distinct mathematical curve families with 28 diverse equations
+    const CATEGORIES = {
+      rational: [
+        {
+          id: 'reciprocal',
+          formula: 'y = 1 / x',
+          fn: (x: number) => (Math.abs(x) < 0.14 ? null : 1 / x),
+        },
+        {
+          id: 'neg_reciprocal',
+          formula: 'y = -1 / x',
+          fn: (x: number) => (Math.abs(x) < 0.14 ? null : -1 / x),
+        },
+        {
+          id: 'volcano',
+          formula: 'y = 1 / x²',
+          fn: (x: number) => (Math.abs(x) < 0.2 ? null : Math.min(8, 0.75 / (x * x))),
+        },
+        {
+          id: 'neg_volcano',
+          formula: 'y = -1 / x²',
+          fn: (x: number) => (Math.abs(x) < 0.2 ? null : Math.max(-8, -0.75 / (x * x))),
+        },
+      ],
+      polynomial: [
+        {
+          id: 'parabola',
+          formula: 'y = x²',
+          fn: (x: number) => 0.35 * x * x,
+        },
+        {
+          id: 'neg_parabola',
+          formula: 'y = -x²',
+          fn: (x: number) => -0.35 * x * x,
+        },
+        {
+          id: 'shifted_parabola_down',
+          formula: 'y = 0.25x² - 2',
+          fn: (x: number) => 0.25 * x * x - 2,
+        },
+        {
+          id: 'shifted_parabola_up',
+          formula: 'y = -0.25x² + 2',
+          fn: (x: number) => -0.25 * x * x + 2,
+        },
+        {
+          id: 'cubic',
+          formula: 'y = x³ / 4',
+          fn: (x: number) => (x * x * x) * 0.12,
+        },
+        {
+          id: 'neg_cubic',
+          formula: 'y = -x³ / 4',
+          fn: (x: number) => -(x * x * x) * 0.12,
+        },
+      ],
+      linear: [
+        {
+          id: 'half_linear',
+          formula: 'y = x / 2',
+          fn: (x: number) => x / 2,
+        },
+        {
+          id: 'neg_half_linear',
+          formula: 'y = -x / 2',
+          fn: (x: number) => -x / 2,
+        },
+        {
+          id: 'linear_2x',
+          formula: 'y = 2x',
+          fn: (x: number) => 1.5 * x,
+        },
+        {
+          id: 'neg_linear_2x',
+          formula: 'y = -2x',
+          fn: (x: number) => -1.5 * x,
+        },
+        {
+          id: 'linear_offset_pos',
+          formula: 'y = x - 1.5',
+          fn: (x: number) => x - 1.5,
+        },
+        {
+          id: 'linear_offset_neg',
+          formula: 'y = -x + 1.5',
+          fn: (x: number) => -x + 1.5,
+        },
+      ],
+      wave: [
+        {
+          id: 'sine',
+          formula: 'y = 2·sin(x)',
+          fn: (x: number) => 2 * Math.sin(x),
+        },
+        {
+          id: 'cosine',
+          formula: 'y = 2·cos(x)',
+          fn: (x: number) => 2 * Math.cos(x),
+        },
+        {
+          id: 'broad_sine',
+          formula: 'y = 3·sin(x / 2)',
+          fn: (x: number) => 3 * Math.sin(x / 2),
+        },
+        {
+          id: 'fast_cosine',
+          formula: 'y = 1.8·cos(2x)',
+          fn: (x: number) => 1.8 * Math.cos(2 * x),
+        },
+      ],
+      special: [
+        {
+          id: 'abs_val',
+          formula: 'y = |x|',
+          fn: (x: number) => Math.abs(x) * 0.8,
+        },
+        {
+          id: 'neg_abs_val',
+          formula: 'y = -|x|',
+          fn: (x: number) => -Math.abs(x) * 0.8,
+        },
+        {
+          id: 'radical',
+          formula: 'y = 2·√|x|',
+          fn: (x: number) => 2 * Math.sqrt(Math.abs(x)),
+        },
+        {
+          id: 'neg_radical',
+          formula: 'y = -2·√|x|',
+          fn: (x: number) => -2 * Math.sqrt(Math.abs(x)),
+        },
+        {
+          id: 'witch_agnesi',
+          formula: 'y = 3 / (x² + 1)',
+          fn: (x: number) => 3 / (x * x + 1),
+        },
+        {
+          id: 'neg_witch_agnesi',
+          formula: 'y = -3 / (x² + 1)',
+          fn: (x: number) => -3 / (x * x + 1),
+        },
+        {
+          id: 'semicircle_dome',
+          formula: 'y = √(16 - x²)',
+          fn: (x: number) => (Math.abs(x) <= 3.95 ? Math.sqrt(16 - x * x) : null),
+        },
+        {
+          id: 'semicircle_bowl',
+          formula: 'y = -√(16 - x²)',
+          fn: (x: number) => (Math.abs(x) <= 3.95 ? -Math.sqrt(16 - x * x) : null),
+        },
+      ],
+    };
+
+    pythagorasGeoMoriCastCountRef.current++;
+
+    const SECTOR_POOLS = {
+      topLeft: [
+        { id: 'neg_hyperbola', formula: 'y = -4 / x', fn: (x: number) => (Math.abs(x) > 0.1 ? -4 / x : null) },
+        { id: 'neg_half_linear', formula: 'y = -x / 2', fn: (x: number) => -x / 2 },
+        { id: 'neg_linear_2x', formula: 'y = -2x', fn: (x: number) => -1.5 * x },
+        { id: 'linear_offset_neg', formula: 'y = -x + 1.5', fn: (x: number) => -x + 1.5 },
+        { id: 'neg_radical', formula: 'y = -2·√|x|', fn: (x: number) => -2 * Math.sqrt(Math.abs(x)) },
+      ],
+      topRight: [
+        { id: 'hyperbola', formula: 'y = 4 / x', fn: (x: number) => (Math.abs(x) > 0.1 ? 4 / x : null) },
+        { id: 'half_linear', formula: 'y = x / 2', fn: (x: number) => x / 2 },
+        { id: 'linear_2x', formula: 'y = 2x', fn: (x: number) => 1.5 * x },
+        { id: 'linear_offset_pos', formula: 'y = x - 1.5', fn: (x: number) => x - 1.5 },
+        { id: 'radical', formula: 'y = 2·√|x|', fn: (x: number) => 2 * Math.sqrt(Math.abs(x)) },
+      ],
+      bottomLeft: [
+        { id: 'neg_parabola', formula: 'y = -x²', fn: (x: number) => -0.35 * x * x },
+        { id: 'neg_cubic', formula: 'y = -x³ / 4', fn: (x: number) => -(x * x * x) * 0.12 },
+        { id: 'neg_witch_agnesi', formula: 'y = -3 / (x² + 1)', fn: (x: number) => -3 / (x * x + 1) },
+        { id: 'semicircle_bowl', formula: 'y = -√(16 - x²)', fn: (x: number) => (Math.abs(x) <= 3.95 ? -Math.sqrt(16 - x * x) : null) },
+      ],
+      bottomRight: [
+        { id: 'parabola', formula: 'y = x²', fn: (x: number) => 0.35 * x * x },
+        { id: 'cubic', formula: 'y = x³ / 4', fn: (x: number) => (x * x * x) * 0.12 },
+        { id: 'witch_agnesi', formula: 'y = 3 / (x² + 1)', fn: (x: number) => 3 / (x * x + 1) },
+        { id: 'semicircle_dome', formula: 'y = √(16 - x²)', fn: (x: number) => (Math.abs(x) <= 3.95 ? Math.sqrt(16 - x * x) : null) },
+      ],
+      waves: [
+        { id: 'sine', formula: 'y = 2·sin(x)', fn: (x: number) => 2 * Math.sin(x) },
+        { id: 'cosine', formula: 'y = 2·cos(x)', fn: (x: number) => 2 * Math.cos(x) },
+        { id: 'broad_sine', formula: 'y = 3·sin(x / 2)', fn: (x: number) => 3 * Math.sin(x / 2) },
+        { id: 'fast_cosine', formula: 'y = 1.8·cos(2x)', fn: (x: number) => 1.8 * Math.cos(2 * x) },
+        { id: 'abs_val', formula: 'y = |x|', fn: (x: number) => Math.abs(x) * 0.8 },
+      ]
+    };
+
+    const pickRandom = (list: any[]) => list[Math.floor(Math.random() * list.length)];
+    // Ensure balanced representation across all 4 quadrants / sectors (3 Top-Left, 3 Top-Right, 2 Bottom-Left, 2 Bottom-Right)
+    const selected = [
+      pickRandom(SECTOR_POOLS.topLeft),
+      pickRandom(SECTOR_POOLS.topLeft),
+      pickRandom(SECTOR_POOLS.topLeft),
+      pickRandom(SECTOR_POOLS.topRight),
+      pickRandom(SECTOR_POOLS.topRight),
+      pickRandom(SECTOR_POOLS.topRight),
+      pickRandom(SECTOR_POOLS.bottomLeft),
+      pickRandom(SECTOR_POOLS.bottomLeft),
+      pickRandom(SECTOR_POOLS.bottomRight),
+      pickRandom(SECTOR_POOLS.bottomRight),
+    ].sort(() => Math.random() - 0.5);
+
+    // Assign 10 distinct neon colors so curves on screen match top-left equations
+    const DISTINCT_COLORS = [
+      '#38bdf8', '#facc15', '#f43f5e', '#a855f7', '#34d399',
+      '#fb923c', '#ec4899', '#3b82f6', '#10b981', '#f59e0b'
+    ];
+    return selected.map((eq, i) => ({
+      ...eq,
+      color: DISTINCT_COLORS[i % DISTINCT_COLORS.length],
+    }));
+  };
+
+  // Geometry helper for Pythagoras "(Mont)YOUR (hall) Problem"
+  const getMontyDoorGeometry = (canvas: HTMLCanvasElement) => {
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    const dw = Math.min(130, Math.floor((canvas.width - 90) / 3));
+    const dh = Math.floor(dw * 1.55);
+    const spacing = Math.min(180, Math.floor(canvas.width / 3.4));
+
+    const doorY = cy - Math.floor(dh / 2) - 15;
+    const bw = Math.min(dw + 24, spacing - 10);
+    const bh = 42;
+    const buttonY = doorY + dh + 16;
+
+    const doors = [0, 1, 2].map((i) => {
+      const doorX = cx + (i - 1) * spacing;
+      return {
+        index: i,
+        x: doorX - dw / 2,
+        y: doorY,
+        w: dw,
+        h: dh,
+        cx: doorX,
+        buttonX: doorX - bw / 2,
+        buttonY: buttonY,
+        buttonW: bw,
+        buttonH: bh,
+      };
+    });
+
+    return { cx, cy, dw, dh, spacing, doorY, bw, bh, buttonY, doors };
+  };
+
   // Input Listeners
   useEffect(() => {
+    const handleMontyPickDoor = (doorIndex: number) => {
+      if (!pythagorasMontyHallActiveRef.current) return;
+      const step = pythagorasMontyStepRef.current;
+
+      if (step === 'PICK') {
+        pythagorasMontyPlayerPickRef.current = doorIndex;
+        soundEngine.playShoot('wand');
+
+        // Host reveals an empty door that is NOT player's pick and NOT the prize door
+        const prize = pythagorasMontyPrizeDoorRef.current;
+        const availableEmpty = [0, 1, 2].filter((d) => d !== doorIndex && d !== prize);
+        const chosenEmpty = availableEmpty[Math.floor(Math.random() * availableEmpty.length)];
+        pythagorasMontyRevealedEmptyDoorRef.current = chosenEmpty;
+
+        pythagorasMontyStepRef.current = 'REVEAL_ANIM';
+        pythagorasMontyTimerRef.current = 1.0;
+      } else if (step === 'CHOICE') {
+        // Cannot pick the already opened empty door
+        if (doorIndex === pythagorasMontyRevealedEmptyDoorRef.current) return;
+
+        pythagorasMontyFinalPickRef.current = doorIndex;
+        const prize = pythagorasMontyPrizeDoorRef.current;
+        pythagorasMontyStepRef.current = 'RESULT';
+        pythagorasMontyTimerRef.current = 2.8;
+
+        const boss = bossInstanceRef.current;
+        if (doorIndex === prize) {
+          // WIN! Deal 20% of Pythagoras Max HP
+          pythagorasMontyResultTypeRef.current = 'WIN';
+          soundEngine.playLevelUp();
+          if (boss) {
+            const damage = Math.round(boss.maxHp * 0.20);
+            boss.hp = Math.max(1, boss.hp - damage);
+            floatingTextsRef.current.push({
+              id: nextEntityId.current++,
+              x: boss.x,
+              y: boss.y - 45,
+              text: `-${damage} HP!`,
+              color: '#38bdf8',
+              life: 0,
+              maxLife: 2.0,
+              vy: -35,
+            });
+          }
+          if (screenShakeEnabledRef.current) {
+            screenShakeRef.current = 8;
+          }
+        } else {
+          // LOSE! Deal 20% of player's CURRENT health
+          pythagorasMontyResultTypeRef.current = 'LOSE';
+          soundEngine.playPlayerHurt();
+          const currentHp = playerRef.current.hp;
+          const playerDmg = Math.max(1, Math.round(currentHp * 0.20));
+          playerRef.current.hp = Math.max(0, currentHp - playerDmg);
+          floatingTextsRef.current.push({
+            id: nextEntityId.current++,
+            x: playerRef.current.x,
+            y: playerRef.current.y - 35,
+            text: `-${playerDmg} HP!`,
+            color: '#ef4444',
+            life: 0,
+            maxLife: 2.0,
+            vy: -35,
+          });
+          if (screenShakeEnabledRef.current) {
+            screenShakeRef.current = 10;
+          }
+        }
+      }
+    };
+
+    const submitMathAnswer = () => {
+      if (phiboccionKeypadResultTimerRef.current > 0 || phiboccionKeypadPendingAdvanceRef.current) {
+        return;
+      }
+
+      const currentInput = phiboccionKeypadInputRef.current.trim();
+      const correctAnswer = phiboccionKeypadQuestionRef.current?.a || "";
+      const isFib = phiboccionKeypadModeRef.current === 'FIBONACCI';
+
+      if (isFib) {
+        const isCorrect = currentInput === correctAnswer;
+        phiboccionKeypadLastAnswerCorrectRef.current = isCorrect;
+        if (isCorrect) {
+          phiboccionKeypadAnswersCorrectRef.current++;
+          phiboccionKeypadResultTextRef.current = "CORRECT!";
+          phiboccionKeypadResultTimerRef.current = 0.8;
+          soundEngine.playLevelUp();
+        } else {
+          phiboccionKeypadResultTextRef.current = `WRONG! (ANS: ${correctAnswer})`;
+          phiboccionKeypadResultTimerRef.current = 1.2;
+          soundEngine.playPlayerHurt();
+        }
+      } else {
+        if (currentInput === correctAnswer) {
+          phiboccionKeypadAnswersCorrectRef.current++;
+          phiboccionKeypadResultTextRef.current = "CORRECT!";
+          phiboccionKeypadResultTimerRef.current = 1.0;
+          soundEngine.playLevelUp();
+
+          const canvas = canvasRef.current;
+          if (canvas) {
+            const sx = canvas.width / 2;
+            const sy = canvas.height - 390;
+            for (let i = 0; i < 20; i++) {
+              const ang = Math.random() * Math.PI * 2;
+              const spd = Math.random() * 90 + 30;
+              particlesRef.current.push({
+                x: sx + (isBossFightRef.current ? lockedCameraRef.current.x : playerRef.current.x - canvas.width / 2),
+                y: sy + (isBossFightRef.current ? lockedCameraRef.current.y : playerRef.current.y - canvas.height / 2),
+                vx: Math.cos(ang) * spd,
+                vy: Math.sin(ang) * spd,
+                size: Math.random() * 4 + 2,
+                color: '#22c55e',
+                alpha: 0.9,
+                decay: 2.0,
+              });
+            }
+          }
+        } else {
+          phiboccionKeypadResultTextRef.current = `WRONG! (ANS: ${correctAnswer})`;
+          phiboccionKeypadResultTimerRef.current = 1.2;
+          soundEngine.playPlayerHurt();
+
+          const canvas = canvasRef.current;
+          if (canvas) {
+            const sx = canvas.width / 2;
+            const sy = canvas.height - 390;
+            for (let i = 0; i < 20; i++) {
+              const ang = Math.random() * Math.PI * 2;
+              const spd = Math.random() * 90 + 30;
+              particlesRef.current.push({
+                x: sx + (isBossFightRef.current ? lockedCameraRef.current.x : playerRef.current.x - canvas.width / 2),
+                y: sy + (isBossFightRef.current ? lockedCameraRef.current.y : playerRef.current.y - canvas.height / 2),
+                vx: Math.cos(ang) * spd,
+                vy: Math.sin(ang) * spd,
+                size: Math.random() * 4 + 2,
+                color: '#ef4444',
+                alpha: 0.9,
+                decay: 2.0,
+              });
+            }
+          }
+        }
+      }
+
+      phiboccionKeypadPendingAdvanceRef.current = true;
+    };
+
+    const triggerGoogolbraStruggle = () => {
+      if (googolbraStateRef.current !== 'SNEAK_GRASP') return;
+      const now = Date.now();
+      if (now - lastStruggleTriggerTimeRef.current < 60) return;
+      lastStruggleTriggerTimeRef.current = now;
+      const sneak = googolbraSneakStateRef.current;
+      sneak.struggles++;
+      googolbraGraspLastStrugglesRef.current = -1; // Force immediate HUD update on struggle click
+      soundEngine.playHit();
+      if (screenShakeEnabledRef.current) screenShakeRef.current = Math.min(screenShakeRef.current + 3, 12);
+
+      const p = playerRef.current;
+      if (p) {
+        for (let i = 0; i < 6; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 100 + 40;
+          particlesRef.current.push({
+            x: p.x,
+            y: p.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: Math.random() * 3 + 2,
+            color: '#38bdf8',
+            alpha: 0.9,
+            decay: 3.5,
+          });
+        }
+      }
+
+      const inDamage = sneak.graspTimer >= 5.0;
+      const graceRemaining = Math.max(0, 5.0 - sneak.graspTimer);
+
+      if (sneak.struggles >= sneak.maxStruggles) {
+        googolbraStateRef.current = 'COOLDOWN';
+        googolbraCooldownTimerRef.current = 1.0; // 1s breathing time before next constriction
+        if (bossInstanceRef.current) {
+          bossInstanceRef.current.googolbraState = 'COOLDOWN';
+          bossInstanceRef.current.x = -9999;
+          bossInstanceRef.current.y = -9999;
+        }
+        googolbraCurrentSegmentsRef.current = [];
+        soundEngine.playExplosion();
+        if (screenShakeEnabledRef.current) screenShakeRef.current = 16;
+        const lang = getLanguage();
+        floatingTextsRef.current.push({
+          id: nextEntityId.current++,
+          x: p ? p.x : 0,
+          y: p ? p.y - 60 : 0,
+          text: lang === 'pt-BR' ? 'LIBERTOU-SE!' : 'BROKE FREE!',
+          color: '#4ade80',
+          life: 0,
+          maxLife: 2.0,
+          vy: -40,
+        });
+
+        window.dispatchEvent(new CustomEvent('googolbra-grasp-state', {
+          detail: {
+            active: false,
+            struggles: sneak.maxStruggles,
+            maxStruggles: sneak.maxStruggles,
+            graceTimer: 0,
+            inDamagePhase: false,
+          }
+        }));
+      } else {
+        window.dispatchEvent(new CustomEvent('googolbra-grasp-state', {
+          detail: {
+            active: true,
+            struggles: sneak.struggles,
+            maxStruggles: sneak.maxStruggles,
+            graceTimer: graceRemaining,
+            inDamagePhase: inDamage,
+          }
+        }));
+      }
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Spacebar Struggles during Googolbra Sssneak Attack Grasp
+      if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
+        if (googolbraStateRef.current === 'SNEAK_GRASP') {
+          e.preventDefault();
+          triggerGoogolbraStruggle();
+          return;
+        }
+      }
+
       if (e.repeat) return;
+
+      // Handle Keypad Interception if Active
+      if (phiboccionKeypadActiveRef.current) {
+        if (phiboccionKeypadResultTimerRef.current > 0 || phiboccionKeypadPendingAdvanceRef.current) {
+          e.preventDefault();
+          return;
+        }
+        if (e.key >= '0' && e.key <= '9') {
+          e.preventDefault();
+          if (phiboccionKeypadInputRef.current.length < 3) {
+            phiboccionKeypadInputRef.current += e.key;
+            soundEngine.playShoot('wand');
+          }
+          return;
+        }
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+          e.preventDefault();
+          if (phiboccionKeypadInputRef.current.length > 0) {
+            phiboccionKeypadInputRef.current = phiboccionKeypadInputRef.current.slice(0, -1);
+            soundEngine.playShoot('sword');
+          }
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitMathAnswer();
+          return;
+        }
+      }
+
+      // Handle Pythagoras Monty Hall Keys (1, 2, 3)
+      if (pythagorasMontyHallActiveRef.current) {
+        if (e.key === '1') {
+          e.preventDefault();
+          handleMontyPickDoor(0);
+          return;
+        }
+        if (e.key === '2') {
+          e.preventDefault();
+          handleMontyPickDoor(1);
+          return;
+        }
+        if (e.key === '3') {
+          e.preventDefault();
+          handleMontyPickDoor(2);
+          return;
+        }
+      }
+
       if (e.key === 'Escape') {
         e.preventDefault();
         if (onTogglePause) {
@@ -1083,11 +2061,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           id.includes('virtual-joystick') ||
           id.includes('hud-dash') ||
           id.includes('hud-pause') ||
+          id.includes('googolbra-struggle') ||
           id.includes('options') ||
           id.includes('modal') ||
           id.includes('menu') ||
           className.includes('virtual-joystick') ||
           className.includes('hud-dash') ||
+          className.includes('googolbra-struggle') ||
           className.includes('hud-pause')
         ) {
           return true;
@@ -1127,11 +2107,101 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     const handlePointerDown = (e: PointerEvent) => {
       const targetElement = e.target as HTMLElement | null;
+      if (targetElement?.closest('#googolbra-struggle-button') || targetElement?.closest('#googolbra-struggle-overlay')) {
+        return;
+      }
+      if (googolbraStateRef.current === 'SNEAK_GRASP') {
+        triggerGoogolbraStruggle();
+      }
+
       if (!isTouchOnExcludedControls(targetElement)) {
         updateCursorPos(e.clientX, e.clientY);
         if (mobileModeRef.current && mobileAimModeRef.current === 'TOUCH') {
           isCursorJoystickActiveRef.current = true;
         }
+      }
+
+      // Check math keypad clicks
+      if (phiboccionKeypadActiveRef.current) {
+        if (phiboccionKeypadResultTimerRef.current > 0 || phiboccionKeypadPendingAdvanceRef.current) {
+          return;
+        }
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
+          const scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
+          const sx = (e.clientX - rect.left) * scaleX;
+          const sy = (e.clientY - rect.top) * scaleY;
+
+          const cx = canvas.width / 2;
+          const cy = canvas.height / 2 - 120;
+
+          for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 3; col++) {
+              const bx = cx - 115 + col * 80;
+              const by = cy + 105 + row * 65;
+              const bw = 70;
+              const bh = 55;
+
+              if (sx >= bx && sx <= bx + bw && sy >= by && sy <= by + bh) {
+                let btnLabel = '';
+                if (row < 3) {
+                  btnLabel = String(7 - row * 3 + col);
+                } else {
+                  if (col === 0) btnLabel = 'DEL';
+                  else if (col === 1) btnLabel = '0';
+                  else btnLabel = 'ENTER';
+                }
+
+                if (btnLabel === 'DEL') {
+                  if (phiboccionKeypadInputRef.current.length > 0) {
+                    phiboccionKeypadInputRef.current = phiboccionKeypadInputRef.current.slice(0, -1);
+                    soundEngine.playShoot('sword');
+                  }
+                } else if (btnLabel === 'ENTER') {
+                  submitMathAnswer();
+                } else {
+                  if (phiboccionKeypadInputRef.current.length < 3) {
+                    phiboccionKeypadInputRef.current += btnLabel;
+                    soundEngine.playShoot('wand');
+                  }
+                }
+                return;
+              }
+            }
+          }
+
+          // Intercept and absorb all clicks inside the overall keypad bounds to prevent movement
+          if (sx >= cx - 150 && sx <= cx + 150 && sy >= cy - 140 && sy <= cy + 380) {
+            return;
+          }
+        }
+      }
+
+      // Check Pythagoras Monty Hall door clicks
+      if (pythagorasMontyHallActiveRef.current) {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
+          const scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
+          const sx = (e.clientX - rect.left) * scaleX;
+          const sy = (e.clientY - rect.top) * scaleY;
+
+          const { doors } = getMontyDoorGeometry(canvas);
+
+          for (const d of doors) {
+            const hitDoor = sx >= d.x && sx <= d.x + d.w && sy >= d.y && sy <= d.y + d.h;
+            const hitButton = sx >= d.buttonX && sx <= d.buttonX + d.buttonW && sy >= d.buttonY && sy <= d.buttonY + d.buttonH;
+
+            if (hitDoor || hitButton) {
+              handleMontyPickDoor(d.index);
+              return;
+            }
+          }
+        }
+        return;
       }
 
       if (!isClickToMoveActiveRef.current || isPausedRef.current) return;
@@ -1254,12 +2324,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     };
 
+    const handleTriggerStruggleEvent = () => {
+      triggerGoogolbraStruggle();
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerdown', handlePointerDown);
     window.addEventListener('trigger-dash', handleTriggerDashEvent);
+    window.addEventListener('trigger-struggle', handleTriggerStruggleEvent);
     window.addEventListener('trigger-walk-to-cursor', handleTriggerWalkToCursor);
     window.addEventListener('joystick-move', handleJoystickMove);
     window.addEventListener('cursor-joystick-move', handleCursorJoystickMove);
@@ -1271,6 +2346,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('trigger-dash', handleTriggerDashEvent);
+      window.removeEventListener('trigger-struggle', handleTriggerStruggleEvent);
       window.removeEventListener('trigger-walk-to-cursor', handleTriggerWalkToCursor);
       window.removeEventListener('joystick-move', handleJoystickMove);
       window.removeEventListener('cursor-joystick-move', handleCursorJoystickMove);
@@ -1311,7 +2387,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const ey = p.y + Math.sin(angle) * spawnRadius;
 
         // Enemy Base HP: doubles at level 2, with rate of increase slowing down subsequently
-        const baseHp = getEnemyBaseHp(enemyLevel);
+        let baseHp = getEnemyBaseHp(enemyLevel);
+        if (selectedMapRef.current === 'black_honey_forest') {
+          baseHp = Math.round(baseHp * 1.2);
+        }
 
         // Enemy speed scales with time to steadily increase combat pressure
         const baseSpeed = Math.random() * 16 + 48 + Math.min(80, (enemyLevel - 1) * 2.2);
@@ -1320,11 +2399,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
         // Enemy Archetypes
         const roll = Math.random();
-        let type: Enemy['type'] = 'WRAITH';
-        let color = '#38bdf8';
+        const isMathRealm = selectedMapRef.current === 'mathematical_realm';
+        let type: Enemy['type'] = isMathRealm ? 'UNOCONDA' : 'WRAITH';
+        let color = isMathRealm ? '#10b981' : '#38bdf8';
         let radius = 13;
         let hp = baseHp; // Base 20 HP
-        let name = 'Torch Peasant';
+        let name = isMathRealm ? 'Unoconda' : 'Torch Peasant';
         let damage = 10; // Base enemy deals 10 damage
         let isRed = false;
         speed = baseSpeed * 1.0; // Base 1x speed
@@ -1334,43 +2414,82 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const isRedTimeEligible = curTime >= 80;
         const redSpawnChance = curTime >= 300 ? 0.82 : curTime >= 180 ? 0.88 : 0.93;
         if (isRedTimeEligible && roll > redSpawnChance) {
-          type = 'GHOUL';
+          isRed = true;
+          if (selectedMapRef.current === 'mathematical_realm') {
+            type = 'OBMOOSE';
+            name = 'ObMoose';
+            radius = 20;
+          } else {
+            type = 'GHOUL';
+            name = 'Village Knight';
+            radius = 16;
+          }
           color = '#ef4444'; // Distinct crimson red
-          radius = 16;
-          hp = baseHp * 1.5; // 30 HP if base is 20
-          name = 'Village Knight';
+          hp = baseHp * 3.0; // 60 HP if base is 20
           speed = baseSpeed * 0.75;
           damage = 25; // 25 damage for Red enemy
-          isRed = true;
         } else {
           const subRoll = Math.random();
           if (subRoll < 0.0625) {
-            type = 'ROCK_THROWER';
-            color = '#d97706';
-            radius = 14;
-            hp = Math.round(baseHp * 1.25); // 25 HP when base is 20
-            name = 'Rock Thrower';
-            speed = baseSpeed * 0.85; // 0.85x speed
-            damage = 20; // 20 damage
-            isRed = false;
+            if (isMathRealm) {
+              type = 'BUNNARY';
+              color = '#06b6d4';
+              radius = 20;
+              hp = Math.round(baseHp * 1.25); // 25 HP when base is 20
+              name = 'Bunnary';
+              speed = baseSpeed * 0.85; // 0.85x speed
+              damage = 20; // 20 damage
+              isRed = false;
+            } else {
+              type = 'ROCK_THROWER';
+              color = '#d97706';
+              radius = 14;
+              hp = Math.round(baseHp * 1.25); // 25 HP when base is 20
+              name = 'Rock Thrower';
+              speed = baseSpeed * 0.85; // 0.85x speed
+              damage = 20; // 20 damage
+              isRed = false;
+            }
           } else if (subRoll < 0.53125) {
-            type = 'BAT';
-            color = '#a855f7';
-            radius = 13;
-            hp = baseHp; // 20 HP when base is 20
-            name = 'Pitchfork Peasant';
-            speed = baseSpeed * 1.15; // 1.15x speed
-            damage = 12;
-            isRed = false;
+            if (isMathRealm) {
+              type = 'VIIIPER';
+              color = '#a855f7';
+              radius = 14;
+              hp = baseHp; // 20 HP when base is 20
+              name = 'VIIIper';
+              speed = baseSpeed * 1.0; // Standard 1.0x speed
+              damage = 12;
+              isRed = false;
+            } else {
+              type = 'BAT';
+              color = '#a855f7';
+              radius = 13;
+              hp = baseHp; // 20 HP when base is 20
+              name = 'Pitchfork Peasant';
+              speed = baseSpeed * 1.0; // Standard 1.0x speed
+              damage = 12;
+              isRed = false;
+            }
           } else {
-            type = 'WRAITH';
-            color = '#38bdf8';
-            radius = 13;
-            hp = baseHp; // Base 20 HP
-            name = 'Torch Peasant';
-            speed = baseSpeed * 1.0;
-            damage = 10;
-            isRed = false;
+            if (isMathRealm) {
+              type = 'UNOCONDA';
+              color = '#10b981';
+              radius = 13;
+              hp = baseHp; // Base 20 HP
+              name = 'Unoconda';
+              speed = baseSpeed * 1.15; // Same 1.15x speed as Torch Peasant
+              damage = 10;
+              isRed = false;
+            } else {
+              type = 'WRAITH';
+              color = '#38bdf8';
+              radius = 13;
+              hp = baseHp; // Base 20 HP
+              name = 'Torch Peasant';
+              speed = baseSpeed * 1.15; // Swifter 1.15x speed
+              damage = 10;
+              isRed = false;
+            }
           }
         }
 
@@ -1396,6 +2515,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           facingDir: (p.x - ex) < 0 ? -1 : 1,
           rockThrowTimer: 3.5 + Math.random() * 2.0,
           targetDistance: 220 + Math.random() * 40,
+          bunnaryMsgIndex: Math.floor(Math.random() * BUNNARY_MESSAGES.length),
+          bunnaryCharIndex: -1,
+          bunnarySymbolTimer: 0.6,
+          bunnaryInGap: false,
         });
       }
     }
@@ -1472,38 +2595,27 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       const intSec = Math.floor(survivalTimeRef.current);
       if (intSec !== lastReportedSurvivalSecRef.current) {
         lastReportedSurvivalSecRef.current = intSec;
-        onUpdateSurvivalTime(intSec);
+        onUpdateSurvivalTime(intSec, selectedMapRef.current);
       }
 
       // Boss Rush Mode Logic
       if (isBossRush) {
-        // Locked at Level 1
-        if (p.level > 1 || p.exp > 0) {
-          p.level = 1;
-          p.exp = 0;
-          onUpdatePlayer({ level: 1, exp: 0 });
-        }
-
         if (!bossInstanceRef.current) {
           bossRushPauseTimerRef.current -= dt;
           if (bossRushPauseTimerRef.current <= 0) {
             if (bossRushIndexRef.current < bossRushQueueRef.current.length) {
               const bId = bossRushQueueRef.current[bossRushIndexRef.current];
-              const selectedBoss = BOSS_POOL.find(b => b.id === bId) || BOSS_POOL[0];
-              if (onBossIncoming) {
-                onBossIncoming(selectedBoss);
-              } else {
-                spawnBossFight(bId);
-              }
+              spawnBossFight(bId);
             } else {
               // Victory!
               onGameOver({
                 time: survivalTimeRef.current,
-                level: 1,
+                level: playerRef.current.level,
                 kills: killsCountRef.current,
                 bossesKilled: bossesKilledRef.current,
                 totalDamage: totalDamageDealtRef.current,
                 isVictory: true,
+                isFullBossRush: bossRushQueueRef.current.length > 1,
               });
               return;
             }
@@ -1522,11 +2634,20 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             const destinyControlItem = statItemsRef.current.find((s) => s.id === 'destiny_control');
             if (destinyControlItem && destinyControlItem.level >= 2 && onTriggerBossSelection) {
               const count = destinyControlItem.level >= 4 ? 3 : 2;
-              const shuffled = [...BOSS_POOL].sort(() => 0.5 - Math.random());
+              const poolForSelection = selectedMapRef.current === 'mathematical_realm'
+                ? BOSS_POOL
+                : BOSS_POOL.filter((b) => b.id !== 'phiboccion');
+              const shuffled = [...poolForSelection].sort(() => 0.5 - Math.random());
               const selection = shuffled.slice(0, count);
               onTriggerBossSelection(selection);
             } else {
-              const selectedBoss = BOSS_POOL[Math.floor(Math.random() * BOSS_POOL.length)];
+              let selectedBoss;
+              if (selectedMapRef.current === 'mathematical_realm') {
+                selectedBoss = BOSS_POOL.find((b) => b.id === 'phiboccion') || BOSS_POOL[0];
+              } else {
+                const availableBosses = BOSS_POOL.filter((b) => b.id !== 'phiboccion');
+                selectedBoss = availableBosses[Math.floor(Math.random() * availableBosses.length)] || BOSS_POOL[0];
+              }
               if (onBossIncoming) {
                 onBossIncoming(selectedBoss);
               } else {
@@ -1553,6 +2674,37 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           bossHitFlashRef.current -= dt;
         }
 
+        // Monitor damage taken for Googolbra Constriction Repel
+        if (bossPreviousHpRef.current === -1 || bossPreviousHpRef.current < boss.hp) {
+          bossPreviousHpRef.current = boss.hp;
+        }
+        if (boss.hp < bossPreviousHpRef.current) {
+          const dmgDealt = bossPreviousHpRef.current - boss.hp;
+          bossPreviousHpRef.current = boss.hp;
+
+          if (boss.id === 'googolbra' && googolbraStateRef.current === 'CONSTRICTION') {
+            googolbraConstrictionDamageTakenRef.current += dmgDealt;
+            const threshold = boss.maxHp / 5;
+            if (googolbraConstrictionDamageTakenRef.current >= threshold) {
+              googolbraStateRef.current = 'RETREATING';
+              boss.googolbraState = 'RETREATING';
+              soundEngine.playHit();
+              if (screenShakeEnabledRef.current) screenShakeRef.current = 8;
+              const lang = getLanguage();
+              floatingTextsRef.current.push({
+                id: nextEntityId.current++,
+                x: boss.x,
+                y: boss.y - 45,
+                text: lang === 'pt-BR' ? 'REPELIDO! RECUANDO!' : 'REPELLED! RETREATING!',
+                color: '#38bdf8',
+                life: 0,
+                maxLife: 1.5,
+                vy: -30,
+              });
+            }
+          }
+        }
+
         if (boss.vineRootedDuration && boss.vineRootedDuration > 0) {
           boss.vineRootedDuration -= dt;
         }
@@ -1567,22 +2719,24 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           boss.burnTickTimer = (boss.burnTickTimer || 0) - dt;
           if (boss.burnTickTimer <= 0) {
             boss.burnTickTimer = 0.5; // Tick twice per second for 5s
-            const tickDmg = boss.burnDamagePerTick || 1;
-            const actualTickDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : tickDmg;
-            boss.hp -= actualTickDmg;
-            boss.lastHitBy = 'seeking_wisp';
-            bossHitFlashRef.current = 0.08;
+            if (!boss.isInvincible) {
+              const tickDmg = boss.burnDamagePerTick || 1;
+              const actualTickDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : tickDmg;
+              boss.hp -= actualTickDmg;
+              boss.lastHitBy = 'seeking_wisp';
+              bossHitFlashRef.current = 0.08;
 
-            floatingTextsRef.current.push({
-              id: nextEntityId.current++,
-              x: boss.x + (Math.random() - 0.5) * 20,
-              y: boss.y - 25,
-              text: `${Math.round(actualTickDmg)}`,
-              color: '#ef4444',
-              life: 0,
-              maxLife: 0.6,
-              vy: -40,
-            });
+              floatingTextsRef.current.push({
+                id: nextEntityId.current++,
+                x: boss.x + (Math.random() - 0.5) * 20,
+                y: boss.y - 25,
+                text: `${Math.round(actualTickDmg)}`,
+                color: '#ef4444',
+                life: 0,
+                maxLife: 0.6,
+                vy: -40,
+              });
+            }
           }
         }
 
@@ -1592,22 +2746,24 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           boss.acidTickTimer = (boss.acidTickTimer || 0) - dt;
           if (boss.acidTickTimer <= 0) {
             boss.acidTickTimer = 1.0; // Tick once per second for Acid
-            const tickDmg = boss.acidDamagePerTick || 1;
-            const actualTickDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : tickDmg;
-            boss.hp -= actualTickDmg;
-            boss.lastHitBy = 'brimstone_shotgun';
-            bossHitFlashRef.current = 0.08;
+            if (!boss.isInvincible) {
+              const tickDmg = boss.acidDamagePerTick || 1;
+              const actualTickDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : tickDmg;
+              boss.hp -= actualTickDmg;
+              boss.lastHitBy = 'brimstone_shotgun';
+              bossHitFlashRef.current = 0.08;
 
-            floatingTextsRef.current.push({
-              id: nextEntityId.current++,
-              x: boss.x + (Math.random() - 0.5) * 20,
-              y: boss.y - 25,
-              text: `${Math.round(actualTickDmg)}`,
-              color: '#22c55e',
-              life: 0,
-              maxLife: 0.6,
-              vy: -40,
-            });
+              floatingTextsRef.current.push({
+                id: nextEntityId.current++,
+                x: boss.x + (Math.random() - 0.5) * 20,
+                y: boss.y - 25,
+                text: `${Math.round(actualTickDmg)}`,
+                color: '#22c55e',
+                life: 0,
+                maxLife: 0.6,
+                vy: -40,
+              });
+            }
           }
         }
 
@@ -1615,7 +2771,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           const nowMs = performance.now();
           const currentIntTimer = Math.ceil(bossTimerRef.current);
           const hpDiff = Math.abs(boss.hp - lastReportedBossHpRef.current);
-          if (boss.hp <= 0 || currentIntTimer !== lastReportedBossTimerRef.current || (hpDiff >= 1 && nowMs - lastBossReportTimeRef.current >= 80)) {
+          const minReportInterval = mobileModeRef.current ? 200 : 80;
+          if (boss.hp <= 0 || currentIntTimer !== lastReportedBossTimerRef.current || (hpDiff >= 1 && nowMs - lastBossReportTimeRef.current >= minReportInterval)) {
             lastBossReportTimeRef.current = nowMs;
             lastReportedBossTimerRef.current = currentIntTimer;
             lastReportedBossHpRef.current = boss.hp;
@@ -1747,8 +2904,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   id: nextEntityId.current++,
                   x: spawnX,
                   y: spawnY,
-                  hp: 1,
-                  maxHp: 1,
+                  hp: selectedMapRef.current === 'black_honey_forest' ? 2 : 1,
+                  maxHp: selectedMapRef.current === 'black_honey_forest' ? 2 : 1,
                   level: playerLevel,
                   speed: 120, // 2x base speed (~60 base * 2)
                   radius: 9,
@@ -1791,7 +2948,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             if (isCursorForbidden) {
               // Deal 20 DPS to the player while cursor is NOT away from the Boss
               const dps = 20;
-              const dmgThisFrame = dps * dt;
+              const dmgThisFrame = invincibilityRef.current ? 0 : (dps * dt);
               playerRef.current.hp = Math.max(0, playerRef.current.hp - dmgThisFrame);
               lastReportedHpRef.current = playerRef.current.hp;
               onUpdatePlayer({ hp: playerRef.current.hp });
@@ -1918,7 +3075,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               const distToP = Math.hypot(p.x - boss.x, p.y - boss.y);
               if (distToP < p.radius + boss.radius) {
                 nightBearHasHitPlayerRef.current = true;
-                const chargeDmg = Math.max(1, Math.round(boss.damage * (1 - (p.damageReduction || 0))));
+                const chargeDmg = invincibilityRef.current ? 0 : Math.max(1, Math.round(boss.damage * (1 - (p.damageReduction || 0))));
                 p.hp = Math.max(0, p.hp - chargeDmg);
                 lastReportedHpRef.current = p.hp;
                 onUpdatePlayer({ hp: p.hp });
@@ -2470,7 +3627,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                           });
                         } else {
                           playerInvincibleTimerRef.current = 1.0; // 1s invincibility time
-                          const beamDmg = Math.max(1, Math.round(20 * (1 - (p.damageReduction || 0))));
+                          const beamDmg = invincibilityRef.current ? 0 : Math.max(1, Math.round(20 * (1 - (p.damageReduction || 0))));
                           p.hp = Math.max(0, p.hp - beamDmg);
                           lastReportedHpRef.current = p.hp;
                           soundEngine.playPlayerHurt();
@@ -2785,7 +3942,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                           });
                       } else {
                         playerInvincibleTimerRef.current = 1.0; // 1s invincibility time
-                        const beamDmg = Math.max(1, Math.round(25 * (1 - (p.damageReduction || 0))));
+                        const beamDmg = invincibilityRef.current ? 0 : Math.max(1, Math.round(25 * (1 - (p.damageReduction || 0))));
                         p.hp = Math.max(0, p.hp - beamDmg);
                         lastReportedHpRef.current = p.hp;
                         soundEngine.playPlayerHurt();
@@ -2884,6 +4041,1288 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   archmageAttackTimerRef.current = 1.2;
                   archmageSubStepRef.current = 0;
                 }
+              }
+            }
+          }
+        } else if (boss.id === 'googolbra') {
+          // --- GOOGOLBRA BOSS BEHAVIOR & AI ---
+          const cam = lockedCameraRef.current;
+          const tileSize = 80;
+
+          // Ensure spiral path is initialized for current locked arena
+          if (googolbraSpiralPathRef.current.length === 0) {
+            googolbraSpiralPathRef.current = generateGoogolbraSpiralPath(cam.x, cam.y, canvas.width, canvas.height);
+          }
+
+          if (googolbraStateRef.current === 'CONSTRICTION') {
+            boss.googolbraState = 'CONSTRICTION';
+            // Snake advances along spiral path: top-right -> top-left -> bottom-left -> bottom-right ...
+            const spiralSpeed = 8.4; // tiles per second (+50% speed)
+            googolbraProgressRef.current += dt * spiralSpeed;
+
+            const headPt = getPathPointAtProgress(googolbraSpiralPathRef.current, googolbraProgressRef.current);
+            if (headPt) {
+              boss.x = headPt.x;
+              boss.y = headPt.y;
+              googolbraHeadAngleRef.current = headPt.angle;
+            }
+
+            // Body trailing behind the head (up to 100 segments representing Googol's 100 zeros)
+            const segCount = Math.min(100, Math.max(0, Math.floor(googolbraProgressRef.current)));
+            const segs: { x: number; y: number; dirX: number; dirY: number; angle: number }[] = [];
+            for (let s = 1; s <= segCount; s++) {
+              const pt = getPathPointAtProgress(googolbraSpiralPathRef.current, googolbraProgressRef.current - s);
+              if (pt) segs.push(pt);
+            }
+            googolbraCurrentSegmentsRef.current = segs;
+
+            // Collision check: Head
+            const headContact = Math.hypot(p.x - boss.x, p.y - boss.y) <= p.radius + 36;
+            if (headContact && playerInvincibleTimerRef.current <= 0) {
+              const contactDmg = invincibilityRef.current ? 0 : Math.max(1, Math.round(boss.damage * (1 - (p.damageReduction || 0))));
+              p.hp = Math.max(0, p.hp - contactDmg);
+              lastReportedHpRef.current = p.hp;
+              onUpdatePlayer({ hp: p.hp });
+              playerInvincibleTimerRef.current = 0.55;
+              soundEngine.playPlayerHurt();
+              if (screenShakeEnabledRef.current) {
+                screenShakeRef.current = Math.min(screenShakeRef.current + 8, 14);
+              }
+            }
+
+            // Collision check: Body segments
+            if (playerInvincibleTimerRef.current <= 0) {
+              for (const seg of segs) {
+                if (Math.hypot(p.x - seg.x, p.y - seg.y) <= p.radius + 34) {
+                  const segDmg = invincibilityRef.current ? 0 : Math.max(1, Math.round((boss.damage * 0.75) * (1 - (p.damageReduction || 0))));
+                  p.hp = Math.max(0, p.hp - segDmg);
+                  lastReportedHpRef.current = p.hp;
+                  onUpdatePlayer({ hp: p.hp });
+                  playerInvincibleTimerRef.current = 0.55;
+                  soundEngine.playPlayerHurt();
+                  if (screenShakeEnabledRef.current) {
+                    screenShakeRef.current = Math.min(screenShakeRef.current + 6, 12);
+                  }
+                  break;
+                }
+              }
+            }
+
+            // If Googolbra coils all the way to the center of the arena without being repelled
+            if (googolbraProgressRef.current >= googolbraSpiralPathRef.current.length - 1) {
+              googolbraStateRef.current = 'RETREATING';
+              boss.googolbraState = 'RETREATING';
+            }
+          } else if (googolbraStateRef.current === 'RETREATING') {
+            boss.googolbraState = 'RETREATING';
+            // Googolbra retreats backwards rapidly until fully off screen (way quicker)
+            googolbraProgressRef.current -= dt * 28.0;
+
+            const headPt = getPathPointAtProgress(googolbraSpiralPathRef.current, googolbraProgressRef.current);
+            if (headPt) {
+              boss.x = headPt.x;
+              boss.y = headPt.y;
+              googolbraHeadAngleRef.current = headPt.angle + Math.PI; // Face backwards when retreating
+            }
+
+            const segCount = Math.min(100, Math.max(0, Math.floor(googolbraProgressRef.current)));
+            const segs: { x: number; y: number; dirX: number; dirY: number; angle: number }[] = [];
+            for (let s = 1; s <= segCount; s++) {
+              const pt = getPathPointAtProgress(googolbraSpiralPathRef.current, googolbraProgressRef.current - s);
+              if (pt) segs.push(pt);
+            }
+            googolbraCurrentSegmentsRef.current = segs;
+
+            // When fully off-screen (progress <= -2)
+            if (googolbraProgressRef.current <= -2) {
+              googolbraCurrentSegmentsRef.current = [];
+              googolbraZebraAttackCountRef.current = 0;
+              googolbraStateRef.current = 'ZEBRA_TELEGRAPH';
+              boss.googolbraState = 'ZEBRA_TELEGRAPH';
+              googolbraZebraStateRef.current.timer = 1.2; // 1.2s telegraph
+              googolbraZebraStateRef.current.isVertical = Math.random() < 0.5;
+
+              // Generate alternating zebra stripes across the arena
+              const cols = Math.floor(canvas.width / tileSize);
+              const rows = Math.floor(canvas.height / tileSize);
+              const isVert = googolbraZebraStateRef.current.isVertical;
+              const stripes: number[] = [];
+              const maxUnits = isVert ? cols : rows;
+              for (let i = 1; i < maxUnits; i += 2) {
+                stripes.push(i);
+              }
+              googolbraZebraStateRef.current.stripes = stripes;
+              googolbraZebraStateRef.current.progress = 0;
+
+              // Park boss off-screen during telegraph
+              boss.x = cam.x - 300;
+              boss.y = cam.y - 300;
+            }
+          } else if (googolbraStateRef.current === 'ZEBRA_TELEGRAPH') {
+            boss.googolbraState = 'ZEBRA_TELEGRAPH';
+            googolbraZebraStateRef.current.timer -= dt;
+
+            if (googolbraZebraStateRef.current.timer <= 0) {
+              // Build continuous serpentine path visiting all stripes simultaneously
+              const isVert = googolbraZebraStateRef.current.isVertical;
+              const stripes = googolbraZebraStateRef.current.stripes;
+              const cols = Math.floor(canvas.width / tileSize);
+              const rows = Math.floor(canvas.height / tileSize);
+              const waypoints: { x: number; y: number }[] = [];
+
+              if (isVert) {
+                const yTop = cam.y - 120;
+                const yBottom = cam.y + rows * tileSize + 120;
+                const yArenaTop = cam.y - 20;
+                const yArenaBottom = cam.y + rows * tileSize + 20;
+
+                stripes.forEach((colIdx, idx) => {
+                  const x = cam.x + colIdx * tileSize + tileSize / 2;
+                  const goDown = idx % 2 === 0;
+                  if (idx === 0) {
+                    waypoints.push({ x, y: yTop });
+                  }
+                  if (goDown) {
+                    waypoints.push({ x, y: yArenaBottom });
+                  } else {
+                    waypoints.push({ x, y: yArenaTop });
+                  }
+                  if (idx + 1 < stripes.length) {
+                    const nextColIdx = stripes[idx + 1];
+                    const nextX = cam.x + nextColIdx * tileSize + tileSize / 2;
+                    waypoints.push({ x: nextX, y: goDown ? yArenaBottom : yArenaTop });
+                  } else {
+                    waypoints.push({ x, y: goDown ? yBottom : yTop });
+                  }
+                });
+              } else {
+                const xLeft = cam.x - 120;
+                const xRight = cam.x + cols * tileSize + 120;
+                const xArenaLeft = cam.x - 20;
+                const xArenaRight = cam.x + cols * tileSize + 20;
+
+                stripes.forEach((rowIdx, idx) => {
+                  const y = cam.y + rowIdx * tileSize + tileSize / 2;
+                  const goRight = idx % 2 === 0;
+                  if (idx === 0) {
+                    waypoints.push({ x: xLeft, y });
+                  }
+                  if (goRight) {
+                    waypoints.push({ x: xArenaRight, y });
+                  } else {
+                    waypoints.push({ x: xArenaLeft, y });
+                  }
+                  if (idx + 1 < stripes.length) {
+                    const nextRowIdx = stripes[idx + 1];
+                    const nextY = cam.y + nextRowIdx * tileSize + tileSize / 2;
+                    waypoints.push({ x: goRight ? xArenaRight : xArenaLeft, y: nextY });
+                  } else {
+                    waypoints.push({ x: goRight ? xRight : xLeft, y });
+                  }
+                });
+              }
+
+              const pathPoints: { x: number; y: number; dirX: number; dirY: number; angle: number; dist: number }[] = [];
+              let totalDist = 0;
+              pathPoints.push({ x: waypoints[0].x, y: waypoints[0].y, dirX: 0, dirY: 1, angle: Math.PI / 2, dist: 0 });
+
+              for (let i = 0; i < waypoints.length - 1; i++) {
+                const p1 = waypoints[i];
+                const p2 = waypoints[i + 1];
+                const segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                if (segLen < 1) continue;
+                const dx = (p2.x - p1.x) / segLen;
+                const dy = (p2.y - p1.y) / segLen;
+                const angle = Math.atan2(dy, dx);
+                const step = 15;
+                for (let d = step; d < segLen; d += step) {
+                  totalDist += step;
+                  pathPoints.push({
+                    x: p1.x + dx * d,
+                    y: p1.y + dy * d,
+                    dirX: dx,
+                    dirY: dy,
+                    angle,
+                    dist: totalDist,
+                  });
+                }
+                totalDist += segLen - (Math.floor(segLen / step) * step);
+                pathPoints.push({
+                  x: p2.x,
+                  y: p2.y,
+                  dirX: dx,
+                  dirY: dy,
+                  angle,
+                  dist: totalDist,
+                });
+              }
+
+              googolbraZebraStateRef.current.path = pathPoints;
+              googolbraZebraStateRef.current.totalPathLength = totalDist;
+              googolbraZebraStateRef.current.snakeLength = totalDist + 800; // Longer than total path to occupy all lanes simultaneously!
+              googolbraZebraStateRef.current.progress = 0;
+              googolbraStateRef.current = 'ZEBRA_ATTACK';
+              boss.googolbraState = 'ZEBRA_ATTACK';
+              soundEngine.playWhoosh();
+              if (screenShakeEnabledRef.current) screenShakeRef.current = 12;
+            }
+          } else if (googolbraStateRef.current === 'ZEBRA_ATTACK') {
+            boss.googolbraState = 'ZEBRA_ATTACK';
+            const zState = googolbraZebraStateRef.current;
+            const zebraSpeed = 3400; // Ultra high-speed continuous rush
+            zState.progress += dt * zebraSpeed;
+            const pHeadDist = zState.progress;
+
+            const path = zState.path;
+            const totalL = zState.totalPathLength;
+            const snakeL = zState.snakeLength;
+
+            const allSegments: { x: number; y: number; dirX: number; dirY: number; angle: number }[] = [];
+            let primaryHeadSet = false;
+
+            const segSpacing = 80; // Discrete 80px tile grid spacing
+            const numSegmentsToDraw = Math.floor(snakeL / segSpacing);
+
+            for (let s = 0; s <= numSegmentsToDraw; s++) {
+              const d = pHeadDist - s * segSpacing;
+              if (d >= 0 && d <= totalL) {
+                const sampleIdx = Math.min(
+                  path.length - 1,
+                  Math.max(0, Math.round((d / (totalL || 1)) * (path.length - 1)))
+                );
+                const pt = path[sampleIdx] || path[0];
+                if (pt) {
+                  // Tile grid snap for classic snake aesthetic
+                  const cam = lockedCameraRef.current;
+                  const snappedX = Math.floor((pt.x - cam.x) / tileSize) * tileSize + tileSize / 2 + cam.x;
+                  const snappedY = Math.floor((pt.y - cam.y) / tileSize) * tileSize + tileSize / 2 + cam.y;
+
+                  if (s === 0) {
+                    boss.x = snappedX;
+                    boss.y = snappedY;
+                    googolbraHeadAngleRef.current = pt.angle;
+                    primaryHeadSet = true;
+                  }
+                  allSegments.push({
+                    x: snappedX,
+                    y: snappedY,
+                    dirX: pt.dirX,
+                    dirY: pt.dirY,
+                    angle: pt.angle,
+                  });
+                }
+              }
+            }
+
+            googolbraCurrentSegmentsRef.current = allSegments;
+
+            // Check collision with player
+            let hitPlayer = false;
+            for (const seg of allSegments) {
+              if (Math.hypot(p.x - seg.x, p.y - seg.y) <= p.radius + 36) {
+                hitPlayer = true;
+                break;
+              }
+            }
+
+            if (hitPlayer && playerInvincibleTimerRef.current <= 0) {
+              const dmg = invincibilityRef.current ? 0 : Math.max(1, Math.round(boss.damage * (1 - (p.damageReduction || 0))));
+              p.hp = Math.max(0, p.hp - dmg);
+              lastReportedHpRef.current = p.hp;
+              onUpdatePlayer({ hp: p.hp });
+              playerInvincibleTimerRef.current = 0.55;
+              soundEngine.playPlayerHurt();
+              if (screenShakeEnabledRef.current) screenShakeRef.current = 10;
+            }
+
+            // Once the entire snake has finished rushing through
+            if (pHeadDist >= totalL + snakeL) {
+              googolbraZebraAttackCountRef.current++;
+              if (googolbraZebraAttackCountRef.current < 2) {
+                // Wave 1 finished, telegraph Wave 2 immediately with alternating axis!
+                googolbraCurrentSegmentsRef.current = [];
+                googolbraStateRef.current = 'ZEBRA_TELEGRAPH';
+                boss.googolbraState = 'ZEBRA_TELEGRAPH';
+                googolbraZebraStateRef.current.timer = 1.0;
+                googolbraZebraStateRef.current.isVertical = !googolbraZebraStateRef.current.isVertical;
+                googolbraZebraStateRef.current.progress = 0;
+                const cols = Math.floor(canvas.width / tileSize);
+                const rows = Math.floor(canvas.height / tileSize);
+                const isVert = googolbraZebraStateRef.current.isVertical;
+                const stripes: number[] = [];
+                const maxUnits = isVert ? cols : rows;
+                for (let i = 1; i < maxUnits; i += 2) {
+                  stripes.push(i);
+                }
+                googolbraZebraStateRef.current.stripes = stripes;
+                boss.x = cam.x - 300;
+                boss.y = cam.y - 300;
+              } else {
+                // Wave 2 complete! Launch Sssneak Attack!
+                googolbraZebraAttackCountRef.current = 0;
+                googolbraCurrentSegmentsRef.current = [];
+                googolbraStateRef.current = 'SNEAK_APPROACH';
+                boss.googolbraState = 'SNEAK_APPROACH';
+
+                // Pick random point off-screen
+                const spawnAngle = Math.random() * Math.PI * 2;
+                const spawnDist = Math.max(canvas.width, canvas.height) * 0.8 + 300;
+                const startX = p.x + Math.cos(spawnAngle) * spawnDist;
+                const startY = p.y + Math.sin(spawnAngle) * spawnDist;
+
+                boss.x = startX;
+                boss.y = startY;
+                googolbraHeadAngleRef.current = Math.atan2(p.y - startY, p.x - startX);
+
+                googolbraSneakStateRef.current = {
+                  approachTimer: 0,
+                  startX,
+                  startY,
+                  targetX: p.x,
+                  targetY: p.y,
+                  graspTimer: 0,
+                  damageTickTimer: 0,
+                  struggles: 0,
+                  maxStruggles: 30,
+                };
+                soundEngine.playWhoosh();
+              }
+            }
+          } else if (googolbraStateRef.current === 'SNEAK_APPROACH') {
+            boss.googolbraState = 'SNEAK_APPROACH';
+            const sneak = googolbraSneakStateRef.current;
+            sneak.approachTimer += dt;
+            const approachDuration = 0.35; // Rockets to player in 0.35s
+            const progressRatio = Math.min(1, sneak.approachTimer / approachDuration);
+
+            boss.x = sneak.startX + (p.x - sneak.startX) * progressRatio;
+            boss.y = sneak.startY + (p.y - sneak.startY) * progressRatio;
+            googolbraHeadAngleRef.current = Math.atan2(p.y - sneak.startY, p.x - sneak.startX);
+
+            const segs: { x: number; y: number; dirX: number; dirY: number; angle: number }[] = [];
+            const dirX = Math.cos(googolbraHeadAngleRef.current);
+            const dirY = Math.sin(googolbraHeadAngleRef.current);
+            for (let s = 1; s <= 12; s++) {
+              segs.push({
+                x: boss.x - dirX * (s * 50),
+                y: boss.y - dirY * (s * 50),
+                dirX,
+                dirY,
+                angle: googolbraHeadAngleRef.current,
+              });
+            }
+            googolbraCurrentSegmentsRef.current = segs;
+
+            if (progressRatio >= 1 || Math.hypot(p.x - boss.x, p.y - boss.y) <= 45) {
+              googolbraStateRef.current = 'SNEAK_GRASP';
+              boss.googolbraState = 'SNEAK_GRASP';
+              sneak.graspTimer = 0;
+              sneak.damageTickTimer = 0;
+              sneak.struggles = 0;
+              soundEngine.playWhoosh();
+              if (screenShakeEnabledRef.current) screenShakeRef.current = 12;
+
+              googolbraGraspLastTenthsRef.current = -1;
+              googolbraGraspLastStrugglesRef.current = -1;
+              googolbraGraspLastInDamageRef.current = false;
+
+              window.dispatchEvent(
+                new CustomEvent('googolbra-grasp-state', {
+                  detail: {
+                    active: true,
+                    struggles: 0,
+                    maxStruggles: sneak.maxStruggles,
+                    graceTimer: 5.0,
+                    inDamagePhase: false,
+                  },
+                })
+              );
+            }
+          } else if (googolbraStateRef.current === 'SNEAK_GRASP') {
+            boss.googolbraState = 'SNEAK_GRASP';
+            const sneak = googolbraSneakStateRef.current;
+            sneak.graspTimer += dt;
+            const inDamage = sneak.graspTimer >= 5.0;
+            const graceRemaining = Math.max(0, 5.0 - sneak.graspTimer);
+
+            // Constrict player movement while grasped
+            p.vx = 0;
+            p.vy = 0;
+
+            // Tight rotating coil directly wrapping around player
+            const coilSpeed = 3.5;
+            const coilAngle = (Date.now() / 300) * coilSpeed;
+            const coilRadius = 45;
+            boss.x = p.x + Math.cos(coilAngle) * coilRadius;
+            boss.y = p.y + Math.sin(coilAngle) * coilRadius;
+            googolbraHeadAngleRef.current = coilAngle + Math.PI / 2;
+
+            const coilSegs: { x: number; y: number; dirX: number; dirY: number; angle: number }[] = [];
+            for (let s = 1; s <= 14; s++) {
+              const segA = coilAngle - s * 0.44;
+              const r = coilRadius + s * 2.2;
+              coilSegs.push({
+                x: p.x + Math.cos(segA) * r,
+                y: p.y + Math.sin(segA) * r,
+                dirX: -Math.sin(segA),
+                dirY: Math.cos(segA),
+                angle: segA + Math.PI / 2,
+              });
+            }
+            googolbraCurrentSegmentsRef.current = coilSegs;
+
+            // Damage only starts after 5s grace period: 10 DPS (5 damage every 0.5s)
+            if (inDamage) {
+              sneak.damageTickTimer += dt;
+              if (sneak.damageTickTimer >= 0.5) {
+                sneak.damageTickTimer -= 0.5;
+                const crushDmg = invincibilityRef.current
+                  ? 0
+                  : Math.max(1, Math.round(5 * (1 - (p.damageReduction || 0))));
+                p.hp = Math.max(0, p.hp - crushDmg);
+                lastReportedHpRef.current = p.hp;
+                onUpdatePlayer({ hp: p.hp });
+                soundEngine.playPlayerHurt();
+                if (screenShakeEnabledRef.current) screenShakeRef.current = 6;
+              }
+            }
+
+            // Sync with HUD (Throttled to 10 FPS or on struggle click to prevent mobile React state lag)
+            const graceTenths = Math.round(graceRemaining * 10);
+            if (
+              graceTenths !== googolbraGraspLastTenthsRef.current ||
+              sneak.struggles !== googolbraGraspLastStrugglesRef.current ||
+              inDamage !== googolbraGraspLastInDamageRef.current
+            ) {
+              googolbraGraspLastTenthsRef.current = graceTenths;
+              googolbraGraspLastStrugglesRef.current = sneak.struggles;
+              googolbraGraspLastInDamageRef.current = inDamage;
+
+              window.dispatchEvent(
+                new CustomEvent('googolbra-grasp-state', {
+                  detail: {
+                    active: true,
+                    struggles: sneak.struggles,
+                    maxStruggles: sneak.maxStruggles,
+                    graceTimer: graceRemaining,
+                    inDamagePhase: inDamage,
+                  },
+                })
+              );
+            }
+          } else if (googolbraStateRef.current === 'COOLDOWN') {
+            googolbraCooldownTimerRef.current -= dt;
+            if (googolbraCooldownTimerRef.current <= 0) {
+              googolbraStateRef.current = 'CONSTRICTION';
+              boss.googolbraState = 'CONSTRICTION';
+              googolbraConstrictionDamageTakenRef.current = 0;
+              googolbraProgressRef.current = 0;
+              googolbraSpiralPathRef.current = generateGoogolbraSpiralPath(cam.x, cam.y, canvas.width, canvas.height);
+            }
+          }
+        } else if (boss.id === 'phiboccion') {
+          // --- PHIBOCCION BEHAVIOR & AI ---
+          if (boss.phiboccionState === 'FLOATING') {
+            bossAttackCooldownRef.current -= dt;
+
+            // Smoothly hover in place with subtle, gentle floating so he is easy to aim at and hit
+            const targetX = lockedCameraRef.current.x + canvas.width / 2 + Math.sin(survivalTimeRef.current * 0.8) * 24;
+            const targetY = lockedCameraRef.current.y + 170 + Math.cos(survivalTimeRef.current * 0.6) * 12;
+            const dx = targetX - boss.x;
+            const dy = targetY - boss.y;
+            boss.x += dx * 1.5 * dt;
+            boss.y += dy * 1.5 * dt;
+
+            if (bossAttackCooldownRef.current <= 0) {
+              const atkIdx = phiboccionAttackIndexRef.current;
+              phiboccionAttackIndexRef.current = (atkIdx + 1) % 3;
+
+              if (atkIdx === 0) {
+                // Prepare "x to the Power of THIS KICK"
+                boss.phiboccionState = 'KICKING';
+                boss.isKicking = true;
+                phiboccionKickCountRef.current = 0;
+                phiboccionKickPhaseRef.current = 'PREP';
+                phiboccionTimerRef.current = 0.5;
+
+                // Clear previous Land Phi-nes as specified
+                boss.attacks = boss.attacks.filter((a) => a.type !== 'PHIBOCCION_LAND_PHINE');
+              } else if (atkIdx === 1) {
+                // Prepare "Phi-X-Plosion"
+                boss.phiboccionState = 'PHI_X_PLOSION';
+                phiboccionKickPhaseRef.current = 'PREP';
+                phiboccionTimerRef.current = 0.5;
+                boss.isKicking = true;
+
+                // Select random corner out of 4 (or top corners only if Mobile Mode)
+                const corner = mobileModeRef.current ? Math.floor(Math.random() * 2) : Math.floor(Math.random() * 4);
+                phiboccionCornerRef.current = corner;
+
+                const left = lockedCameraRef.current.x + 90;
+                const right = lockedCameraRef.current.x + canvas.width - 90;
+                const top = lockedCameraRef.current.y + 130;
+                const bottom = lockedCameraRef.current.y + canvas.height - 90;
+
+                if (corner === 0) {
+                  phiboccionDashTargetRef.current = { x: left, y: top };
+                } else if (corner === 1) {
+                  phiboccionDashTargetRef.current = { x: right, y: top };
+                } else if (corner === 2) {
+                  phiboccionDashTargetRef.current = { x: left, y: bottom };
+                } else {
+                  phiboccionDashTargetRef.current = { x: right, y: bottom };
+                }
+                phiboccionDashStartRef.current = { x: boss.x, y: boss.y };
+
+                // Drop 5 Land Phi-nes at random well-spaced points across the map (never at the player's feet)
+                const newMines: { x: number; y: number }[] = [];
+                const minMinesX = lockedCameraRef.current.x + 100;
+                const maxMinesX = lockedCameraRef.current.x + canvas.width - 100;
+                const minMinesY = lockedCameraRef.current.y + 140;
+                const maxMinesY = lockedCameraRef.current.y + canvas.height - 100;
+
+                for (let attempts = 0; attempts < 120 && newMines.length < 5; attempts++) {
+                  const rx = minMinesX + Math.random() * (maxMinesX - minMinesX);
+                  const ry = minMinesY + Math.random() * (maxMinesY - minMinesY);
+
+                  // Must be at least 180px away from the player
+                  if (Math.hypot(rx - p.x, ry - p.y) < 180) continue;
+
+                  // Must be at least 150px away from all other mines in this batch
+                  if (newMines.some((m) => Math.hypot(m.x - rx, m.y - ry) < 150)) continue;
+
+                  newMines.push({ x: rx, y: ry });
+                }
+
+                for (const m of newMines) {
+                  boss.attacks.push({
+                    type: 'PHIBOCCION_LAND_PHINE',
+                    x: m.x,
+                    y: m.y,
+                    radius: 25,
+                    warningTimer: 0.4,
+                    activeTimer: 99999,
+                    duration: 99999,
+                    damage: 30,
+                    hasHit: false,
+                  });
+                }
+              } else {
+                // Prepare "The Root of Strength"
+                boss.phiboccionState = 'ROOT_OF_STRENGTH';
+                phiboccionKickPhaseRef.current = 'PREP';
+                phiboccionTimerRef.current = 1.2;
+                phiboccionDashStartRef.current = { x: boss.x, y: boss.y };
+                phiboccionDashTargetRef.current = {
+                  x: lockedCameraRef.current.x + canvas.width / 2,
+                  y: lockedCameraRef.current.y + 115,
+                };
+              }
+            }
+          } else if (boss.phiboccionState === 'KICKING') {
+            phiboccionTimerRef.current -= dt;
+
+            if (phiboccionKickPhaseRef.current === 'PREP') {
+              // Point bottom/legs towards player position
+              const dx = p.x - boss.x;
+              const dy = p.y - boss.y;
+              boss.phiboccionAngle = Math.atan2(dy, dx);
+
+              if (phiboccionTimerRef.current <= 0) {
+                phiboccionKickPhaseRef.current = 'DASH';
+                phiboccionTimerRef.current = 1.2;
+                phiboccionMineDroppedRef.current = false;
+                phiboccionDashStartRef.current = { x: boss.x, y: boss.y };
+
+                const angle = boss.phiboccionAngle || 0;
+                let tx = boss.x + Math.cos(angle) * 700;
+                let ty = boss.y + Math.sin(angle) * 700;
+
+                // Keep dash strictly bounded within the arena
+                tx = Math.max(lockedCameraRef.current.x + 80, Math.min(lockedCameraRef.current.x + canvas.width - 80, tx));
+                ty = Math.max(lockedCameraRef.current.y + 120, Math.min(lockedCameraRef.current.y + canvas.height - 80, ty));
+
+                phiboccionDashTargetRef.current = { x: tx, y: ty };
+                soundEngine.playShoot('sword');
+                if (screenShakeEnabledRef.current) screenShakeRef.current = 5;
+              }
+            } else if (phiboccionKickPhaseRef.current === 'DASH') {
+              const t = Math.max(0, Math.min(1, 1 - (phiboccionTimerRef.current / 1.2)));
+              boss.x = phiboccionDashStartRef.current.x + (phiboccionDashTargetRef.current.x - phiboccionDashStartRef.current.x) * t;
+              boss.y = phiboccionDashStartRef.current.y + (phiboccionDashTargetRef.current.y - phiboccionDashStartRef.current.y) * t;
+
+              // Drop Land Phi-ne directly beneath Phiboccion as he passes through the midpoint of his kick (t >= 0.5)
+              if (!phiboccionMineDroppedRef.current && t >= 0.5) {
+                phiboccionMineDroppedRef.current = true;
+                boss.attacks.push({
+                  type: 'PHIBOCCION_LAND_PHINE',
+                  x: boss.x,
+                  y: boss.y,
+                  radius: 25,
+                  warningTimer: 0.4,
+                  activeTimer: 99999,
+                  duration: 99999,
+                  damage: 30,
+                  hasHit: false,
+                });
+              }
+
+              // Check direct player collision with kicking boss
+              const dist = Math.hypot(p.x - boss.x, p.y - boss.y);
+              if (dist <= boss.radius + p.radius) {
+                if (playerInvincibleTimerRef.current <= 0) {
+                  const actualDamage = Math.max(1, Math.round(25 * (1 - (p.damageReduction || 0))));
+                  p.hp -= actualDamage;
+                  playerInvincibleTimerRef.current = 1.0;
+
+                  soundEngine.playPlayerHurt();
+                  floatingTextsRef.current.push({
+                    id: nextEntityId.current++,
+                    x: p.x,
+                    y: p.y - 20,
+                    text: `-${actualDamage}`,
+                    color: '#f87171',
+                    life: 0.8,
+                    maxLife: 0.8,
+                    vy: -40,
+                  });
+                }
+              }
+
+              if (phiboccionTimerRef.current <= 0) {
+                boss.x = phiboccionDashTargetRef.current.x;
+                boss.y = phiboccionDashTargetRef.current.y;
+
+                phiboccionKickCountRef.current++;
+                if (phiboccionKickCountRef.current < 5) {
+                  phiboccionKickPhaseRef.current = 'PREP';
+                  phiboccionTimerRef.current = 0.45;
+                } else {
+                  boss.phiboccionState = 'FLOATING';
+                  boss.isKicking = false;
+                  bossAttackCooldownRef.current = 2.0;
+                }
+              }
+            }
+          } else if (boss.phiboccionState === 'PHI_X_PLOSION') {
+            phiboccionTimerRef.current -= dt;
+
+            if (phiboccionKickPhaseRef.current === 'PREP') {
+              const t = Math.max(0, Math.min(1, 1 - (phiboccionTimerRef.current / 1.0)));
+              boss.x = phiboccionDashStartRef.current.x + (phiboccionDashTargetRef.current.x - phiboccionDashStartRef.current.x) * t;
+              boss.y = phiboccionDashStartRef.current.y + (phiboccionDashTargetRef.current.y - phiboccionDashStartRef.current.y) * t;
+
+              if (phiboccionTimerRef.current <= 0) {
+                boss.x = phiboccionDashTargetRef.current.x;
+                boss.y = phiboccionDashTargetRef.current.y;
+
+                phiboccionKickPhaseRef.current = 'DASH';
+                phiboccionTimerRef.current = 4.0;
+                phiboccionLaserTimerRef.current = 0;
+                boss.phiboccionAngle = 0;
+              }
+            } else if (phiboccionKickPhaseRef.current === 'DASH') {
+              const angleToPlayer = Math.atan2(p.y - boss.y, p.x - boss.x);
+              boss.phiboccionAngle = angleToPlayer;
+
+              const isFastPhase = phiboccionTimerRef.current < 2.0;
+              const fireInterval = isFastPhase ? 0.12 : 0.35;
+
+              phiboccionLaserTimerRef.current -= dt;
+              if (phiboccionLaserTimerRef.current <= 0) {
+                phiboccionLaserTimerRef.current = fireInterval;
+
+                // Aim directly at the player and spawn laser strictly from the tip of his kicking foot
+                soundEngine.playShoot('wand');
+
+                const feetOffset = boss.radius * 2.8;
+                const feetX = boss.x + Math.cos(angleToPlayer) * feetOffset;
+                const feetY = boss.y + Math.sin(angleToPlayer) * feetOffset;
+
+                boss.attacks.push({
+                  type: 'PHIBOCCION_BEAM',
+                  x: feetX,
+                  y: feetY,
+                  radius: 12,
+                  vx: Math.cos(angleToPlayer) * 350,
+                  vy: Math.sin(angleToPlayer) * 350,
+                  warningTimer: 0,
+                  activeTimer: 4.5,
+                  duration: 4.5,
+                  damage: 10,
+                  hasHit: false,
+                });
+              }
+
+              if (phiboccionTimerRef.current <= 0) {
+                phiboccionKickPhaseRef.current = 'REST';
+                phiboccionTimerRef.current = 2.4;
+                boss.isKicking = false;
+
+                // Spawn explosion directly under the player with a human-scale, escapable radius
+                boss.attacks.push({
+                  type: 'PHIBOCCION_EXPLOSION',
+                  x: p.x,
+                  y: p.y,
+                  radius: 180,
+                  warningTimer: 2.0,
+                  activeTimer: 0.4,
+                  duration: 2.4,
+                  damage: 40,
+                  hasHit: false,
+                });
+
+                soundEngine.playShoot('lightning');
+              }
+            } else if (phiboccionKickPhaseRef.current === 'REST') {
+              if (phiboccionTimerRef.current > 0.4) {
+                if (screenShakeEnabledRef.current && Math.random() < 0.4) {
+                  screenShakeRef.current = Math.max(screenShakeRef.current, 3);
+                }
+              } else {
+                if (screenShakeEnabledRef.current && phiboccionTimerRef.current > 0.2) {
+                  screenShakeRef.current = Math.max(screenShakeRef.current, 12);
+                }
+              }
+
+              if (phiboccionTimerRef.current <= 0) {
+                boss.phiboccionState = 'FLOATING';
+                bossAttackCooldownRef.current = 2.5;
+              }
+            }
+          } else if (boss.phiboccionState === 'ROOT_OF_STRENGTH') {
+            phiboccionTimerRef.current -= dt;
+
+            if (phiboccionKickPhaseRef.current === 'PREP') {
+              const t = Math.max(0, Math.min(1, 1 - (phiboccionTimerRef.current / 1.2)));
+              boss.x = phiboccionDashStartRef.current.x + (phiboccionDashTargetRef.current.x - phiboccionDashStartRef.current.x) * t;
+              boss.y = phiboccionDashStartRef.current.y + (phiboccionDashTargetRef.current.y - phiboccionDashStartRef.current.y) * t;
+
+              if (phiboccionTimerRef.current <= 0) {
+                boss.x = phiboccionDashTargetRef.current.x;
+                boss.y = phiboccionDashTargetRef.current.y;
+
+                boss.isInvincible = true;
+                phiboccionKickPhaseRef.current = 'DASH';
+                phiboccionKeypadActiveRef.current = true;
+                phiboccionKeypadStageRef.current = 1;
+                phiboccionKeypadAnswersCorrectRef.current = 0;
+                phiboccionKeypadTimerRef.current = 10.0;
+                phiboccionKeypadInputRef.current = "";
+                phiboccionKeypadResultTextRef.current = "";
+                phiboccionKeypadResultTimerRef.current = 0;
+
+                const ans = Math.floor(Math.random() * 9) + 1;
+                phiboccionKeypadQuestionRef.current = {
+                  q: `√${ans * ans}`,
+                  a: String(ans),
+                  difficulty: ans,
+                };
+
+                soundEngine.playLevelUp();
+              }
+            } else if (phiboccionKickPhaseRef.current === 'DASH') {
+              boss.x = lockedCameraRef.current.x + canvas.width / 2;
+              boss.y = lockedCameraRef.current.y + 115;
+
+              if (phiboccionKeypadActiveRef.current) {
+                playerInvincibleTimerRef.current = 0.5; // Player and Phiboccion are both invincible during Root of Strength attack
+                if (phiboccionKeypadResultTimerRef.current > 0) {
+                  phiboccionKeypadResultTimerRef.current -= dt;
+
+                  if (phiboccionKeypadResultTimerRef.current <= 0) {
+                    phiboccionKeypadResultTimerRef.current = 0;
+
+                    // Execute the delayed stage transition or close
+                    if (phiboccionKeypadPendingAdvanceRef.current) {
+                      phiboccionKeypadPendingAdvanceRef.current = false;
+                      const currentStage = phiboccionKeypadStageRef.current;
+
+                      if (currentStage < 3) {
+                        phiboccionKeypadStageRef.current = currentStage + 1;
+                        phiboccionKeypadTimerRef.current = 10.0;
+                        phiboccionKeypadInputRef.current = "";
+                        phiboccionKeypadResultTextRef.current = "";
+
+                        let nextAns = 5;
+                        if (currentStage + 1 === 2) {
+                          do {
+                            nextAns = Math.floor(Math.random() * 11) + 10; // 10..20
+                          } while (nextAns === 10 || nextAns === 20); // Exclude 100 and 400
+                        } else {
+                          do {
+                            nextAns = Math.floor(Math.random() * 10) + 21; // 21..30
+                          } while (nextAns === 30); // Exclude 900
+                        }
+
+                        phiboccionKeypadQuestionRef.current = {
+                          q: `√${nextAns * nextAns}`,
+                          a: String(nextAns),
+                          difficulty: nextAns,
+                        };
+                      } else {
+                        // Finished Stage 3! Transition out and apply rewards
+                        phiboccionKeypadActiveRef.current = false;
+                        boss.isInvincible = false;
+                        boss.phiboccionState = 'FLOATING';
+                        bossAttackCooldownRef.current = 3.0;
+
+                        if (phiboccionKeypadAnswersCorrectRef.current === 3) {
+                          const rewardDamage = Math.round(boss.maxHp / 5);
+                          boss.hp = Math.max(1, boss.hp - rewardDamage);
+                          soundEngine.playExplosion();
+                          if (screenShakeEnabledRef.current) screenShakeRef.current = 15;
+
+                          floatingTextsRef.current.push({
+                            id: nextEntityId.current++,
+                            x: boss.x,
+                            y: boss.y - 40,
+                            text: `-${rewardDamage} (MATH PENETRATION!)`,
+                            color: '#facc15',
+                            life: 1.5,
+                            maxLife: 1.5,
+                            vy: -50,
+                          });
+                        }
+                      }
+                    }
+                  }
+                } else {
+                  // Only run down timer if not showing result feedback
+                  phiboccionKeypadTimerRef.current -= dt;
+
+                  if (phiboccionKeypadTimerRef.current <= 0) {
+                    phiboccionKeypadResultTextRef.current = "TIME'S UP!";
+                    phiboccionKeypadResultTimerRef.current = 1.2;
+                    phiboccionKeypadPendingAdvanceRef.current = true;
+                    soundEngine.playPlayerHurt();
+                  }
+                }
+              }
+            }
+          } else if (boss.phiboccionState === 'FIBONACCI_INTRO') {
+            boss.x = lockedCameraRef.current.x + canvas.width / 2;
+            boss.y = lockedCameraRef.current.y + 115;
+            boss.isInvincible = true;
+            boss.damage = 0;
+
+            phiboccionFibIntroTimerRef.current -= dt;
+            if (phiboccionFibIntroTimerRef.current <= 0) {
+              phiboccionFibIntroStepRef.current++;
+              if (phiboccionFibIntroStepRef.current < 3) {
+                phiboccionFibIntroTimerRef.current = 1.0;
+                soundEngine.playShoot('wand');
+              } else if (phiboccionFibIntroStepRef.current === 3) {
+                phiboccionFibIntroTimerRef.current = 1.5;
+                soundEngine.playShoot('lightning');
+              } else {
+                boss.phiboccionState = 'FIBONACCI_CHALLENGE';
+                phiboccionKeypadModeRef.current = 'FIBONACCI';
+                phiboccionKeypadActiveRef.current = true;
+                phiboccionKeypadStageRef.current = 1;
+                phiboccionKeypadAnswersCorrectRef.current = 0;
+                phiboccionKeypadTimerRef.current = 5.0;
+                phiboccionKeypadInputRef.current = "";
+                phiboccionKeypadResultTextRef.current = "";
+                phiboccionKeypadResultTimerRef.current = 0;
+
+                const firstAns = getFibonacciNumber(1);
+                const lang = getLanguage();
+                phiboccionKeypadQuestionRef.current = {
+                  q: getFibonacciQuestionText(1, lang),
+                  a: firstAns.toString(),
+                  difficulty: 1,
+                };
+                soundEngine.playLevelUp();
+              }
+            }
+          } else if (boss.phiboccionState === 'FIBONACCI_CHALLENGE') {
+            boss.x = lockedCameraRef.current.x + canvas.width / 2;
+            boss.y = lockedCameraRef.current.y + 115;
+            playerInvincibleTimerRef.current = 0.5;
+
+            if (phiboccionKeypadActiveRef.current) {
+              if (phiboccionKeypadResultTimerRef.current > 0) {
+                phiboccionKeypadResultTimerRef.current -= dt;
+                if (phiboccionKeypadResultTimerRef.current <= 0) {
+                  phiboccionKeypadResultTimerRef.current = 0;
+                  if (phiboccionKeypadPendingAdvanceRef.current) {
+                    phiboccionKeypadPendingAdvanceRef.current = false;
+                    const currentStage = phiboccionKeypadStageRef.current;
+                    const passed = phiboccionKeypadLastAnswerCorrectRef.current;
+
+                    if (passed && currentStage < 50) {
+                      const nextStage = currentStage + 1;
+                      phiboccionKeypadStageRef.current = nextStage;
+                      const correctCount = phiboccionKeypadAnswersCorrectRef.current;
+                      phiboccionKeypadTimerRef.current = Math.max(1.0, 5.0 - (correctCount * 0.2));
+                      phiboccionKeypadInputRef.current = "";
+                      phiboccionKeypadResultTextRef.current = "";
+
+                      const nextAns = getFibonacciNumber(nextStage);
+                      const lang = getLanguage();
+                      phiboccionKeypadQuestionRef.current = {
+                        q: getFibonacciQuestionText(nextStage, lang),
+                        a: nextAns.toString(),
+                        difficulty: nextStage,
+                      };
+                    } else {
+                      phiboccionKeypadActiveRef.current = false;
+                      boss.isInvincible = false;
+                      boss.hp = 0;
+                    }
+                  }
+                }
+              } else {
+                phiboccionKeypadTimerRef.current -= dt;
+                if (phiboccionKeypadTimerRef.current <= 0) {
+                  phiboccionKeypadLastAnswerCorrectRef.current = false;
+                  phiboccionKeypadResultTextRef.current = "TIME'S UP!";
+                  phiboccionKeypadResultTimerRef.current = 1.2;
+                  phiboccionKeypadPendingAdvanceRef.current = true;
+                  soundEngine.playPlayerHurt();
+                }
+              }
+            }
+          }
+        } else if (boss.id === 'pythagoras') {
+          // --- PYTHAGORAS THE MATHEMAGICIAN BEHAVIOR & AI ---
+          if (pythagorasPhaseRef.current === 'GEOMETRY_DASH') {
+            pythagorasTimerRef.current += dt;
+
+            // Movement: Pythagoras stays still at the top center of the screen
+            const centerX = lockedCameraRef.current.x + canvas.width / 2;
+            const topY = lockedCameraRef.current.y + 120;
+
+            boss.x += (centerX - boss.x) * 6 * dt;
+            boss.y += (topY - boss.y) * 6 * dt;
+
+            // 1. "Geometry? Dash!": Constantly throws rulers underneath him, functionally dividing the arena in two
+            pythagorasRulerTimerRef.current -= dt;
+            if (pythagorasRulerTimerRef.current <= 0) {
+              pythagorasRulerTimerRef.current = 0.16;
+
+              boss.attacks.push({
+                type: 'PYTHAGORAS_RULER',
+                x: boss.x + (Math.random() - 0.5) * 10,
+                y: boss.y + 125,
+                vx: 0,
+                vy: 140,
+                radius: 20,
+                width: 25,
+                height: 75,
+                damage: 20,
+                duration: 9.0,
+                warningTimer: 0,
+                activeTimer: 9.0,
+                hasHit: false,
+                angle: Math.PI / 2,
+              });
+            }
+
+            // 2. Protractors: Throws 1 to the left and 1 to the right, moving in a circular motion circling around all of both areas (3 times total)
+            pythagorasProtractorTimerRef.current -= dt;
+            if (pythagorasProtractorTimerRef.current <= 0 && pythagorasProtractorWaveRef.current < 3) {
+              pythagorasProtractorWaveRef.current += 1;
+              pythagorasProtractorTimerRef.current = 2.8;
+
+              const wave = pythagorasProtractorWaveRef.current;
+              const leftCenterX = centerX - canvas.width * 0.25;
+              const rightCenterX = centerX + canvas.width * 0.25;
+              const centerY = lockedCameraRef.current.y + canvas.height / 2;
+              // Radii span from inner to outer coverage across all of left/right area
+              const orbitRadius = 120 + (wave - 1) * 90;
+
+              // Left Protractor: appears from Pythagoras's left side and leaves towards the left
+              boss.attacks.push({
+                type: 'PYTHAGORAS_PROTRACTOR',
+                x: boss.x - 48,
+                y: boss.y + 15,
+                vx: 0,
+                vy: 0,
+                radius: 20,
+                damage: 20,
+                duration: 12.0,
+                warningTimer: 0,
+                activeTimer: 12.0,
+                hasHit: false,
+                orbitCenterX: leftCenterX,
+                orbitCenterY: centerY,
+                orbitRadius: orbitRadius,
+                orbitAngle: -Math.PI / 2,
+                orbitSpeed: -0.9,
+                rotAngle: 0,
+                spawnOriginX: boss.x - 48,
+                spawnOriginY: boss.y + 15,
+                launchTimer: 0,
+                launchDuration: 1.5,
+              });
+
+              // Right Protractor: appears from Pythagoras's right side and leaves towards the right
+              boss.attacks.push({
+                type: 'PYTHAGORAS_PROTRACTOR',
+                x: boss.x + 48,
+                y: boss.y + 15,
+                vx: 0,
+                vy: 0,
+                radius: 20,
+                damage: 20,
+                duration: 12.0,
+                warningTimer: 0,
+                activeTimer: 12.0,
+                hasHit: false,
+                orbitCenterX: rightCenterX,
+                orbitCenterY: centerY,
+                orbitRadius: orbitRadius,
+                orbitAngle: -Math.PI / 2,
+                orbitSpeed: 0.9,
+                rotAngle: 0,
+                spawnOriginX: boss.x + 48,
+                spawnOriginY: boss.y + 15,
+                launchTimer: 0,
+                launchDuration: 1.5,
+              });
+            }
+
+            // 3. Spinning Set-Square: Throws every 1.5s aimed at player
+            pythagorasSetSquareTimerRef.current -= dt;
+            if (pythagorasSetSquareTimerRef.current <= 0) {
+              pythagorasSetSquareTimerRef.current = 1.5;
+
+              const angleToPlayer = Math.atan2(playerRef.current.y - boss.y, playerRef.current.x - boss.x);
+              const speed = 230;
+
+              boss.attacks.push({
+                type: 'PYTHAGORAS_SETSQUARE',
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angleToPlayer) * speed,
+                vy: Math.sin(angleToPlayer) * speed,
+                radius: 18,
+                damage: 20,
+                duration: 8.5,
+                warningTimer: 0,
+                activeTimer: 8.5,
+                hasHit: false,
+                rotAngle: 0,
+                rotSpeed: 10,
+              });
+            }
+
+            if (pythagorasTimerRef.current >= 11.0) {
+              pythagorasPhaseRef.current = 'REST';
+              pythagorasTimerRef.current = 0;
+              pythagorasLastAttackRef.current = 'GEOMETRY_DASH';
+            }
+          } else if (pythagorasPhaseRef.current === 'MONTY_HALL') {
+            // Keep Pythagoras stationary at top center and invulnerable during the puzzle
+            const centerX = lockedCameraRef.current.x + canvas.width / 2;
+            const topY = lockedCameraRef.current.y + 115;
+            boss.x += (centerX - boss.x) * 6 * dt;
+            boss.y += (topY - boss.y) * 6 * dt;
+            boss.isInvincible = true;
+            playerInvincibleTimerRef.current = 0.5;
+
+            if (pythagorasMontyStepRef.current === 'REVEAL_ANIM') {
+              pythagorasMontyTimerRef.current -= dt;
+              if (pythagorasMontyTimerRef.current <= 0) {
+                pythagorasMontyStepRef.current = 'CHOICE';
+              }
+            } else if (pythagorasMontyStepRef.current === 'RESULT') {
+              pythagorasMontyTimerRef.current -= dt;
+              if (pythagorasMontyTimerRef.current <= 0) {
+                pythagorasMontyHallActiveRef.current = false;
+                boss.isInvincible = false;
+                pythagorasPhaseRef.current = 'REST';
+                pythagorasTimerRef.current = 0;
+                pythagorasLastAttackRef.current = 'MONTY_HALL';
+              }
+            }
+          } else if (pythagorasPhaseRef.current === 'GEOMENTO_MORI') {
+            // Keep Pythagoras floating in top center casting the graphs
+            const centerX = lockedCameraRef.current.x + canvas.width / 2;
+            const topY = lockedCameraRef.current.y + 115;
+            boss.x += (centerX - boss.x) * 6 * dt;
+            boss.y += (topY - boss.y) * 6 * dt;
+
+            pythagorasGeoMoriTimerRef.current += dt;
+            pythagorasGeoMoriHitCooldownRef.current = Math.max(0, pythagorasGeoMoriHitCooldownRef.current - dt);
+
+            // Spawn floating magical mathematical equations particles from Pythagoras
+            if (Math.random() < 0.25) {
+              const symbols = ['f(x)', '∫', '²', '√', '1/x', 'lim', 'π', 'dy/dx'];
+              const sym = symbols[Math.floor(Math.random() * symbols.length)];
+              floatingTextsRef.current.push({
+                id: nextEntityId.current++,
+                x: boss.x + (Math.random() - 0.5) * 60,
+                y: boss.y + (Math.random() - 0.5) * 30,
+                text: sym,
+                color: '#f87171',
+                life: 0.8,
+                maxLife: 0.8,
+                vy: -35,
+              });
+            }
+
+            if (pythagorasGeoMoriStateRef.current === 'TELEGRAPH') {
+              // 1.5 seconds equations appear on top-left
+              if (pythagorasGeoMoriTimerRef.current >= 1.5) {
+                pythagorasGeoMoriStateRef.current = 'ACTIVE';
+                pythagorasGeoMoriTimerRef.current = 0;
+                soundEngine.playShoot('lightning');
+              }
+            } else if (pythagorasGeoMoriStateRef.current === 'ACTIVE') {
+              // 2.2 seconds the red lines are graphed onto the arena
+              // Player Collision with the 3 graphed curves
+              // Middle of screen is (0;0) in coordinate space
+              const screenCenterX = lockedCameraRef.current.x + canvas.width / 2;
+              const screenCenterY = lockedCameraRef.current.y + canvas.height / 2;
+
+              // Grid scale: 1 coordinate unit = 60 pixels
+              const scale = 60;
+              const px = playerRef.current.x;
+              const py = playerRef.current.y;
+              const playerCoordX = (px - screenCenterX) / scale;
+
+              // Check collision against all 3 equations
+              if (pythagorasGeoMoriHitCooldownRef.current <= 0 && playerInvincibleTimerRef.current <= 0) {
+                let hitByCurve = false;
+
+                for (const eq of pythagorasGeoMoriEquationsRef.current) {
+                  // Sample nearby x values around player hitbox
+                  const testSteps = [-0.25, -0.15, 0, 0.15, 0.25];
+                  for (const step of testSteps) {
+                    const sampleX = playerCoordX + step;
+                    const sampleY = eq.fn(sampleX);
+                    if (sampleY === null || isNaN(sampleY)) continue;
+
+                    // Convert coordinate (sampleX, sampleY) to world pixels
+                    // Remember: standard Cartesian y goes UP, canvas y goes DOWN
+                    const worldCurveX = screenCenterX + sampleX * scale;
+                    const worldCurveY = screenCenterY - sampleY * scale;
+
+                    const dist = Math.hypot(px - worldCurveX, py - worldCurveY);
+                    const hitRadius = playerRef.current.radius + 10; // 10px line thickness buffer
+
+                    if (dist <= hitRadius) {
+                      hitByCurve = true;
+                      break;
+                    }
+                  }
+                  if (hitByCurve) break;
+                }
+
+                if (hitByCurve) {
+                  if (playerRef.current.isDashing) {
+                    // Evaded with Dash!
+                    floatingTextsRef.current.push({
+                      id: nextEntityId.current++,
+                      x: playerRef.current.x,
+                      y: playerRef.current.y - 24,
+                      text: 'DODGE!',
+                      color: '#38bdf8',
+                      life: 0.65,
+                      maxLife: 0.65,
+                      vy: -45,
+                    });
+                  } else {
+                    // Player touches the line: takes 20 damage!
+                    const rawDamage = 20;
+                    const damage = invincibilityRef.current ? 0 : Math.max(1, Math.round(rawDamage * (1 - (playerRef.current.damageReduction || 0))));
+                    playerRef.current.hp = Math.max(0, playerRef.current.hp - damage);
+                    lastReportedHpRef.current = playerRef.current.hp;
+                    pythagorasGeoMoriHitCooldownRef.current = 0.55; // Brief grace period so player isn't instantly deleted in 1 frame
+
+                    soundEngine.playHit();
+                    if (screenShakeEnabledRef.current) {
+                      screenShakeRef.current = 12;
+                    }
+                    floatingTextsRef.current.push({
+                      id: nextEntityId.current++,
+                      x: playerRef.current.x,
+                      y: playerRef.current.y - 20,
+                      text: `-${damage}`,
+                      color: '#ef4444',
+                      life: 0.85,
+                      maxLife: 0.85,
+                      vy: -50,
+                    });
+
+                    // Sparks & blood particles on hit
+                    for (let p = 0; p < 12; p++) {
+                      const pAng = Math.random() * Math.PI * 2;
+                      const pSpd = Math.random() * 120 + 30;
+                      particlesRef.current.push({
+                        x: playerRef.current.x,
+                        y: playerRef.current.y,
+                        vx: Math.cos(pAng) * pSpd,
+                        vy: Math.sin(pAng) * pSpd,
+                        size: Math.random() * 3 + 2,
+                        color: '#ef4444',
+                        alpha: 1,
+                        decay: Math.random() * 2 + 2,
+                      });
+                    }
+                  }
+                }
+              }
+
+              // Ends sooner once the graphs appear (2.2 seconds instead of 3.2 seconds)
+              if (pythagorasGeoMoriTimerRef.current >= 2.2) {
+                pythagorasGeoMoriRoundRef.current += 1;
+                if (pythagorasGeoMoriRoundRef.current <= 3) {
+                  pythagorasGeoMoriEquationsRef.current = getRandomGeoMoriEquations();
+                  pythagorasGeoMoriStateRef.current = 'TELEGRAPH';
+                  pythagorasGeoMoriTimerRef.current = 0;
+                  pythagorasGeoMoriHitCooldownRef.current = 0;
+                  soundEngine.playShoot('wand');
+                } else {
+                  pythagorasGeoMoriActiveRef.current = false;
+                  pythagorasGeoMoriStateRef.current = 'DONE';
+                  pythagorasPhaseRef.current = 'REST';
+                  pythagorasTimerRef.current = 0;
+                  pythagorasLastAttackRef.current = 'GEOMENTO_MORI';
+                }
+              }
+            }
+          } else {
+            // REST phase
+            pythagorasTimerRef.current += dt;
+            const centerX = lockedCameraRef.current.x + canvas.width / 2;
+            const topY = lockedCameraRef.current.y + 120;
+            boss.x += (centerX - boss.x) * 6 * dt;
+            boss.y += (topY - boss.y) * 6 * dt;
+
+            if (pythagorasTimerRef.current >= 1.8) {
+              pythagorasTimerRef.current = 0;
+              if (pythagorasLastAttackRef.current === 'GEOMETRY_DASH') {
+                pythagorasPhaseRef.current = 'MONTY_HALL';
+                pythagorasMontyHallActiveRef.current = true;
+                pythagorasMontyStepRef.current = 'PICK';
+                pythagorasMontyPrizeDoorRef.current = Math.floor(Math.random() * 3);
+                pythagorasMontyPlayerPickRef.current = -1;
+                pythagorasMontyRevealedEmptyDoorRef.current = -1;
+                pythagorasMontyFinalPickRef.current = -1;
+                pythagorasMontyTimerRef.current = 0;
+                pythagorasMontyResultTypeRef.current = null;
+                boss.attacks = [];
+                soundEngine.playLevelUp();
+              } else if (pythagorasLastAttackRef.current === 'MONTY_HALL') {
+                pythagorasPhaseRef.current = 'GEOMENTO_MORI';
+                pythagorasGeoMoriActiveRef.current = true;
+                pythagorasGeoMoriEquationsRef.current = getRandomGeoMoriEquations();
+                pythagorasGeoMoriStateRef.current = 'TELEGRAPH';
+                pythagorasGeoMoriTimerRef.current = 0;
+                pythagorasGeoMoriHitCooldownRef.current = 0;
+                pythagorasGeoMoriRoundRef.current = 1;
+                boss.attacks = [];
+                soundEngine.playShoot('wand');
+              } else {
+                pythagorasPhaseRef.current = 'GEOMETRY_DASH';
+                pythagorasRulerTimerRef.current = 0;
+                pythagorasProtractorWaveRef.current = 0;
+                pythagorasProtractorTimerRef.current = 0.5;
+                pythagorasSetSquareTimerRef.current = 0.5;
               }
             }
           }
@@ -3092,6 +5531,131 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 if (pDist <= a.radius + playerRef.current.radius) {
                   isPlayerHit = true;
                 }
+              } else if (a.type === 'PHIBOCCION_LAND_PHINE') {
+                const pDist = Math.hypot(playerRef.current.x - a.x, playerRef.current.y - a.y);
+                if (pDist <= a.radius + playerRef.current.radius) {
+                  isPlayerHit = true;
+                  a.hasHit = true;
+
+                  // Cool golden/red math blast particles
+                  for (let i = 0; i < 15; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const spd = Math.random() * 80 + 45;
+                    particlesRef.current.push({
+                      x: a.x,
+                      y: a.y,
+                      vx: Math.cos(ang) * spd,
+                      vy: Math.sin(ang) * spd,
+                      size: Math.random() * 4 + 2,
+                      color: Math.random() < 0.5 ? '#eab308' : '#ef4444',
+                      alpha: 0.95,
+                      decay: 2.5,
+                    });
+                  }
+                  soundEngine.playExplosion();
+                }
+              } else if (a.type === 'PHIBOCCION_BEAM') {
+                a.x += (a.vx || 0) * dt;
+                a.y += (a.vy || 0) * dt;
+                const pDist = Math.hypot(playerRef.current.x - a.x, playerRef.current.y - a.y);
+                if (pDist <= a.radius + playerRef.current.radius) {
+                  isPlayerHit = true;
+                  a.hasHit = true;
+                }
+
+                if (Math.random() < 0.18) {
+                  particlesRef.current.push({
+                    x: a.x,
+                    y: a.y,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    size: 2,
+                    color: '#fef08a',
+                    alpha: 0.7,
+                    decay: 3.0,
+                  });
+                }
+              } else if (a.type === 'PHIBOCCION_EXPLOSION') {
+                const pDist = Math.hypot(playerRef.current.x - a.x, playerRef.current.y - a.y);
+                if (pDist <= a.radius + playerRef.current.radius) {
+                  isPlayerHit = true;
+                }
+
+                if (Math.random() < 0.15) {
+                  const dots = 24;
+                  for (let i = 0; i < dots; i++) {
+                    const ang = (i / dots) * Math.PI * 2;
+                    particlesRef.current.push({
+                      x: a.x + Math.cos(ang) * (a.radius * 0.4),
+                      y: a.y + Math.sin(ang) * (a.radius * 0.4),
+                      vx: Math.cos(ang) * 160,
+                      vy: Math.sin(ang) * 160,
+                      size: 3,
+                      color: '#facc15',
+                      alpha: 0.9,
+                      decay: 2.0,
+                    });
+                  }
+                }
+              } else if (a.type === 'PYTHAGORAS_RULER') {
+                a.y += (a.vy || 140) * dt;
+                const pDist = Math.hypot(playerRef.current.x - a.x, playerRef.current.y - a.y);
+                if (pDist <= a.radius + playerRef.current.radius) {
+                  isPlayerHit = true;
+                }
+              } else if (a.type === 'PYTHAGORAS_PROTRACTOR') {
+                if (a.orbitCenterX !== undefined && a.orbitCenterY !== undefined) {
+                  const screenCenterX = lockedCameraRef.current.x + canvas.width / 2;
+                  const screenCenterY = lockedCameraRef.current.y + canvas.height / 2;
+                  const isLeft = a.orbitCenterX < screenCenterX;
+                  const currentOrbitCenterX = screenCenterX + (isLeft ? -canvas.width * 0.25 : canvas.width * 0.25);
+                  const currentOrbitCenterY = screenCenterY;
+
+                  a.orbitAngle = (a.orbitAngle || 0) + (a.orbitSpeed || (isLeft ? -0.9 : 0.9)) * dt;
+                  const baseR = a.orbitRadius || 150;
+                  const sweepingR = baseR + Math.sin((a.orbitAngle || 0) * 1.5) * 35;
+                  const targetOrbitX = currentOrbitCenterX + Math.cos(a.orbitAngle) * sweepingR;
+                  const targetOrbitY = currentOrbitCenterY + Math.sin(a.orbitAngle) * sweepingR;
+
+                  if (a.launchDuration && a.launchTimer !== undefined && a.launchTimer < a.launchDuration) {
+                    a.launchTimer += dt;
+                    const progress = Math.min(1, a.launchTimer / a.launchDuration);
+                    const ease = 1 - (1 - progress) * (1 - progress);
+                    const startX = a.spawnOriginX ?? a.x;
+                    const startY = a.spawnOriginY ?? a.y;
+                    a.x = startX + (targetOrbitX - startX) * ease;
+                    a.y = startY + (targetOrbitY - startY) * ease;
+                  } else {
+                    a.x = targetOrbitX;
+                    a.y = targetOrbitY;
+                  }
+                  a.rotAngle = (a.rotAngle || 0) + (isLeft ? -2 : 2) * dt;
+
+                  if (Math.random() < 0.2) {
+                    particlesRef.current.push({
+                      x: a.x + (Math.random() - 0.5) * 12,
+                      y: a.y + (Math.random() - 0.5) * 12,
+                      vx: (Math.random() - 0.5) * 20,
+                      vy: (Math.random() - 0.5) * 20,
+                      size: 2,
+                      color: '#38bdf8',
+                      alpha: 0.7,
+                      decay: 2.2,
+                    });
+                  }
+                }
+                const pDist = Math.hypot(playerRef.current.x - a.x, playerRef.current.y - a.y);
+                if (pDist <= a.radius + playerRef.current.radius) {
+                  isPlayerHit = true;
+                }
+              } else if (a.type === 'PYTHAGORAS_SETSQUARE') {
+                a.x += (a.vx || 0) * dt;
+                a.y += (a.vy || 0) * dt;
+                a.rotAngle = (a.rotAngle || 0) + (a.rotSpeed || 5) * dt;
+                const pDist = Math.hypot(playerRef.current.x - a.x, playerRef.current.y - a.y);
+                if (pDist <= a.radius + playerRef.current.radius) {
+                  isPlayerHit = true;
+                }
               }
 
               if (isPlayerHit && playerInvincibleTimerRef.current <= 0) {
@@ -3111,10 +5675,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 } else {
                   // Direct hit: 25 heavy damage
                   a.hasHit = true;
-                  const heavyDamage = Math.max(1, Math.round(a.damage * (1 - (playerRef.current.damageReduction || 0))));
+                  const heavyDamage = invincibilityRef.current ? 0 : Math.max(1, Math.round(a.damage * (1 - (playerRef.current.damageReduction || 0))));
                   playerRef.current.hp = Math.max(0, playerRef.current.hp - heavyDamage);
                   lastReportedHpRef.current = playerRef.current.hp;
                   soundEngine.playHit();
+                  if (a.type === 'PYTHAGORAS_RULER') {
+                    playerInvincibleTimerRef.current = Math.max(playerInvincibleTimerRef.current, 1.0);
+                  }
                   if (screenShakeEnabledRef.current) {
                     screenShakeRef.current = 14;
                   }
@@ -3166,7 +5733,20 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
         // Boss defeat check (Note: 3 Archmages Phase 1 & MERGING transition into Phase 2 Geraldo The RGB)
         const isArchmagesPhase1OrMerging = boss.id === 'archmages' && (boss.archmagesPhase === 'PHASE1' || boss.archmagesPhase === 'MERGING');
+        const isPhiboccionFibPending = boss.id === 'phiboccion' && boss.phiboccionState !== 'FIBONACCI_INTRO' && boss.phiboccionState !== 'FIBONACCI_CHALLENGE';
+
         if (boss.hp <= 0 && !isArchmagesPhase1OrMerging) {
+          if (isPhiboccionFibPending) {
+            boss.hp = 1;
+            boss.isInvincible = true;
+            boss.damage = 0;
+            boss.phiboccionState = 'FIBONACCI_INTRO';
+            phiboccionFibIntroStepRef.current = 0;
+            phiboccionFibIntroTimerRef.current = 1.0;
+            soundEngine.playLevelUp();
+            return;
+          }
+
           soundEngine.playLevelUp();
           if (onEnemyDefeated) {
             onEnemyDefeated(boss.id);
@@ -3181,6 +5761,38 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               color: '#eab308',
               radius: 9.5,
             });
+
+            if (boss.id === 'phiboccion') {
+              const correctCount = phiboccionKeypadAnswersCorrectRef.current;
+              const yellowCount = Math.floor(correctCount / 8);
+              const redCount = correctCount % 8;
+
+              for (let yb = 0; yb < yellowCount; yb++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * 40 + 10;
+                expGemsRef.current.push({
+                  id: nextEntityId.current++,
+                  x: boss.x + Math.cos(angle) * dist,
+                  y: boss.y + Math.sin(angle) * dist,
+                  value: 75,
+                  color: '#eab308',
+                  radius: 9.5,
+                });
+              }
+
+              for (let rb = 0; rb < redCount; rb++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * 50 + 15;
+                expGemsRef.current.push({
+                  id: nextEntityId.current++,
+                  x: boss.x + Math.cos(angle) * dist,
+                  y: boss.y + Math.sin(angle) * dist,
+                  value: 10,
+                  color: '#ef4444',
+                  radius: 7,
+                });
+              }
+            }
 
             // Always drop a 25HP healing food with the yellow orb (independent of boss damage)
             pickupsRef.current.push({
@@ -3256,6 +5868,29 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
             soundEngine.playLevelUp();
 
+            if (onBossDefeated) {
+              onBossDefeated(boss.id);
+            }
+            if (boss.id === 'googolbra') {
+              googolbraCurrentSegmentsRef.current = [];
+              window.dispatchEvent(
+                new CustomEvent('googolbra-grasp-state', {
+                  detail: {
+                    active: false,
+                    struggles: 0,
+                    maxStruggles: 30,
+                    graceTimer: 0,
+                    inDamagePhase: false,
+                  },
+                })
+              );
+            }
+            if (onBossUpdate) {
+              onBossUpdate(null, true, 0, 0);
+            }
+            // Clear remaining minions from defeated boss
+            enemiesRef.current = enemiesRef.current.filter((e) => e.type !== 'mini_eye');
+
             bossRushIndexRef.current += 1;
             bossInstanceRef.current = null;
             isBossFightRef.current = true;
@@ -3265,7 +5900,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             } else {
               onGameOver({
                 time: survivalTimeRef.current,
-                level: 1,
+                level: playerRef.current.level,
                 kills: killsCountRef.current,
                 bossesKilled: bossesKilledRef.current,
                 totalDamage: totalDamageDealtRef.current,
@@ -3308,7 +5943,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       // Dash Cooldown & Movement Update
       if (p.dashTimer > 0) {
         p.dashTimer = Math.max(0, p.dashTimer - dt);
-        onUpdatePlayer({ dashTimer: p.dashTimer });
+        const nowMs = performance.now();
+        if (p.dashTimer === 0 || nowMs - lastDashReportTimeRef.current >= 100) {
+          lastDashReportTimeRef.current = nowMs;
+          onUpdatePlayer({ dashTimer: p.dashTimer });
+        }
       }
 
       if (p.isDashing) {
@@ -3326,6 +5965,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           walkTargetRef.current = null;
           onUpdatePlayer({ isDashing: false });
         }
+      } else if (phiboccionKeypadActiveRef.current || pythagorasMontyHallActiveRef.current) {
+        // Player is locked in place during Root of Strength keypad challenge or Monty Hall
+        walkTargetRef.current = null;
       } else {
         // Standard WASD keyboard movement, Joystick movement, or Walk to cursor
         const keys = keysRef.current;
@@ -3448,6 +6090,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         if (boss.id === 'archmages' && (boss.archmagesPhase === 'PHASE1' || boss.archmagesPhase === 'MERGING')) {
           // Archmages Phase 1 and Phase 2 transition animation float in positions casting/merging spells; physical body touch contact collision is disabled
           isContact = false;
+        } else if (boss.id === 'phiboccion' && (boss.phiboccionState === 'FLOATING' || phiboccionKickPhaseRef.current === 'PREP')) {
+          // Disable body touch contact damage while Phiboccion is floating or moving towards setup corners in PREP phase
+          isContact = false;
+        } else if (boss.id === 'googolbra') {
+          // Body and head contact damage handled precisely per tile segment in Googolbra loop
+          isContact = false;
         } else if (boss.id === 'haunted_eye') {
           const rx = (boss.widthRadius || 155) + p.radius;
           const ry = (boss.heightRadius || 55) + p.radius;
@@ -3486,7 +6134,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             }
           } else if (bossContactCooldownRef.current <= 0 && playerInvincibleTimerRef.current <= 0) {
             bossContactCooldownRef.current = 0.55;
-            const contactDmg = Math.max(1, Math.round(boss.damage * (1 - (p.damageReduction || 0))));
+            const contactDmg = invincibilityRef.current ? 0 : Math.max(1, Math.round(boss.damage * (1 - (p.damageReduction || 0))));
             p.hp = Math.max(0, p.hp - contactDmg);
             lastReportedHpRef.current = p.hp;
             onUpdatePlayer({ hp: p.hp });
@@ -3671,7 +6319,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           let closestTarget: { x: number; y: number; hp: number; radius: number; isBoss: boolean; ref?: any } | null = null;
           let minDist = 220; // Pet Plant attack radius
 
-          if (activeBoss) {
+          if (activeBoss && !activeBoss.isInvincible) {
             const dist = Math.hypot(activeBoss.x - pet.x, activeBoss.y - pet.y);
             if (dist < minDist) {
               minDist = dist;
@@ -3780,8 +6428,74 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         if (curTime - owned.lastFired >= interval) {
           owned.lastFired = curTime;
 
+          if (def.id === 'protractor') {
+            soundEngine.playShoot('sword');
+
+            // Determine movement base direction
+            let baseAngle = Math.atan2(lastMoveDirRef.current.dy, lastMoveDirRef.current.dx);
+            if (Math.hypot(lastMoveDirRef.current.dx, lastMoveDirRef.current.dy) < 0.05) {
+              baseAngle = lastFacingDirectionRef.current === 'left' ? Math.PI : 0;
+            }
+
+            // Determine launch angles based on weapon rank:
+            // Rank 1: moving direction
+            // Rank 2: + behind (+PI)
+            // Rank 3: + above (-PI/2)
+            // Rank 4+: + underneath (+PI/2)
+            const angles: number[] = [baseAngle];
+            if (owned.level >= 2) {
+              angles.push(baseAngle + Math.PI); // Behind
+            }
+            if (owned.level >= 3) {
+              angles.push(baseAngle - Math.PI / 2); // Above
+            }
+            if (owned.level >= 4) {
+              angles.push(baseAngle + Math.PI / 2); // Underneath
+            }
+
+            // Loop geometry: big circular motion strictly in front of the player towards shot direction
+            const loopR = 140 * p.areaMult;
+            const loopDuration = 1.6;
+
+            angles.forEach((alpha, idx) => {
+              const forwardX = Math.cos(alpha);
+              const forwardY = Math.sin(alpha);
+              const perpX = -Math.sin(alpha);
+              const perpY = Math.cos(alpha);
+              const loopDir = idx % 2 === 0 ? 1 : -1;
+
+              projectilesRef.current.push({
+                id: nextEntityId.current++,
+                weaponId: def.id,
+                weaponLevel: owned.level,
+                x: p.x,
+                y: p.y,
+                vx: forwardX * 420,
+                vy: forwardY * 420,
+                damage,
+                radius: size,
+                color: '#38bdf8',
+                pierce: 999,
+                duration: 0,
+                maxDuration: loopDuration,
+                knockback: 10 * p.knockbackMult,
+                vampirismRatio: p.vampirism,
+                isCircularLoop: true,
+                loopRadius: loopR,
+                loopDirection: loopDir,
+                forwardX,
+                forwardY,
+                perpX,
+                perpY,
+                rotationAngle: alpha,
+                hitEnemyIds: new Set<number>(),
+                hitBoss: false,
+              });
+            });
+          }
+
           // SHOOTING SYSTEM 1: MOUSE_DIRECTION
-          if (def.shootingType === 'MOUSE_DIRECTION') {
+          else if (def.shootingType === 'MOUSE_DIRECTION') {
             const baseAngle = Math.atan2(mouseWorldY - p.y, mouseWorldX - p.x);
 
             if (def.id === 'astral_sword') {
@@ -3842,7 +6556,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
               // 2. Cleave Boss if active
               const activeBoss = isBossFightRef.current && bossInstanceRef.current ? bossInstanceRef.current : null;
-              if (activeBoss && activeBoss.hp > 0) {
+              if (activeBoss && activeBoss.hp > 0 && !activeBoss.isInvincible) {
                 const bdx = activeBoss.x - p.x;
                 const bdy = activeBoss.y - p.y;
                 const bdist = Math.hypot(bdx, bdy);
@@ -4008,6 +6722,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   projectilesRef.current.push({
                     id: nextEntityId.current++,
                     weaponId: def.id,
+                    weaponLevel: owned.level,
                     x: p.x,
                     y: p.y,
                     vx: Math.cos(ang) * def.baseSpeed,
@@ -4017,8 +6732,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     color: def.bulletColor,
                     pierce,
                     duration: 0,
-                    maxDuration: 1.8,
-                    knockback: 18 * p.knockbackMult,
+                    maxDuration: 3.5, // Extended lifespan so projectiles traverse large boss arenas without early despawns
+                    knockback: (def.id === 'spectral_arrow' ? 24 : 18) * p.knockbackMult,
                     vampirismRatio: p.vampirism,
                     hitEnemyIds: new Set<number>(),
                     hitBoss: false,
@@ -4073,7 +6788,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     p.hp = Math.min(p.maxHp, p.hp + healed);
                   }
                 }
-              } else if (activeBoss) {
+              } else if (activeBoss && !activeBoss.isInvincible) {
                 soundEngine.playShoot('cauldron');
 
                 const actualDmg = instaKillRef.current ? Math.max(activeBoss.hp + 10, 999999) : damage;
@@ -4159,6 +6874,75 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     freezeDuration,
                     chainMax,
                     chainFreeze,
+                    hitEnemyIds: new Set<number>(),
+                    hitBoss: false,
+                  });
+                }
+              }
+            } else if (def.id === 'sickle') {
+              const projSpeed = def.baseSpeed + ((tier as any).speedBonus || 0);
+              const kb = (owned.level >= 6 ? 12 : 0) * p.knockbackMult;
+
+              if (sortedEnemies.length > 0) {
+                soundEngine.playShoot('sword');
+                const targetCount = Math.min(count, sortedEnemies.length);
+                for (let i = 0; i < targetCount; i++) {
+                  const target = sortedEnemies[i];
+                  const ang = Math.atan2(target.y - p.y, target.x - p.x);
+                  projectilesRef.current.push({
+                    id: nextEntityId.current++,
+                    weaponId: def.id,
+                    weaponLevel: owned.level,
+                    x: p.x,
+                    y: p.y,
+                    vx: Math.cos(ang) * projSpeed,
+                    vy: Math.sin(ang) * projSpeed,
+                    damage,
+                    radius: size,
+                    color: '#38bdf8',
+                    pierce: 999,
+                    duration: 0,
+                    maxDuration: 4.5,
+                    knockback: kb,
+                    vampirismRatio: p.vampirism,
+                    isBoomerang: true,
+                    startX: p.x,
+                    startY: p.y,
+                    maxDistance: 280,
+                    isReturning: false,
+                    returnThrowTriggered: false,
+                    rotationAngle: 0,
+                    hitEnemyIds: new Set<number>(),
+                    hitBoss: false,
+                  });
+                }
+              } else if (activeBoss) {
+                soundEngine.playShoot('sword');
+                for (let i = 0; i < count; i++) {
+                  const ang = Math.atan2(activeBoss.y - p.y, activeBoss.x - p.x);
+                  projectilesRef.current.push({
+                    id: nextEntityId.current++,
+                    weaponId: def.id,
+                    weaponLevel: owned.level,
+                    x: p.x,
+                    y: p.y,
+                    vx: Math.cos(ang) * projSpeed,
+                    vy: Math.sin(ang) * projSpeed,
+                    damage,
+                    radius: size,
+                    color: '#38bdf8',
+                    pierce: 999,
+                    duration: 0,
+                    maxDuration: 4.5,
+                    knockback: kb,
+                    vampirismRatio: p.vampirism,
+                    isBoomerang: true,
+                    startX: p.x,
+                    startY: p.y,
+                    maxDistance: 280,
+                    isReturning: false,
+                    returnThrowTriggered: false,
+                    rotationAngle: 0,
                     hitEnemyIds: new Set<number>(),
                     hitBoss: false,
                   });
@@ -4361,7 +7145,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             } else {
               isBookHit = Math.hypot(boss.x - bx, boss.y - by) <= bookRadius + boss.radius;
             }
-            if (isBookHit) {
+            if (isBookHit && !boss.isInvincible) {
               const tickDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : damage * dt * 3.5;
               boss.hp -= tickDmg;
               bossHitFlashRef.current = 0.05;
@@ -4524,7 +7308,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           // Check hit against Boss
           if (isBossFightRef.current && bossInstanceRef.current) {
             const boss = bossInstanceRef.current;
-            if (boss.hp > 0) {
+            if (boss.hp > 0 && !boss.isInvincible) {
               const bdist = Math.hypot(boss.x - blade.x, boss.y - blade.y);
               if (bdist <= bladeRadius + (boss.radius || 45)) {
                 const ASTRAL_BOSS_HIT_COOLDOWN = 0.5; // Prevent rapid hits from spinning blade (0.5s cooldown for boss)
@@ -4584,9 +7368,118 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         }
 
+        // Boomerang / Sickle logic
+        if (proj.isBoomerang) {
+          // Constantly rotating clockwise
+          proj.rotationAngle = ((proj.rotationAngle || 0) + dt * 14) % (Math.PI * 2);
+
+          if (!proj.isReturning) {
+            const distFromStart = Math.hypot(proj.x - (proj.startX ?? proj.x), proj.y - (proj.startY ?? proj.y));
+            if (distFromStart >= (proj.maxDistance ?? 280)) {
+              proj.isReturning = true;
+              // Reset hit sets so enemies can be struck again on return journey
+              proj.hitEnemyIds?.clear();
+              proj.hitBoss = false;
+
+              // Rank 3: When a Sickle is at its maximum distance, the player throws another (essentially double fire rate)
+              if ((proj.weaponLevel ?? 1) >= 3 && !proj.returnThrowTriggered) {
+                proj.returnThrowTriggered = true;
+                const activeBoss = isBossFightRef.current && bossInstanceRef.current ? bossInstanceRef.current : null;
+                const sortedEnemies = [...enemiesRef.current].filter((e) => e.hp > 0).sort((a, b) => {
+                  return Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y);
+                });
+                let throwAngle: number | null = null;
+                if (sortedEnemies.length > 0) {
+                  throwAngle = Math.atan2(sortedEnemies[0].y - p.y, sortedEnemies[0].x - p.x);
+                } else if (activeBoss) {
+                  throwAngle = Math.atan2(activeBoss.y - p.y, activeBoss.x - p.x);
+                }
+                if (throwAngle !== null) {
+                  soundEngine.playShoot('sword');
+                  const projSpeed = 450;
+                  const kb = ((proj.weaponLevel ?? 1) >= 6 ? 12 : 0) * p.knockbackMult;
+                  projectilesRef.current.push({
+                    id: nextEntityId.current++,
+                    weaponId: 'sickle',
+                    weaponLevel: proj.weaponLevel,
+                    x: p.x,
+                    y: p.y,
+                    vx: Math.cos(throwAngle) * projSpeed,
+                    vy: Math.sin(throwAngle) * projSpeed,
+                    damage: proj.damage,
+                    radius: proj.radius,
+                    color: '#38bdf8',
+                    pierce: 999,
+                    duration: 0,
+                    maxDuration: 4.5,
+                    knockback: kb,
+                    vampirismRatio: p.vampirism,
+                    isBoomerang: true,
+                    startX: p.x,
+                    startY: p.y,
+                    maxDistance: 280,
+                    isReturning: false,
+                    returnThrowTriggered: true, // Only primary sickle triggers secondary throw
+                    rotationAngle: 0,
+                    hitEnemyIds: new Set<number>(),
+                    hitBoss: false,
+                  });
+                }
+              }
+            }
+          } else {
+            // Returning to player
+            const toPlayerX = p.x - proj.x;
+            const toPlayerY = p.y - proj.y;
+            const distToPlayer = Math.hypot(toPlayerX, toPlayerY);
+            if (distToPlayer <= Math.max(28, p.radius + proj.radius)) {
+              // Caught by player
+              projectilesRef.current.splice(i, 1);
+              continue;
+            } else {
+              const retSpeed = 480;
+              proj.vx = (toPlayerX / distToPlayer) * retSpeed;
+              proj.vy = (toPlayerY / distToPlayer) * retSpeed;
+            }
+          }
+        }
+
         if (proj.isLaser) {
           proj.x = p.x;
           proj.y = p.y;
+        } else if (proj.isCircularLoop) {
+          const loopDuration = proj.maxDuration || 1.6;
+          const progress = Math.min(1.0, proj.duration / loopDuration);
+
+          proj.rotationAngle = (proj.rotationAngle || 0) + 14 * dt;
+
+          if (progress >= 1.0) {
+            // Loop finished and returned to player!
+            projectilesRef.current.splice(i, 1);
+            continue;
+          }
+
+          // Reset hit enemies halfway through loop so return journey slices again
+          if (progress > 0.52 && !proj.returnThrowTriggered) {
+            proj.returnThrowTriggered = true;
+            proj.hitBoss = false;
+            proj.hitEnemyIds?.clear();
+          }
+
+          // Circle strictly towards where it was shot:
+          // Starts at player, moves forward along forward vector, arcs in a circle reaching 2*R distance at progress=0.5, and returns to player at progress=1.0
+          const theta = progress * Math.PI * 2;
+          const R = proj.loopRadius || 140;
+          const fwdDist = R * (1 - Math.cos(theta));
+          const latDist = R * Math.sin(theta) * (proj.loopDirection || 1);
+
+          const fwdX = proj.forwardX ?? 1;
+          const fwdY = proj.forwardY ?? 0;
+          const pX = proj.perpX ?? 0;
+          const pY = proj.perpY ?? 1;
+
+          proj.x = p.x + fwdDist * fwdX + latDist * pX;
+          proj.y = p.y + fwdDist * fwdY + latDist * pY;
         } else {
           proj.x += proj.vx * dt;
           proj.y += proj.vy * dt;
@@ -4607,7 +7500,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
 
         // Check lifespan
-        if (proj.duration >= proj.maxDuration) {
+        if (!proj.isCircularLoop && proj.duration >= proj.maxDuration) {
           projectilesRef.current.splice(i, 1);
           continue;
         }
@@ -4636,14 +7529,31 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               const dx = (proj.x - boss.x) / rx;
               const dy = (proj.y - boss.y) / ry;
               isBossHit = (dx * dx + dy * dy) <= 1.0;
+            } else if (boss.id === 'googolbra') {
+              isBossHit = Math.hypot(proj.x - boss.x, proj.y - boss.y) <= proj.radius + boss.radius;
+              if (!isBossHit && googolbraCurrentSegmentsRef.current) {
+                for (const seg of googolbraCurrentSegmentsRef.current) {
+                  if (Math.hypot(proj.x - seg.x, proj.y - seg.y) <= proj.radius + 38) {
+                    isBossHit = true;
+                    break;
+                  }
+                }
+              }
             } else {
               isBossHit = Math.hypot(proj.x - boss.x, proj.y - boss.y) <= proj.radius + boss.radius;
             }
           }
 
-          if (isBossHit) {
+          if (isBossHit && !boss.isInvincible) {
             proj.hitBoss = true;
-            const actualDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : proj.damage;
+            proj.hitCount = (proj.hitCount || 0) + 1;
+
+            let calcDmg = proj.damage;
+            if (proj.weaponId === 'spectral_arrow' && proj.hitCount > 1 && (proj.weaponLevel ?? 1) < 5) {
+              calcDmg = Math.round(proj.damage * 0.5);
+            }
+
+            const actualDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : calcDmg;
             boss.hp -= actualDmg;
             boss.lastHitBy = proj.weaponId;
             bossHitFlashRef.current = 0.12;
@@ -4797,8 +7707,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           if (isHit) {
             if (!proj.hitEnemyIds) proj.hitEnemyIds = new Set<number>();
             proj.hitEnemyIds.add(enemy.id);
+            proj.hitCount = (proj.hitCount || 0) + 1;
 
-            const actualDmg = instaKillRef.current ? Math.max(enemy.hp + 10, 999999) : proj.damage;
+            let calcDmg = proj.damage;
+            if (proj.weaponId === 'spectral_arrow' && proj.hitCount > 1 && (proj.weaponLevel ?? 1) < 5) {
+              calcDmg = Math.round(proj.damage * 0.5);
+            }
+
+            const actualDmg = instaKillRef.current ? Math.max(enemy.hp + 10, 999999) : calcDmg;
             enemy.hp -= actualDmg;
             enemy.lastHitBy = proj.weaponId;
             enemy.hitFlashTimer = 0.1;
@@ -4962,7 +7878,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               }
 
               // Boss caught in splash
-              if (isBossFightRef.current && bossInstanceRef.current && !proj.hitBoss) {
+              if (isBossFightRef.current && bossInstanceRef.current && !proj.hitBoss && !bossInstanceRef.current.isInvincible) {
                 const b = bossInstanceRef.current;
                 const bdist = Math.hypot(b.x - expX, b.y - expY);
                 if (bdist <= expRadius + (b.radius || 40)) {
@@ -4999,6 +7915,21 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             if (proj.pierce <= 0) {
               projectilesRef.current.splice(i, 1);
               break;
+            } else if (proj.weaponId === 'spectral_arrow' && (proj.weaponLevel ?? 1) >= 3) {
+              // Spectral Arrow Homing logic (Rank 3+): After hitting enemy, homes into closest remaining enemy
+              const target = [...enemiesRef.current]
+                .filter(e => e.hp > 0 && e.id !== enemy.id && !proj.hitEnemyIds?.has(e.id))
+                .sort((a, b) => Math.hypot(a.x - enemy.x, a.y - enemy.y) - Math.hypot(b.x - enemy.x, b.y - enemy.y))[0];
+
+              if (target) {
+                const spd = Math.hypot(proj.vx, proj.vy) || 800;
+                const nextAngle = Math.atan2(target.y - enemy.y, target.x - enemy.x);
+                proj.vx = Math.cos(nextAngle) * spd;
+                proj.vy = Math.sin(nextAngle) * spd;
+                proj.x = enemy.x;
+                proj.y = enemy.y;
+                proj.homingTargetId = target.id;
+              }
             }
           }
         }
@@ -5051,7 +7982,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             } else {
               isAoEHit = Math.hypot(aoe.x - boss.x, aoe.y - boss.y) <= aoe.radius + boss.radius;
             }
-            if (isAoEHit) {
+            if (isAoEHit && !boss.isInvincible) {
               const actualDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : aoe.damage;
               boss.hp -= actualDmg;
               boss.lastHitBy = aoe.weaponId;
@@ -5154,7 +8085,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           } else {
             isPulseHit = Math.hypot(boss.x - p.x, boss.y - p.y) <= pulse.currentRadius + boss.radius;
           }
-          if (isPulseHit) {
+          if (isPulseHit && !boss.isInvincible) {
             pulse.hitEnemyIds.add(-999);
             const actualDmg = instaKillRef.current ? Math.max(boss.hp + 10, 999999) : pulse.damage;
             boss.hp -= actualDmg;
@@ -5205,7 +8136,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const distToP = Math.hypot(p.x - rock.x, p.y - rock.y);
         if (distToP <= p.radius + rock.radius) {
           if (!p.isDashing && playerInvincibleTimerRef.current <= 0) {
-            const rockDmg = Math.max(1, Math.round(rock.damage * (1 - (p.damageReduction || 0))));
+            const rockDmg = invincibilityRef.current ? 0 : Math.max(1, Math.round(rock.damage * (1 - (p.damageReduction || 0))));
             p.hp = Math.max(0, p.hp - rockDmg);
             lastReportedHpRef.current = p.hp;
             onUpdatePlayer({ hp: p.hp });
@@ -5220,7 +8151,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               x: p.x + (Math.random() - 0.5) * 16,
               y: p.y - 18,
               text: `-${rockDmg}`,
-              color: '#d97706',
+              color: rock.isPellet ? '#06b6d4' : '#d97706',
               life: 0,
               maxLife: 0.75,
               vy: -40,
@@ -5235,7 +8166,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 level: p.level,
                 kills: killsCountRef.current,
                 bossesKilled: bossesKilledRef.current,
-                killerName: 'Rock Thrower',
+                killerName: rock.isPellet ? (getLanguage() === 'en' ? 'Bunnary' : 'c0e1ho') : 'Rock Thrower',
               });
               return;
             }
@@ -5353,8 +8284,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         }
 
-        // Rock Thrower AI & Attack logic
-        if (enemy.type === 'ROCK_THROWER' && (!enemy.vineRootedDuration || enemy.vineRootedDuration <= 0) && (!enemy.frozenTimer || enemy.frozenTimer <= 0)) {
+        // Rock Thrower & Bunnary AI & Attack logic
+        if ((enemy.type === 'ROCK_THROWER' || enemy.type === 'BUNNARY') && (!enemy.vineRootedDuration || enemy.vineRootedDuration <= 0) && (!enemy.frozenTimer || enemy.frozenTimer <= 0)) {
           if (enemy.rockTelegraphTimer && enemy.rockTelegraphTimer > 0) {
             enemy.rockTelegraphTimer -= dt;
             enemy.targetAngle = Math.atan2(p.y - enemy.y, p.x - enemy.x);
@@ -5371,6 +8302,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 radius: 6,
                 life: 0,
                 maxLife: 4.0,
+                isPellet: enemy.type === 'BUNNARY',
               });
               soundEngine.playShoot('wisp');
               enemy.rockThrowTimer = 4.5 + Math.random() * 1.5;
@@ -5381,6 +8313,55 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             if (enemy.rockThrowTimer <= 0) {
               enemy.rockTelegraphTimer = 1.0;
               enemy.targetAngle = Math.atan2(p.y - enemy.y, p.x - enemy.x);
+            }
+          }
+        }
+
+        // Bunnary binary sprite cycling
+        if (enemy.type === 'BUNNARY') {
+          const msgIdx = enemy.bunnaryMsgIndex ?? 0;
+          const currentMsg = BUNNARY_MESSAGES[msgIdx % BUNNARY_MESSAGES.length];
+          enemy.bunnarySymbolTimer = (enemy.bunnarySymbolTimer ?? 0.32) - dt;
+          if (enemy.bunnarySymbolTimer <= 0) {
+            if (enemy.bunnaryInGap) {
+              // Quick blank flicker between numbers finished; now show the next character
+              enemy.bunnaryInGap = false;
+              const nextCharIdx = (enemy.bunnaryCharIndex ?? -1) + 1;
+              if (nextCharIdx >= currentMsg.length) {
+                // Loop to next message, signaling start of new message with End Sentence sprite
+                enemy.bunnaryMsgIndex = (msgIdx + 1) % BUNNARY_MESSAGES.length;
+                enemy.bunnaryCharIndex = -1;
+                enemy.bunnarySymbolTimer = 0.6; // End Sentence marker duration
+              } else {
+                enemy.bunnaryCharIndex = nextCharIdx;
+                enemy.bunnarySymbolTimer = 0.32; // Normal character duration
+              }
+            } else {
+              // Just finished displaying current character or End Sentence marker
+              const charIdx = enemy.bunnaryCharIndex ?? -1;
+              if (charIdx === -1) {
+                // Finished End Sentence marker, start first character
+                enemy.bunnaryCharIndex = 0;
+                enemy.bunnarySymbolTimer = 0.32;
+              } else {
+                const ch = currentMsg[charIdx];
+                if (ch === '0' || ch === '1') {
+                  // After any number, quickly flash blank (~0.08s) so repeated digits are clearly distinguishable
+                  enemy.bunnaryInGap = true;
+                  enemy.bunnarySymbolTimer = 0.08;
+                } else {
+                  // It was a space, move straight to next character
+                  const nextCharIdx = charIdx + 1;
+                  if (nextCharIdx >= currentMsg.length) {
+                    enemy.bunnaryMsgIndex = (msgIdx + 1) % BUNNARY_MESSAGES.length;
+                    enemy.bunnaryCharIndex = -1;
+                    enemy.bunnarySymbolTimer = 0.6;
+                  } else {
+                    enemy.bunnaryCharIndex = nextCharIdx;
+                    enemy.bunnarySymbolTimer = 0.32;
+                  }
+                }
+              }
             }
           }
         }
@@ -5422,7 +8403,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
         // Advance towards player if not in initial heavy knockback stun and not vine rooted or frozen
         if (edist > 0 && (!enemy.attackCooldown || enemy.attackCooldown < 0.6) && (!enemy.vineRootedDuration || enemy.vineRootedDuration <= 0) && (!enemy.frozenTimer || enemy.frozenTimer <= 0)) {
-          if (enemy.type === 'ROCK_THROWER') {
+          if (enemy.type === 'ROCK_THROWER' || enemy.type === 'BUNNARY') {
             const isTelegraphing = enemy.rockTelegraphTimer && enemy.rockTelegraphTimer > 0;
             if (!isTelegraphing) {
               const targetDist = enemy.targetDistance || 230;
@@ -5581,7 +8562,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           // If dashing, immune to damage!
           // Enemies only deal damage once on collision, then get knocked back away
           if (!p.isDashing && playerInvincibleTimerRef.current <= 0 && (!enemy.attackCooldown || enemy.attackCooldown <= 0)) {
-            const dmgDealt = Math.max(1, Math.round(enemy.damage * (1 - (p.damageReduction || 0))));
+            const dmgDealt = invincibilityRef.current ? 0 : Math.max(1, Math.round(enemy.damage * (1 - (p.damageReduction || 0))));
             p.hp = Math.max(0, p.hp - dmgDealt);
             lastReportedHpRef.current = p.hp;
             onUpdatePlayer({ hp: p.hp });
@@ -5645,8 +8626,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           soundEngine.playEnemyDeath();
           if (onEnemyDefeated) {
             onEnemyDefeated(
+              enemy.type === 'UNOCONDA' || enemy.name === 'Unoconda' ? 'unoconda' :
+              enemy.type === 'VIIIPER' || enemy.name === 'VIIIper' ? 'viiiper' :
+              enemy.type === 'BUNNARY' || enemy.name === 'Bunnary' ? 'bunnary' :
               enemy.type === 'BAT' ? 'bat' :
-              enemy.type === 'GHOUL' ? 'ghoul' : 
+              enemy.type === 'GHOUL' ? 'ghoul' :
+              enemy.type === 'OBMOOSE' ? 'obmoose' :
               enemy.type === 'MINI_EYE' ? 'mini_eye' :
               enemy.type === 'ROCK_THROWER' ? 'rock_thrower' : 'wraith'
             );
@@ -5676,11 +8661,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
           // Enemy Drops (Disabled in Boss Rush mode)
           if (!isBossRush) {
-            const isVillageKnight = enemy.isRed || enemy.name === 'Village Knight';
+            const isEliteEnemy = enemy.isRed || enemy.name === 'Village Knight' || enemy.name === 'ObMoose' || enemy.type === 'OBMOOSE';
             const specialRoll = Math.random();
 
             const pushExpDrop = (fallbackValue: number, fallbackColor: string, fallbackRadius: number) => {
-              const chance = isVillageKnight ? 0.10 : 0.01;
+              const chance = isEliteEnemy ? 0.10 : 0.01;
               if (p.expToNextLevel > 700 && Math.random() < chance) {
                 expGemsRef.current.push({
                   id: nextEntityId.current++,
@@ -5713,15 +8698,15 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               });
 
               // Normal EXP drop accompanying the magnet
-              if (isVillageKnight) {
+              if (isEliteEnemy) {
                 pushExpDrop(10, '#ef4444', 7);
               } else {
                 pushExpDrop(enemy.exp, '#38bdf8', 5);
               }
             } else if (specialRoll < 0.10) {
               // Other Special Drops (remaining ~9% chance)
-              if (isVillageKnight) {
-                // Village's Knight: higher-level orb doesn't apply; drops Food (half of enemy damage rounded to 0 or 5) + standard Red Orb (10 EXP)
+              if (isEliteEnemy) {
+                // Elite Enemy (Village Knight / ObMoose): higher-level orb doesn't apply; drops Food (half of enemy damage rounded to 0 or 5) + standard Red Orb (10 EXP)
                 pickupsRef.current.push({
                   id: nextEntityId.current++,
                   type: 'FOOD',
@@ -5750,7 +8735,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               }
             } else {
               // Normal 90% drops:
-              if (isVillageKnight) {
+              if (isEliteEnemy) {
                 pushExpDrop(10, '#ef4444', 7);
               } else {
                 // Normal cyan diamond EXP gem
@@ -5841,15 +8826,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         }
       }
 
-      // EXP Attraction & Collection (Disabled in Boss Rush mode)
-      if (isBossRush) {
-        expGemsRef.current = [];
-        if (p.level > 1 || p.exp > 0) {
-          p.level = 1;
-          p.exp = 0;
-          onUpdatePlayer({ level: 1, exp: 0 });
-        }
-      } else {
+      // EXP Attraction & Collection
+      {
         const magnetRadius = p.magnetRadius;
 
         // Attract world pickups (Food & Magnets) towards player
@@ -5995,25 +8973,139 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const tileSize = 80;
-      const groundImg = groundTileImageRef.current;
 
-      let patternDrawn = false;
-      if (groundImg) {
-        try {
-          const pattern = ctx.createPattern(groundImg, 'repeat');
-          if (pattern && typeof (pattern as any).setTransform === 'function') {
-            const matrix = new DOMMatrix();
-            matrix.translateSelf(-cameraX, -cameraY);
-            (pattern as any).setTransform(matrix);
-            ctx.fillStyle = pattern;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            patternDrawn = true;
-          }
-        } catch {
-          patternDrawn = false;
+      // In Boss Rush and Singular Fight, dynamic floor tiles always match the map the Boss is originally fought in
+      let activeFloorMap = selectedMapRef.current;
+      if (isBossRush) {
+        const currentBossId = bossInstanceRef.current?.id || (bossRushIndexRef.current < bossRushQueueRef.current.length ? bossRushQueueRef.current[bossRushIndexRef.current] : null);
+        if (currentBossId) {
+          activeFloorMap = getBossHomeMap(currentBossId);
         }
+      }
 
-        if (!patternDrawn) {
+      if (activeFloorMap === 'black_honey_forest') {
+        const honeyImg = blackHoneyTileImageRef.current;
+        let patternDrawn = false;
+        if (honeyImg && honeyImg.complete && honeyImg.naturalWidth > 0) {
+          try {
+            if (!blackHoneyPatternRef.current || blackHoneyPatternImgRef.current !== honeyImg) {
+              blackHoneyPatternRef.current = ctx.createPattern(honeyImg, 'repeat');
+              blackHoneyPatternImgRef.current = honeyImg;
+            }
+            const pattern = blackHoneyPatternRef.current;
+            if (pattern && typeof (pattern as any).setTransform === 'function') {
+              const matrix = new DOMMatrix();
+              matrix.translateSelf(-cameraX, -cameraY);
+              const scale = 120 / honeyImg.naturalWidth;
+              matrix.scaleSelf(scale, scale);
+              (pattern as any).setTransform(matrix);
+              ctx.fillStyle = pattern;
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              patternDrawn = true;
+            }
+          } catch {
+            patternDrawn = false;
+          }
+
+          if (!patternDrawn) {
+            const bTileSize = 120;
+            const startCol = Math.floor(cameraX / bTileSize) - 1;
+            const endCol = startCol + Math.ceil(canvas.width / bTileSize) + 2;
+            const startRow = Math.floor(cameraY / bTileSize) - 1;
+            const endRow = startRow + Math.ceil(canvas.height / bTileSize) + 2;
+
+            for (let col = startCol; col <= endCol; col++) {
+              for (let row = startRow; row <= endRow; row++) {
+                const screenX = Math.floor(col * bTileSize - cameraX);
+                const screenY = Math.floor(row * bTileSize - cameraY);
+                ctx.drawImage(honeyImg, screenX, screenY, bTileSize + 1, bTileSize + 1);
+              }
+            }
+          }
+        } else {
+          ctx.fillStyle = '#1c120c';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+      } else if (activeFloorMap === 'mathematical_realm') {
+        const mathTileSize = 160;
+        const startCol = Math.floor(cameraX / mathTileSize) - 1;
+        const endCol = startCol + Math.ceil(canvas.width / mathTileSize) + 2;
+        const startRow = Math.floor(cameraY / mathTileSize) - 1;
+        const endRow = startRow + Math.ceil(canvas.height / mathTileSize) + 2;
+
+        for (let col = startCol; col <= endCol; col++) {
+          for (let row = startRow; row <= endRow; row++) {
+            const screenX = Math.floor(col * mathTileSize - cameraX);
+            const screenY = Math.floor(row * mathTileSize - cameraY);
+            
+            // Deterministic check: only 15% of the tiles are special symbol tiles, most (85%) are blank
+            const isSpecial = Math.abs((col * 73 + row * 89) % 100) < 15;
+            let img = mathTileBlankRef.current;
+
+            if (isSpecial) {
+              const val = Math.abs((col * 17 + row * 31) % 4);
+              if (val === 0 && mathTile1Ref.current) img = mathTile1Ref.current;
+              else if (val === 1 && mathTile2Ref.current) img = mathTile2Ref.current;
+              else if (val === 2 && mathTile3Ref.current) img = mathTile3Ref.current;
+              else if (val === 3 && mathTile4Ref.current) img = mathTile4Ref.current;
+            }
+            
+            if (img) {
+              ctx.drawImage(img, screenX, screenY, mathTileSize + 1, mathTileSize + 1);
+            } else {
+              // Fallback if images aren't loaded yet
+              const isAlt = (Math.abs(col) + Math.abs(row)) % 2 === 0;
+              ctx.fillStyle = isAlt ? '#140c24' : '#11091f';
+              ctx.fillRect(screenX, screenY, mathTileSize + 1, mathTileSize + 1);
+            }
+          }
+        }
+        // Darken the ground texture a bit for improved contrast and atmosphere
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else {
+        const groundImg = groundTileImageRef.current;
+
+        let patternDrawn = false;
+        if (groundImg && groundImg.complete && groundImg.naturalWidth > 0) {
+          try {
+            if (!groundPatternRef.current || groundPatternImgRef.current !== groundImg) {
+              groundPatternRef.current = ctx.createPattern(groundImg, 'repeat');
+              groundPatternImgRef.current = groundImg;
+            }
+            const pattern = groundPatternRef.current;
+            if (pattern && typeof (pattern as any).setTransform === 'function') {
+              const matrix = new DOMMatrix();
+              matrix.translateSelf(-cameraX, -cameraY);
+              (pattern as any).setTransform(matrix);
+              ctx.fillStyle = pattern;
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              patternDrawn = true;
+            }
+          } catch {
+            patternDrawn = false;
+          }
+
+          if (!patternDrawn) {
+            const startCol = Math.floor(cameraX / tileSize) - 1;
+            const endCol = startCol + Math.ceil(canvas.width / tileSize) + 2;
+            const startRow = Math.floor(cameraY / tileSize) - 1;
+            const endRow = startRow + Math.ceil(canvas.height / tileSize) + 2;
+
+            for (let col = startCol; col <= endCol; col++) {
+              for (let row = startRow; row <= endRow; row++) {
+                const screenX = Math.floor(col * tileSize - cameraX);
+                const screenY = Math.floor(row * tileSize - cameraY);
+                // +1 pixel overlap prevents subpixel hairline seams on mobile high-DPI screens
+                ctx.drawImage(groundImg, screenX, screenY, tileSize + 1, tileSize + 1);
+              }
+            }
+          }
+
+          // Darken the ground texture a bit for improved contrast and atmosphere
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else {
           const startCol = Math.floor(cameraX / tileSize) - 1;
           const endCol = startCol + Math.ceil(canvas.width / tileSize) + 2;
           const startRow = Math.floor(cameraY / tileSize) - 1;
@@ -6023,28 +9115,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             for (let row = startRow; row <= endRow; row++) {
               const screenX = Math.floor(col * tileSize - cameraX);
               const screenY = Math.floor(row * tileSize - cameraY);
-              // +1 pixel overlap prevents subpixel hairline seams on mobile high-DPI screens
-              ctx.drawImage(groundImg, screenX, screenY, tileSize + 1, tileSize + 1);
+              const isAlt = (Math.abs(col) + Math.abs(row)) % 2 === 0;
+              ctx.fillStyle = isAlt ? '#140c24' : '#11091f';
+              ctx.fillRect(screenX, screenY, tileSize + 1, tileSize + 1);
             }
-          }
-        }
-
-        // Darken the ground texture a bit for improved contrast and atmosphere
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      } else {
-        const startCol = Math.floor(cameraX / tileSize) - 1;
-        const endCol = startCol + Math.ceil(canvas.width / tileSize) + 2;
-        const startRow = Math.floor(cameraY / tileSize) - 1;
-        const endRow = startRow + Math.ceil(canvas.height / tileSize) + 2;
-
-        for (let col = startCol; col <= endCol; col++) {
-          for (let row = startRow; row <= endRow; row++) {
-            const screenX = Math.floor(col * tileSize - cameraX);
-            const screenY = Math.floor(row * tileSize - cameraY);
-            const isAlt = (Math.abs(col) + Math.abs(row)) % 2 === 0;
-            ctx.fillStyle = isAlt ? '#140c24' : '#11091f';
-            ctx.fillRect(screenX, screenY, tileSize + 1, tileSize + 1);
           }
         }
       }
@@ -6059,8 +9133,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.fillStyle = '#c084fc';
         ctx.font = 'bold 36px serif';
         ctx.textAlign = 'center';
-        ctx.shadowColor = '#9333ea';
-        ctx.shadowBlur = 20;
+        if (!mobileModeRef.current) {
+          ctx.shadowColor = '#9333ea';
+          ctx.shadowBlur = 20;
+        } else {
+          ctx.shadowBlur = 0;
+        }
         const lang = getLanguage();
         const isSingular = bossRushQueueRef.current.length === 1;
         const modeTitle = isSingular
@@ -6070,20 +9148,39 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
         ctx.fillStyle = '#f3f4f6';
         ctx.font = 'bold 24px sans-serif';
-        ctx.shadowBlur = 10;
+        if (!mobileModeRef.current) {
+          ctx.shadowBlur = 10;
+        } else {
+          ctx.shadowBlur = 0;
+        }
         const currentQueueId = bossRushQueueRef.current[bossRushIndexRef.current];
         const bossDef = BOSS_POOL.find((b) => b.id === currentQueueId);
         const nextName = bossDef
           ? translateBossName(bossDef.id, bossDef.name, lang)
           : (currentQueueId || 'Boss');
         const nextLabel = lang === 'en' ? 'Next Challenger' : 'Próximo Desafiante';
-        ctx.fillText(`${nextLabel}: ${nextName}`, canvas.width / 2, canvas.height / 2 - 15);
+        ctx.fillText(`${nextLabel}: ${nextName}`, canvas.width / 2, canvas.height / 2 - 20);
+
+        if (currentQueueId) {
+          const mapId = getBossHomeMap(currentQueueId);
+          const mapDisplayName = translateMapName(mapId, lang);
+          const arenaLabel = lang === 'en' ? 'Arena' : 'Arena';
+          ctx.fillStyle = '#c084fc';
+          ctx.font = 'bold 15px monospace';
+          ctx.shadowBlur = 0;
+          ctx.fillText(`(${arenaLabel}: ${mapDisplayName})`, canvas.width / 2, canvas.height / 2 + 10);
+        }
 
         ctx.fillStyle = '#fbbf24';
         ctx.font = 'bold 52px monospace';
-        ctx.shadowColor = '#d97706';
-        ctx.shadowBlur = 15;
-        ctx.fillText(`${Math.ceil(bossRushPauseTimerRef.current)}s`, canvas.width / 2, canvas.height / 2 + 55);
+        if (!mobileModeRef.current) {
+          ctx.shadowColor = '#d97706';
+          ctx.shadowBlur = 15;
+        } else {
+          ctx.shadowBlur = 0;
+        }
+        ctx.fillText(`${Math.ceil(bossRushPauseTimerRef.current)}s`, canvas.width / 2, canvas.height / 2 + 65);
+        ctx.shadowBlur = 0;
         ctx.restore();
       }
 
@@ -6266,31 +9363,41 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.arc(sx, sy, Math.max(0, pulse.currentRadius - 3), 0, Math.PI * 2);
         ctx.stroke();
 
-        // 4. Cosmetic right-side-up star (pentagram) inside the circle with real self-intersecting closed lines
-        const starRadius = pulse.currentRadius * 0.55;
-        const starStartAngle = -Math.PI / 2; // Pointing upwards (right-side-up star)
-
-        const vertices = [];
-        for (let k = 0; k < 5; k++) {
-          const angle = starStartAngle + (k * 2 * Math.PI) / 5;
-          vertices.push({
-            x: sx + Math.cos(angle) * starRadius,
-            y: sy + Math.sin(angle) * starRadius
-          });
+        // 4. In-game Pentagram sprite inside the pulse
+        const pentagramImg = pentagramImageRef.current;
+        if (pentagramImg && pentagramImg.complete && pentagramImg.naturalWidth > 0) {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.shadowColor = '#ea580c';
+          ctx.shadowBlur = 16 * alpha;
+          ctx.imageSmoothingEnabled = false;
+          const imgSize = pulse.currentRadius * 1.5;
+          ctx.drawImage(pentagramImg, sx - imgSize / 2, sy - imgSize / 2, imgSize, imgSize);
+          ctx.restore();
+        } else {
+          const starRadius = pulse.currentRadius * 0.55;
+          const starStartAngle = -Math.PI / 2;
+          const vertices = [];
+          for (let k = 0; k < 5; k++) {
+            const angle = starStartAngle + (k * 2 * Math.PI) / 5;
+            vertices.push({
+              x: sx + Math.cos(angle) * starRadius,
+              y: sy + Math.sin(angle) * starRadius
+            });
+          }
+          ctx.beginPath();
+          ctx.moveTo(vertices[0].x, vertices[0].y);
+          ctx.lineTo(vertices[2].x, vertices[2].y);
+          ctx.lineTo(vertices[4].x, vertices[4].y);
+          ctx.lineTo(vertices[1].x, vertices[1].y);
+          ctx.lineTo(vertices[3].x, vertices[3].y);
+          ctx.closePath();
+          ctx.fillStyle = `rgba(249, 115, 22, ${0.16 * alpha})`;
+          ctx.fill();
+          ctx.lineWidth = Math.max(1.2, 2.5 * (1 - progress));
+          ctx.strokeStyle = `rgba(254, 240, 138, ${alpha * 0.85})`;
+          ctx.stroke();
         }
-
-        ctx.beginPath();
-        ctx.moveTo(vertices[0].x, vertices[0].y);
-        ctx.lineTo(vertices[2].x, vertices[2].y);
-        ctx.lineTo(vertices[4].x, vertices[4].y);
-        ctx.lineTo(vertices[1].x, vertices[1].y);
-        ctx.lineTo(vertices[3].x, vertices[3].y);
-        ctx.closePath();
-        ctx.fillStyle = `rgba(249, 115, 22, ${0.16 * alpha})`;
-        ctx.fill();
-        ctx.lineWidth = Math.max(1.2, 2.5 * (1 - progress));
-        ctx.strokeStyle = `rgba(254, 240, 138, ${alpha * 0.85})`;
-        ctx.stroke();
 
         ctx.restore();
       });
@@ -6990,9 +10097,424 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               ctx.lineWidth = 2.5;
               ctx.stroke();
             }
+          } else if (atk.type === 'PHIBOCCION_LAND_PHINE') {
+            const r = atk.radius;
+            const isBlinking = Math.floor(survivalTimeRef.current * 4) % 2 === 0;
+
+            // Draw telegraph/warning circle around landmine
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.arc(sx, sy, r * 1.35, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.08)';
+            ctx.beginPath();
+            ctx.arc(sx, sy, r * 1.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Swap between regular and blinking image
+            const mineImg = isBlinking
+              ? (landPhineBlinkingImageRef.current || landPhineImageRef.current)
+              : (landPhineImageRef.current || landPhineBlinkingImageRef.current);
+
+            if (mineImg && mineImg.complete && mineImg.naturalWidth > 0) {
+              ctx.save();
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(mineImg, sx - r, sy - r, r * 2, r * 2);
+              ctx.restore();
+            } else {
+              // Mathematical Golden Ratio styled fallback mine
+              ctx.save();
+              ctx.translate(sx, sy);
+              ctx.fillStyle = isBlinking ? '#f59e0b' : '#d97706';
+              ctx.beginPath();
+              ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.strokeStyle = '#ffffff';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(0, 0, r * 0.5, 0, Math.PI * 2);
+              ctx.stroke();
+
+              ctx.fillStyle = '#fee2e2';
+              ctx.beginPath();
+              ctx.arc(0, 0, 4, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            }
+          } else if (atk.type === 'PHIBOCCION_BEAM') {
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(Math.atan2(atk.vy || 0, atk.vx || 0));
+
+            ctx.fillStyle = '#fef08a';
+            ctx.strokeStyle = '#eab308';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-14, -4, 28, 8, 4);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+          } else if (atk.type === 'PHIBOCCION_EXPLOSION') {
+            const r = atk.radius;
+            if (atk.warningTimer > 0) {
+              const progress = Math.max(0, Math.min(1, 1 - (atk.warningTimer / 2.0)));
+
+              ctx.strokeStyle = '#eab308';
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.arc(sx, sy, r, 0, Math.PI * 2);
+              ctx.stroke();
+
+              ctx.fillStyle = `rgba(234, 179, 8, ${0.1 + 0.15 * progress})`;
+              ctx.beginPath();
+              ctx.arc(sx, sy, r * progress, 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.strokeStyle = '#ef4444';
+              ctx.lineWidth = 2;
+              ctx.setLineDash([8, 8]);
+              ctx.beginPath();
+              ctx.arc(sx, sy, r, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            } else if (atk.activeTimer > 0) {
+              const progress = Math.max(0, Math.min(1, 1 - (atk.activeTimer / 0.4)));
+
+              ctx.fillStyle = `rgba(251, 191, 36, ${0.85 * (1 - progress)})`;
+              ctx.beginPath();
+              ctx.arc(sx, sy, r * (0.2 + 0.8 * progress), 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.strokeStyle = `rgba(255, 255, 255, ${1 - progress})`;
+              ctx.lineWidth = 8 * (1 - progress);
+              ctx.beginPath();
+              ctx.arc(sx, sy, r * progress, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          } else if (atk.type === 'PYTHAGORAS_RULER') {
+            const rulerImg = rulerImageRef.current;
+            const rSize = (atk.height || 50);
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(atk.angle || 0);
+            if (rulerImg && rulerImg.complete && rulerImg.naturalWidth > 0) {
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(rulerImg, -rSize / 2, -rSize / 2, rSize, rSize);
+            } else {
+              const rWidth = atk.width || 20;
+              const rHeight = atk.height || 50;
+              ctx.fillStyle = '#f59e0b';
+              ctx.fillRect(-rWidth / 2, -rHeight / 2, rWidth, rHeight);
+              ctx.strokeStyle = '#78350f';
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(-rWidth / 2, -rHeight / 2, rWidth, rHeight);
+              ctx.fillStyle = '#451a03';
+              for (let t = -rHeight / 2 + 4; t < rHeight / 2 - 4; t += 6) {
+                ctx.fillRect(-rWidth / 2 + 2, t, rWidth / 3, 1.5);
+              }
+            }
+            ctx.restore();
+          } else if (atk.type === 'PYTHAGORAS_PROTRACTOR') {
+            const protractorImg = protractorImageRef.current;
+            const pSize = atk.radius * 2.2;
+
+            // Telegraph launch trail connecting from Pythagoras's side for clear dodgeability
+            if (atk.launchDuration && atk.launchTimer !== undefined && atk.launchTimer < atk.launchDuration && atk.spawnOriginX !== undefined && atk.spawnOriginY !== undefined) {
+              const launchProgress = atk.launchTimer / atk.launchDuration;
+              const lineAlpha = (1 - launchProgress) * 0.75;
+              if (lineAlpha > 0.05) {
+                const startSx = atk.spawnOriginX - lockedCameraRef.current.x;
+                const startSy = atk.spawnOriginY - lockedCameraRef.current.y;
+                ctx.save();
+                ctx.strokeStyle = `rgba(56, 189, 248, ${lineAlpha})`;
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([6, 5]);
+                ctx.beginPath();
+                ctx.moveTo(startSx, startSy);
+                ctx.lineTo(sx, sy);
+                ctx.stroke();
+                ctx.restore();
+              }
+            }
+
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(atk.rotAngle || 0);
+
+            // Glowing blue/cyan aura for high visibility and dodgeability
+            ctx.shadowColor = '#38bdf8';
+            ctx.shadowBlur = 10;
+
+            if (protractorImg && protractorImg.complete && protractorImg.naturalWidth > 0) {
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(protractorImg, -pSize / 2, -pSize / 2, pSize, pSize);
+            } else {
+              ctx.fillStyle = 'rgba(59, 130, 246, 0.8)';
+              ctx.beginPath();
+              ctx.arc(0, 0, atk.radius, Math.PI, 0, false);
+              ctx.closePath();
+              ctx.fill();
+              ctx.strokeStyle = '#1d4ed8';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+            }
+            ctx.restore();
+          } else if (atk.type === 'PYTHAGORAS_SETSQUARE') {
+            const setsquareImg = setsquareImageRef.current;
+            const sSize = atk.radius * 2.2;
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(atk.rotAngle || 0);
+            if (setsquareImg && setsquareImg.complete && setsquareImg.naturalWidth > 0) {
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(setsquareImg, -sSize / 2, -sSize / 2, sSize, sSize);
+            } else {
+              ctx.fillStyle = 'rgba(168, 85, 247, 0.85)';
+              ctx.beginPath();
+              ctx.moveTo(-atk.radius, atk.radius);
+              ctx.lineTo(atk.radius, atk.radius);
+              ctx.lineTo(-atk.radius, -atk.radius);
+              ctx.closePath();
+              ctx.fill();
+              ctx.strokeStyle = '#6b21a8';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+            }
+            ctx.restore();
           }
           ctx.restore();
         });
+      }
+
+      // --- RENDER PYTHAGORAS "GEOMENTO MORI" CARTESIAN GRAPH CURVES ---
+      if (pythagorasGeoMoriActiveRef.current && pythagorasGeoMoriEquationsRef.current.length > 0) {
+        ctx.save();
+        const screenCenterX = (lockedCameraRef.current.x + canvas.width / 2) - cameraX;
+        const screenCenterY = (lockedCameraRef.current.y + canvas.height / 2) - cameraY;
+        const scale = 60; // 60px per Cartesian unit
+        const state = pythagorasGeoMoriStateRef.current;
+        const timer = pythagorasGeoMoriTimerRef.current;
+
+        // 1. Cartesian Grid lines
+        const gridAlpha = state === 'TELEGRAPH'
+          ? Math.min(0.22, (timer / 2.2) * 0.22)
+          : (state === 'ACTIVE' ? 0.22 : 0.08);
+
+        ctx.strokeStyle = `rgba(168, 85, 247, ${gridAlpha})`;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 6]);
+
+        // Vertical grid lines
+        for (let x = screenCenterX % scale; x < canvas.width; x += scale) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+        // Horizontal grid lines
+        for (let y = screenCenterY % scale; y < canvas.height; y += scale) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // 2. Main Cartesian Coordinate Axes crossing at (0, 0)
+        const axisAlpha = state === 'TELEGRAPH'
+          ? Math.min(0.75, (timer / 2.2) * 0.75)
+          : (state === 'ACTIVE' ? 0.85 : 0.3);
+
+        ctx.strokeStyle = `rgba(192, 132, 252, ${axisAlpha})`;
+        ctx.lineWidth = 2.0;
+
+        // X-axis (y = 0)
+        ctx.beginPath();
+        ctx.moveTo(0, screenCenterY);
+        ctx.lineTo(canvas.width, screenCenterY);
+        ctx.stroke();
+
+        // X-axis arrowheads & label
+        ctx.fillStyle = `rgba(192, 132, 252, ${axisAlpha})`;
+        ctx.beginPath();
+        ctx.moveTo(canvas.width - 12, screenCenterY - 4);
+        ctx.lineTo(canvas.width - 2, screenCenterY);
+        ctx.lineTo(canvas.width - 12, screenCenterY + 4);
+        ctx.fill();
+
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText('+x', canvas.width - 16, screenCenterY - 7);
+
+        // Y-axis (x = 0)
+        ctx.beginPath();
+        ctx.moveTo(screenCenterX, 0);
+        ctx.lineTo(screenCenterX, canvas.height);
+        ctx.stroke();
+
+        // Y-axis arrowheads & label
+        ctx.beginPath();
+        ctx.moveTo(screenCenterX - 4, 12);
+        ctx.lineTo(screenCenterX, 2);
+        ctx.lineTo(screenCenterX + 4, 12);
+        ctx.fill();
+
+        ctx.textAlign = 'left';
+        ctx.fillText('+y', screenCenterX + 8, 14);
+
+        // Axis unit ticks and coordinate labels
+        ctx.font = '9px monospace';
+        ctx.fillStyle = `rgba(226, 232, 240, ${axisAlpha * 0.75})`;
+        ctx.textAlign = 'center';
+
+        // X Ticks (-6 to +6)
+        for (let u = -8; u <= 8; u++) {
+          if (u === 0) continue;
+          const tx = screenCenterX + u * scale;
+          if (tx > 20 && tx < canvas.width - 20) {
+            ctx.beginPath();
+            ctx.moveTo(tx, screenCenterY - 3);
+            ctx.lineTo(tx, screenCenterY + 3);
+            ctx.stroke();
+            if (u % 2 === 0) {
+              ctx.fillText(String(u), tx, screenCenterY + 14);
+            }
+          }
+        }
+
+        // Y Ticks (-5 to +5)
+        ctx.textAlign = 'right';
+        for (let u = -6; u <= 6; u++) {
+          if (u === 0) continue;
+          const ty = screenCenterY - u * scale;
+          if (ty > 20 && ty < canvas.height - 20) {
+            ctx.beginPath();
+            ctx.moveTo(screenCenterX - 3, ty);
+            ctx.lineTo(screenCenterX + 3, ty);
+            ctx.stroke();
+            if (u % 2 === 0) {
+              ctx.fillText(String(u), screenCenterX - 6, ty + 3);
+            }
+          }
+        }
+
+        // Origin (0;0) indicator marker
+        ctx.strokeStyle = '#facc15';
+        ctx.fillStyle = '#fde047';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(screenCenterX, screenCenterY, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = 'bold 11px monospace';
+        ctx.fillStyle = '#fde047';
+        ctx.textAlign = 'left';
+        ctx.fillText('(0, 0)', screenCenterX + 7, screenCenterY + 14);
+
+        // 3. Render the 3 Graphed Equation Curves
+        if (state === 'TELEGRAPH') {
+          // Pre-graph warning / telegraph: pulsing dashed preview lines in each equation's color
+          const pulse = Math.sin(survivalTimeRef.current * 14) * 0.25 + 0.45;
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([10, 8]);
+
+          pythagorasGeoMoriEquationsRef.current.forEach((eq) => {
+            ctx.strokeStyle = eq.color;
+            ctx.globalAlpha = pulse;
+            ctx.beginPath();
+            let isDrawing = false;
+            const minX = -screenCenterX;
+            const maxX = canvas.width - screenCenterX;
+            const stepPx = 4;
+
+            for (let px = minX; px <= maxX; px += stepPx) {
+              const coordX = px / scale;
+              const coordY = eq.fn(coordX);
+              if (coordY === null || isNaN(coordY) || Math.abs(coordY) > 50) {
+                isDrawing = false;
+                continue;
+              }
+              const canvasX = screenCenterX + px;
+              const canvasY = screenCenterY - coordY * scale;
+
+              if (canvasY < -100 || canvasY > canvas.height + 100) {
+                isDrawing = false;
+                continue;
+              }
+
+              if (!isDrawing) {
+                ctx.moveTo(canvasX, canvasY);
+                isDrawing = true;
+              } else {
+                ctx.lineTo(canvasX, canvasY);
+              }
+            }
+            ctx.stroke();
+          });
+          ctx.globalAlpha = 1.0;
+          ctx.setLineDash([]);
+        } else if (state === 'ACTIVE') {
+          // ACTIVE: Full glowing neon laser curves that deal damage!
+          const activeProgress = Math.min(1, timer / 0.5);
+          const pulseGlow = Math.sin(survivalTimeRef.current * 18) * 0.12 + 0.88;
+
+          pythagorasGeoMoriEquationsRef.current.forEach((eq) => {
+            // Outer bright laser glow in equation's distinct signature color
+            ctx.save();
+            ctx.shadowColor = eq.color;
+            ctx.shadowBlur = 14;
+            ctx.strokeStyle = eq.color;
+            ctx.lineWidth = 5.0;
+            ctx.globalAlpha = 0.9 * activeProgress * pulseGlow;
+            ctx.beginPath();
+
+            let isDrawing = false;
+            const minX = -screenCenterX;
+            const maxX = canvas.width - screenCenterX;
+            const stepPx = 3;
+
+            for (let px = minX; px <= maxX; px += stepPx) {
+              const coordX = px / scale;
+              const coordY = eq.fn(coordX);
+              if (coordY === null || isNaN(coordY) || Math.abs(coordY) > 50) {
+                isDrawing = false;
+                continue;
+              }
+              const canvasX = screenCenterX + px;
+              const canvasY = screenCenterY - coordY * scale;
+
+              if (canvasY < -150 || canvasY > canvas.height + 150) {
+                isDrawing = false;
+                continue;
+              }
+
+              if (!isDrawing) {
+                ctx.moveTo(canvasX, canvasY);
+                isDrawing = true;
+              } else {
+                ctx.lineTo(canvasX, canvasY);
+              }
+            }
+            ctx.stroke();
+
+            // Inner hot core line
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.8;
+            ctx.globalAlpha = 0.95 * activeProgress;
+            ctx.stroke();
+
+            ctx.restore();
+          });
+        }
+        ctx.restore();
       }
 
       // Render Archmage Blue 1.5s Laser Telegraph
@@ -7459,6 +10981,113 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.fill();
 
           ctx.restore();
+        } else if (proj.weaponId === 'spectral_arrow') {
+          const angle = Math.atan2(proj.vy, proj.vx);
+          const arrowImg = spectralArrowImageRef.current;
+          ctx.save();
+          ctx.translate(sx, sy);
+          ctx.rotate(angle + Math.PI / 2);
+          ctx.shadowColor = '#38bdf8';
+          ctx.shadowBlur = 12;
+          if (arrowImg && arrowImg.complete && arrowImg.naturalWidth > 0) {
+            ctx.imageSmoothingEnabled = false;
+            const height = proj.radius * 2.2;
+            const aspect = arrowImg.naturalWidth / arrowImg.naturalHeight;
+            const width = height * aspect;
+            ctx.drawImage(arrowImg, -width / 2, -height / 2, width, height);
+          } else {
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.moveTo(0, -12);
+            ctx.lineTo(-6, 8);
+            ctx.lineTo(0, 4);
+            ctx.lineTo(6, 8);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, -2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        } else if (proj.weaponId === 'sickle') {
+          const sickleImg = sickleImageRef.current;
+          const rotAngle = proj.rotationAngle || 0;
+          ctx.save();
+          ctx.translate(sx, sy);
+          ctx.rotate(rotAngle);
+          ctx.shadowBlur = 0;
+          if (sickleImg && sickleImg.complete && sickleImg.naturalWidth > 0) {
+            ctx.imageSmoothingEnabled = false;
+            const drawSize = proj.radius * 1.8;
+            ctx.drawImage(sickleImg, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+          } else {
+            ctx.fillStyle = '#cbd5e1';
+            ctx.beginPath();
+            ctx.arc(0, 0, proj.radius, -Math.PI * 0.7, Math.PI * 0.3);
+            ctx.lineTo(0, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+          ctx.restore();
+        } else if (proj.weaponId === 'protractor') {
+          const protractorImg = protractorImageRef.current;
+          const rotAngle = proj.rotationAngle || 0;
+          ctx.save();
+          ctx.translate(sx, sy);
+          ctx.rotate(rotAngle);
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = '#38bdf8';
+          if (protractorImg && protractorImg.complete && protractorImg.naturalWidth > 0) {
+            ctx.imageSmoothingEnabled = false;
+            const drawSize = proj.radius * 2.0;
+            ctx.drawImage(protractorImg, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+          } else {
+            // Procedural fallback semi-circle protractor
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, proj.radius * 1.2, 0, Math.PI, false);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(0, 0, proj.radius * 0.5, 0, Math.PI, false);
+            ctx.closePath();
+            ctx.stroke();
+          }
+          ctx.restore();
+        } else if (proj.weaponId === 'arcane_wand') {
+          const angle = Math.atan2(proj.vy, proj.vx);
+          const beamImg = stellarBeamImageRef.current;
+          ctx.save();
+          ctx.translate(sx, sy);
+          ctx.rotate(angle + Math.PI / 2);
+          ctx.shadowColor = '#a855f7';
+          ctx.shadowBlur = 12;
+          if (beamImg && beamImg.complete && beamImg.naturalWidth > 0) {
+            ctx.imageSmoothingEnabled = false;
+            const height = Math.max(24, proj.radius * 2.6);
+            const aspect = beamImg.naturalWidth / beamImg.naturalHeight;
+            const width = height * aspect;
+            ctx.drawImage(beamImg, -width / 2, -height / 2, width, height);
+          } else {
+            ctx.shadowColor = proj.color;
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = proj.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, proj.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, proj.radius * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
         } else {
           ctx.shadowColor = proj.color;
           ctx.shadowBlur = 10;
@@ -7476,7 +11105,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.restore();
       });
 
-      // Render Rock Thrower Projectiles
+      // Render Rock Thrower & Bunnary Projectiles
       rockProjectilesRef.current.forEach((rock) => {
         const sx = rock.x - cameraX;
         const sy = rock.y - cameraY;
@@ -7485,33 +11114,64 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.translate(sx, sy);
         ctx.rotate(rock.life * 9);
 
-        const rockImg = rockProjectileImageRef.current;
-        const rockSize = rock.radius * 2.5;
+        if (rock.isPellet) {
+          const pelletImg = bunnaryPelletImageRef.current;
+          const pelletSize = rock.radius * 3.2;
 
-        if (rockImg && rockImg.complete && rockImg.naturalWidth > 0) {
-          ctx.imageSmoothingEnabled = false;
-          ctx.drawImage(rockImg, -rockSize / 2, -rockSize / 2, rockSize, rockSize);
+          if (pelletImg && pelletImg.complete && pelletImg.naturalWidth > 0) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(pelletImg, -pelletSize / 2, -pelletSize / 2, pelletSize, pelletSize);
+          } else {
+            // Shadow beneath pellet
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(0, 5, rock.radius, rock.radius * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pellet body fallback
+            ctx.fillStyle = '#06b6d4';
+            ctx.strokeStyle = '#083344';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, rock.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Highlight
+            ctx.fillStyle = '#cffafe';
+            ctx.beginPath();
+            ctx.arc(-2, -2, rock.radius * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+          }
         } else {
-          // Shadow beneath rock
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-          ctx.beginPath();
-          ctx.ellipse(0, 6, rock.radius, rock.radius * 0.5, 0, 0, Math.PI * 2);
-          ctx.fill();
+          const rockImg = rockProjectileImageRef.current;
+          const rockSize = rock.radius * 2.5;
 
-          // Jagged boulder body fallback
-          ctx.fillStyle = '#78716c';
-          ctx.strokeStyle = '#292524';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.arc(0, 0, rock.radius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
+          if (rockImg && rockImg.complete && rockImg.naturalWidth > 0) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(rockImg, -rockSize / 2, -rockSize / 2, rockSize, rockSize);
+          } else {
+            // Shadow beneath rock
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(0, 6, rock.radius, rock.radius * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-          // Highlight
-          ctx.fillStyle = '#d6d3d1';
-          ctx.beginPath();
-          ctx.arc(-2, -2, rock.radius * 0.35, 0, Math.PI * 2);
-          ctx.fill();
+            // Jagged boulder body fallback
+            ctx.fillStyle = '#78716c';
+            ctx.strokeStyle = '#292524';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, rock.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Highlight
+            ctx.fillStyle = '#d6d3d1';
+            ctx.beginPath();
+            ctx.arc(-2, -2, rock.radius * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
 
         ctx.restore();
@@ -7603,22 +11263,32 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         }
 
-        const isPitchforkPeasant = enemy.name === 'Pitchfork Peasant' || enemy.type === 'BAT';
-        const isTorchPeasant = enemy.name === 'Torch Peasant' || enemy.type === 'WRAITH';
-        const isVillageKnightEnemy = enemy.isRed || enemy.name === 'Village Knight';
+        const isUnocondaEnemy = enemy.name === 'Unoconda' || enemy.type === 'UNOCONDA';
+        const isViiiperEnemy = enemy.name === 'VIIIper' || enemy.type === 'VIIIPER';
+        const isPitchforkPeasant = (enemy.name === 'Pitchfork Peasant' || enemy.type === 'BAT') && !isViiiperEnemy;
+        const isTorchPeasant = (enemy.name === 'Torch Peasant' || enemy.type === 'WRAITH') && !isUnocondaEnemy;
+        const isObMooseEnemy = enemy.name === 'ObMoose' || enemy.type === 'OBMOOSE';
+        const isVillageKnightEnemy = (enemy.isRed || enemy.name === 'Village Knight' || enemy.type === 'GHOUL') && !isObMooseEnemy;
         const isMiniEye = enemy.type === 'MINI_EYE';
 
         const customEnemyImg = isPitchforkPeasant
           ? peasantImageRef.current
           : isTorchPeasant
           ? peasantTorchImageRef.current
+          : isUnocondaEnemy
+          ? unocondaImageRef.current
+          : isViiiperEnemy
+          ? viiiperImageRef.current
+          : isObMooseEnemy
+          ? obMooseImageRef.current
           : isVillageKnightEnemy
           ? villageKnightImageRef.current
           : null;
 
         if (customEnemyImg) {
           const img = customEnemyImg;
-          const width = enemy.radius * 2 * 1.5;
+          const scaleMult = isObMooseEnemy ? 1.8 : isViiiperEnemy ? 1.62 : 1.5;
+          const width = enemy.radius * 2 * scaleMult;
           const aspect = (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0)
             ? (img.naturalHeight / img.naturalWidth)
             : 1.0;
@@ -7628,7 +11298,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.translate(sx, sy);
 
           // Face moving direction horizontally (same direction sensor as the Witch)
-          const facing = enemy.facingDir !== undefined ? enemy.facingDir : (p.x - enemy.x < 0 ? -1 : 1);
+          let facing = enemy.facingDir !== undefined ? enemy.facingDir : (p.x - enemy.x < 0 ? -1 : 1);
+          if (isUnocondaEnemy || isViiiperEnemy) {
+            facing = -facing; // Invert because source sprite natively faces left
+          }
           if (facing < 0) {
             ctx.scale(-1, 1);
           }
@@ -7771,6 +11444,101 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               ctx.arc(rx, ry, 9 + Math.sin(performance.now() * 0.02) * 2, 0, Math.PI * 2);
               ctx.stroke();
             }
+          }
+
+          ctx.restore();
+        } else if (enemy.type === 'BUNNARY') {
+          // Draw Bunnary
+          ctx.save();
+
+          // If telegraphing, render dashed line & warning target towards player
+          const isTelegraphing = enemy.rockTelegraphTimer && enemy.rockTelegraphTimer > 0;
+          if (isTelegraphing) {
+            const progress = 1 - ((enemy.rockTelegraphTimer || 0) / 1.0);
+            const targetAng = enemy.targetAngle !== undefined ? enemy.targetAngle : Math.atan2(p.y - enemy.y, p.x - enemy.x);
+            const lineLen = 240;
+            const endX = sx + Math.cos(targetAng) * lineLen;
+            const endY = sy + Math.sin(targetAng) * lineLen;
+
+            ctx.save();
+            ctx.strokeStyle = `rgba(6, 182, 212, ${0.35 + progress * 0.5})`;
+            ctx.lineWidth = 2 + progress * 2.5;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            // Telegraph circle at target
+            ctx.fillStyle = `rgba(6, 182, 212, ${0.15 + progress * 0.35})`;
+            ctx.beginPath();
+            ctx.arc(endX, endY, 14 * progress + 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // Pick sprite based on current binary sequence
+          let bunnaryImg: HTMLImageElement | null = null;
+          if (enemy.bunnaryInGap) {
+            bunnaryImg = bunnaryBlankImageRef.current;
+          } else {
+            const charIdx = enemy.bunnaryCharIndex ?? -1;
+            if (charIdx === -1) {
+              bunnaryImg = bunnaryEndImageRef.current;
+            } else {
+              const msgIdx = (enemy.bunnaryMsgIndex ?? 0) % BUNNARY_MESSAGES.length;
+              const currentMsg = BUNNARY_MESSAGES[msgIdx];
+              const ch = currentMsg[charIdx] || ' ';
+              if (ch === '0') {
+                bunnaryImg = bunnary0ImageRef.current;
+              } else if (ch === '1') {
+                bunnaryImg = bunnary1ImageRef.current;
+              } else {
+                bunnaryImg = bunnaryBlankImageRef.current;
+              }
+            }
+          }
+
+          if (!bunnaryImg || !bunnaryImg.complete || bunnaryImg.naturalWidth === 0) {
+            bunnaryImg = bunnary0ImageRef.current || bunnaryBlankImageRef.current;
+          }
+
+          // Bunnary is bigger now for high visibility of chest binary numbers
+          const spriteSize = enemy.radius * 3.6;
+
+          if (bunnaryImg && bunnaryImg.complete && bunnaryImg.naturalWidth > 0) {
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.imageSmoothingEnabled = false;
+
+            if (enemy.hitFlashTimer > 0) {
+              ctx.filter = 'brightness(300%)';
+            } else if (isTelegraphing) {
+              ctx.filter = 'drop-shadow(0 0 8px #06b6d4)';
+            }
+
+            ctx.drawImage(bunnaryImg, -spriteSize / 2, -spriteSize / 2, spriteSize, spriteSize);
+            ctx.restore();
+          } else {
+            if (enemy.hitFlashTimer > 0) {
+              ctx.fillStyle = '#ffffff';
+            } else {
+              ctx.fillStyle = '#06b6d4';
+            }
+
+            ctx.shadowColor = '#06b6d4';
+            ctx.shadowBlur = 6;
+
+            ctx.beginPath();
+            ctx.arc(sx, sy, enemy.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Face / Eyes
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(sx - enemy.radius * 0.35, sy - 2, 2.5, 0, Math.PI * 2);
+            ctx.arc(sx + enemy.radius * 0.35, sy - 2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
           }
 
           ctx.restore();
@@ -8595,6 +12363,367 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               ctx.restore();
             }
           }
+        } else if (boss.id === 'googolbra') {
+          // --- GOOGOLBRA BOSS RENDERING ---
+          const camX = cameraX;
+          const camY = cameraY;
+          const tileSize = 80;
+
+          // 1. Telegraph Warning Indicator for Zebra Pattern
+          if (googolbraStateRef.current === 'ZEBRA_TELEGRAPH') {
+            const zState = googolbraZebraStateRef.current;
+            const isVert = zState.isVertical;
+            const stripes = zState.stripes;
+            const cam = lockedCameraRef.current;
+            const cols = Math.floor(canvas.width / tileSize);
+            const rows = Math.floor(canvas.height / tileSize);
+            const pulse = 0.35 + 0.2 * Math.sin(Date.now() / 90);
+
+            ctx.save();
+            ctx.fillStyle = `rgba(6, 182, 212, ${pulse})`;
+            ctx.strokeStyle = '#22d3ee';
+            ctx.lineWidth = 2;
+
+            if (isVert) {
+              stripes.forEach((colIdx) => {
+                const sx = cam.x + colIdx * tileSize - camX;
+                const sy = cam.y - camY;
+                const sh = rows * tileSize;
+                ctx.fillRect(sx, sy, tileSize, sh);
+                ctx.strokeRect(sx, sy, tileSize, sh);
+
+                // Warning diagonal hazard stripes
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(sx, sy, tileSize, sh);
+                ctx.clip();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.lineWidth = 4;
+                for (let hy = -tileSize; hy < sh + tileSize; hy += 32) {
+                  ctx.beginPath();
+                  ctx.moveTo(sx, sy + hy);
+                  ctx.lineTo(sx + tileSize, sy + hy + tileSize);
+                  ctx.stroke();
+                }
+                ctx.restore();
+              });
+            } else {
+              stripes.forEach((rowIdx) => {
+                const sx = cam.x - camX;
+                const sy = cam.y + rowIdx * tileSize - camY;
+                const sw = cols * tileSize;
+                ctx.fillRect(sx, sy, sw, tileSize);
+                ctx.strokeRect(sx, sy, sw, tileSize);
+
+                // Warning diagonal hazard stripes
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(sx, sy, sw, tileSize);
+                ctx.clip();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.lineWidth = 4;
+                for (let hx = -tileSize; hx < sw + tileSize; hx += 32) {
+                  ctx.beginPath();
+                  ctx.moveTo(sx + hx, sy);
+                  ctx.lineTo(sx + hx + tileSize, sy + tileSize);
+                  ctx.stroke();
+                }
+                ctx.restore();
+              });
+            }
+
+            // Telegraph Countdown Banner
+            const lang = getLanguage();
+            const warningText = lang === 'pt-BR'
+              ? `⚡ PADRÃO ZEBRA IMINENTE! ${Math.max(0, zState.timer).toFixed(1)}s ⚡`
+              : `⚡ ZEBRA STRIKE IMMINENT! ${Math.max(0, zState.timer).toFixed(1)}s ⚡`;
+            ctx.font = 'bold 20px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#06b6d4';
+            ctx.shadowBlur = 10;
+            ctx.fillText(warningText, canvas.width / 2, 90);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+          }
+
+          // 2. Render Body Segments (Rendered from tail to front)
+          const bodySegments = googolbraCurrentSegmentsRef.current;
+          const bodySprite = googolbraBodyImageRef.current;
+          const hasBodySprite = bodySprite && bodySprite.complete && bodySprite.naturalWidth > 0;
+
+          for (let i = bodySegments.length - 1; i >= 0; i--) {
+            const seg = bodySegments[i];
+            const sx = seg.x - camX;
+            const sy = seg.y - camY;
+
+            ctx.save();
+            ctx.translate(sx, sy);
+
+            if (hasBodySprite) {
+              ctx.rotate(seg.angle - Math.PI);
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(bodySprite, -40, -40, 80, 80);
+            } else {
+              // High-tech Mathematical Realm Serpent Segment Fallback
+              ctx.fillStyle = '#0891b2';
+              ctx.strokeStyle = '#22d3ee';
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.arc(0, 0, 36, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+
+              // Digit '0' representing Googol zeros
+              ctx.fillStyle = '#cffafe';
+              ctx.font = 'bold 22px monospace';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('0', 0, 0);
+            }
+
+            ctx.restore();
+          }
+
+          // 3. Render Snake Head
+          const headSprite = googolbraHeadImageRef.current;
+          const hasHeadSprite = headSprite && headSprite.complete && headSprite.naturalWidth > 0;
+          const hx = boss.x - camX;
+          const hy = boss.y - camY;
+
+          ctx.save();
+          ctx.translate(hx, hy);
+
+          if (isFlashing) {
+            ctx.filter = 'brightness(300%)';
+          }
+
+          if (hasHeadSprite) {
+            // Source sprite is facing left, rotate by (angle - Math.PI) so it faces movement direction
+            ctx.rotate(googolbraHeadAngleRef.current - Math.PI);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(headSprite, -40, -40, 80, 80);
+          } else {
+            ctx.rotate(googolbraHeadAngleRef.current);
+            // High-tech Mathematical Realm Serpent Head Fallback
+            ctx.fillStyle = '#0e7490';
+            ctx.strokeStyle = '#67e8f9';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, 38, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Glowing Eyes
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(14, -12, 6, 0, Math.PI * 2);
+            ctx.arc(14, 12, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Crown / Horn of the Googol
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = 'bold 18px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('10¹⁰⁰', -6, 0);
+          }
+          ctx.restore();
+
+          // 4. Constriction Repel Progress Ring (around the Head)
+          if (googolbraStateRef.current === 'CONSTRICTION') {
+            const threshold = boss.maxHp / 5;
+            const dealt = Math.min(threshold, googolbraConstrictionDamageTakenRef.current);
+            const repelPct = dealt / threshold;
+
+            ctx.save();
+            ctx.translate(hx, hy);
+
+            // Progress ring
+            ctx.beginPath();
+            ctx.arc(0, 0, 48, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(0, 0, 48, -Math.PI / 2, -Math.PI / 2 + repelPct * Math.PI * 2);
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Repel badge text
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#e0f2fe';
+            ctx.shadowColor = '#0284c7';
+            ctx.shadowBlur = 4;
+            const lang = getLanguage();
+            const repelLabel = lang === 'pt-BR'
+              ? `REPELIR: ${Math.round(repelPct * 100)}%`
+              : `REPEL: ${Math.round(repelPct * 100)}%`;
+            ctx.fillText(repelLabel, 0, -56);
+            ctx.restore();
+          }
+
+          // 5. Sssneak Attack Grasp Constriction Aura
+          if (googolbraStateRef.current === 'SNEAK_GRASP') {
+            const sneak = googolbraSneakStateRef.current;
+            const inDamage = sneak.graspTimer >= 5.0;
+            const px = p.x - camX;
+            const py = p.y - camY;
+
+            ctx.save();
+            ctx.translate(px, py);
+
+            // Pulsing constriction rings
+            const ringPulse = (Date.now() % 1000) / 1000;
+            ctx.beginPath();
+            ctx.arc(0, 0, 42 + ringPulse * 32, 0, Math.PI * 2);
+            ctx.strokeStyle = inDamage ? `rgba(239, 68, 68, ${1 - ringPulse})` : `rgba(56, 189, 248, ${1 - ringPulse})`;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Threat warning text above player
+            const lang = getLanguage();
+            ctx.font = 'bold 13px sans-serif';
+            ctx.textAlign = 'center';
+            if (!inDamage) {
+              const remaining = Math.max(0, 5.0 - sneak.graspTimer).toFixed(1);
+              ctx.fillStyle = '#fef08a';
+              ctx.shadowColor = '#eab308';
+              ctx.shadowBlur = 6;
+              ctx.fillText(lang === 'pt-BR' ? `ESMAGAMENTO EM: ${remaining}s!` : `CRUSH IN: ${remaining}s!`, 0, -68);
+            } else {
+              ctx.fillStyle = '#f87171';
+              ctx.shadowColor = '#ef4444';
+              ctx.shadowBlur = 8;
+              ctx.fillText(lang === 'pt-BR' ? `SOFRENDO ESMAGAMENTO!` : `SUFFERING CRUSH DAMAGE!`, 0, -68);
+            }
+
+            ctx.restore();
+          }
+        } else if (boss.id === 'phiboccion') {
+          // --- PHIBOCCION BOSS RENDERING ---
+          const r = boss.radius;
+          const isKicking = boss.isKicking || boss.phiboccionState === 'KICKING';
+
+          // Float bobbing effect if NOT actively kicking
+          const bobY = isKicking ? 0 : Math.sin(survivalTimeRef.current * 4) * 8;
+          const px = bx;
+          const py = by + bobY;
+          const size = r * 5.0;
+
+          // Get active sprite
+          const spriteImg = isKicking ? phiboccionKickingImageRef.current : phiboccionImageRef.current;
+          if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
+            ctx.save();
+            ctx.translate(px, py);
+            ctx.imageSmoothingEnabled = false;
+
+            // Rotate legs facing the kick dash direction if kicking
+            if (isKicking && boss.phiboccionAngle !== undefined) {
+              ctx.rotate(boss.phiboccionAngle - Math.PI / 2);
+            } else if (!isKicking) {
+              const facingLeft = p.x < boss.x;
+              if (facingLeft) {
+                ctx.scale(-1, 1);
+              }
+            }
+
+            if (isFlashing) {
+              ctx.filter = 'brightness(300%)';
+            }
+
+            ctx.drawImage(spriteImg, -size / 2, -size / 2, size, size);
+            ctx.restore();
+          } else {
+            // High-quality Golden Ratio fallback shape
+            ctx.save();
+            ctx.translate(px, py);
+
+            if (isFlashing) {
+              ctx.fillStyle = '#ffffff';
+            } else {
+              ctx.fillStyle = '#eab308';
+            }
+
+            ctx.beginPath();
+            ctx.arc(0, 0, r * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = isFlashing ? '#ffffff' : '#fef08a';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, -r * 1.2);
+            ctx.lineTo(0, r * 1.2);
+            ctx.stroke();
+
+            ctx.fillStyle = isFlashing ? '#ffffff' : '#78350f';
+            ctx.beginPath();
+            ctx.arc(0, 0, r * 0.45, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+          }
+
+          // Invincibility barrier bubble (glowing white/gold shield) if invincible
+          if (boss.isInvincible) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#eab308';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(px, py, r * 1.35, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(254, 240, 138, 0.15)';
+            ctx.beginPath();
+            ctx.arc(px, py, r * 1.35, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        } else if (boss.id === 'pythagoras') {
+          // --- PYTHAGORAS BOSS RENDERING ---
+          const r = boss.radius;
+          const bobY = Math.sin(survivalTimeRef.current * 3) * 6;
+          const px = bx;
+          const py = by + bobY;
+          const size = r * 3.5;
+
+          const spriteImg = pythagorasImageRef.current;
+          if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
+            ctx.save();
+            ctx.translate(px, py);
+            ctx.imageSmoothingEnabled = false;
+
+            const facingLeft = p.x < boss.x;
+            if (facingLeft) {
+              ctx.scale(-1, 1);
+            }
+
+            if (isFlashing) {
+              ctx.filter = 'brightness(300%)';
+            }
+
+            ctx.drawImage(spriteImg, -size / 2, -size / 2, size, size);
+            ctx.restore();
+          } else {
+            // High-quality Pythagoras fallback shape
+            ctx.save();
+            ctx.translate(px, py);
+
+            ctx.fillStyle = isFlashing ? '#ffffff' : '#8b5cf6';
+            ctx.beginPath();
+            ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = isFlashing ? '#ffffff' : '#c084fc';
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+
+            ctx.restore();
+          }
         }
 
         // Visible Burn effect on Boss
@@ -8853,6 +12982,636 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.stroke();
       }
       ctx.restore();
+
+      // --- DRAW PHIBOCCION FIBONACCI INTRO SEQUENCE ---
+      if (bossInstanceRef.current && bossInstanceRef.current.id === 'phiboccion' && bossInstanceRef.current.phiboccionState === 'FIBONACCI_INTRO') {
+        ctx.save();
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2 - 60;
+        const step = phiboccionFibIntroStepRef.current;
+        const texts = ["SHOW", "ME", "THE", "FIBONACCI SEQUENCE!!!"];
+        const currentText = texts[step] || "FIBONACCI SEQUENCE!!!";
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.fillRect(0, cy - 80, canvas.width, 160);
+
+        ctx.strokeStyle = '#eab308';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, cy - 80);
+        ctx.lineTo(canvas.width, cy - 80);
+        ctx.moveTo(0, cy + 80);
+        ctx.lineTo(canvas.width, cy + 80);
+        ctx.stroke();
+
+        ctx.font = 'bold 44px monospace';
+        ctx.fillStyle = '#fef08a';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#a855f7';
+        ctx.shadowBlur = 20;
+        ctx.fillText(currentText, cx, cy + 12);
+        ctx.restore();
+      }
+
+      // --- DRAW PHIBOCCION MATH KEYPAD CHALLENGE ---
+      if (phiboccionKeypadActiveRef.current) {
+        ctx.save();
+
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2 - 120;
+
+        const lang = getLanguage();
+        const t = (key: string) => UI_TRANSLATIONS[lang]?.[key] || UI_TRANSLATIONS['en']?.[key] || key;
+
+        // Backdrop panel dimming screen
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Core panel box container (with glowing golden border)
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#eab308';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.roundRect(cx - 150, cy - 140, 300, 520, 16);
+        ctx.fill();
+        ctx.stroke();
+
+        // Highlighting top header bar
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.roundRect(cx - 150, cy - 140, 300, 55, [16, 16, 0, 0]);
+        ctx.fill();
+
+        // Title text
+        const isFib = phiboccionKeypadModeRef.current === 'FIBONACCI';
+        ctx.font = 'bold 15px monospace';
+        ctx.fillStyle = '#fef08a';
+        ctx.textAlign = 'center';
+        ctx.fillText(isFib ? 'SAY. SOME. FIBONACCI!!!' : t('math_root_of_strength'), cx, cy - 100);
+
+        // Subtitle instructions
+        ctx.font = '10px monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(isFib ? (lang === 'pt-BR' ? `QUESTÃO ${phiboccionKeypadStageRef.current} DE 50` : `QUESTION ${phiboccionKeypadStageRef.current} OF 50`) : t('math_solve_root').toUpperCase(), cx, cy - 65);
+
+        // Current Stage Indicator
+        const stage = phiboccionKeypadStageRef.current;
+        if (isFib) {
+          ctx.font = 'bold 12px monospace';
+          ctx.fillStyle = '#a855f7';
+          ctx.fillText(`STAGE ${stage} / 50 (Correct: ${phiboccionKeypadAnswersCorrectRef.current})`, cx, cy - 45);
+        } else {
+          let dots = '';
+          for (let i = 1; i <= 3; i++) {
+            if (i < stage) dots += '✓ ';
+            else if (i === stage) dots += '● ';
+            else dots += '○ ';
+          }
+          ctx.font = 'bold 12px monospace';
+          ctx.fillStyle = '#a855f7';
+          ctx.fillText(`${dots}`, cx, cy - 45);
+        }
+
+        // Display math question formula (e.g., √144)
+        const qData = phiboccionKeypadQuestionRef.current;
+        if (qData) {
+          ctx.font = 'bold 36px monospace';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(`${qData.q}`, cx, cy);
+        }
+
+        // Display user input & underline
+        const inputStr = phiboccionKeypadInputRef.current;
+        ctx.font = 'bold 28px monospace';
+        ctx.fillStyle = '#eab308';
+        ctx.fillText(inputStr || '?', cx, cy + 40);
+
+        // Underline for answer area
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 50, cy + 50);
+        ctx.lineTo(cx + 50, cy + 50);
+        ctx.stroke();
+
+        // Display 10-second Countdown bar & remaining time
+        const timeLeft = Math.max(0, phiboccionKeypadTimerRef.current);
+        const barWidth = 240;
+        const fillWidth = barWidth * (timeLeft / 10.0);
+
+        // Bar background
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.roundRect(cx - 120, cy + 65, barWidth, 10, 4);
+        ctx.fill();
+
+        // Bar fill (Green to Red transition)
+        const g = Math.floor((timeLeft / 10.0) * 255);
+        const rVal = Math.floor((1 - timeLeft / 10.0) * 255);
+        ctx.fillStyle = `rgb(${rVal}, ${g}, 40)`;
+        ctx.beginPath();
+        ctx.roundRect(cx - 120, cy + 65, fillWidth, 10, 4);
+        ctx.fill();
+
+        // Timer text
+        ctx.font = 'bold 10px monospace';
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillText(`${timeLeft.toFixed(1)}s`, cx, cy + 90);
+
+        // DRAW BUTTON GRID
+        for (let rIdx = 0; rIdx < 4; rIdx++) {
+          for (let cIdx = 0; cIdx < 3; cIdx++) {
+            const bx = cx - 115 + cIdx * 80;
+            const by = cy + 105 + rIdx * 65;
+            const bw = 70;
+            const bh = 55;
+
+            // Determine label
+            let label = '';
+            if (rIdx < 3) {
+              label = String(7 - rIdx * 3 + cIdx);
+            } else {
+              if (cIdx === 0) label = t('math_del');
+              else if (cIdx === 1) label = '0';
+              else label = t('math_enter');
+            }
+
+            // Check if mouse hovers over this button
+            const isHovered = mx >= bx && mx <= bx + bw && my >= by && my <= by + bh;
+
+            // Draw button background
+            ctx.fillStyle = isHovered ? '#334155' : '#1e293b';
+            ctx.strokeStyle = isHovered ? '#fef08a' : '#475569';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(bx, by, bw, bh, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw button text label
+            ctx.font = label.length > 3 ? 'bold 11px monospace' : 'bold 18px monospace';
+            ctx.fillStyle = isHovered ? '#ffffff' : '#f8fafc';
+            ctx.fillText(label, bx + bw / 2, by + bh / 2 + 6);
+          }
+        }
+
+        // Feedback Result Banner Overlay (Correct/Wrong/Times Up)
+        const resultTimer = phiboccionKeypadResultTimerRef.current || 0;
+        const resText = phiboccionKeypadResultTextRef.current || "";
+        if (resultTimer > 0 && resText !== "") {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+          ctx.beginPath();
+          ctx.roundRect(cx - 140, cy - 40, 280, 110, 12);
+          ctx.fill();
+
+          ctx.strokeStyle = resText.includes('CORRECT') ? '#22c55e' : '#ef4444';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          ctx.font = 'bold 20px monospace';
+          ctx.fillStyle = resText.includes('CORRECT') ? '#4ade80' : '#f87171';
+          ctx.fillText(resText, cx, cy + 15);
+
+          if (phiboccionKeypadAnswersCorrectRef.current === 3 && resText.includes('CORRECT')) {
+            ctx.font = '11px monospace';
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillText(t('math_damage_dealt'), cx, cy + 45);
+          }
+        }
+
+        ctx.restore();
+      }
+
+      // --- DRAW PYTHAGORAS "(MONT)YOUR (HALL) PROBLEM" CHALLENGE ---
+      if (pythagorasMontyHallActiveRef.current) {
+        ctx.save();
+
+        const lang = getLanguage();
+        const t = (key: string) => UI_TRANSLATIONS[lang]?.[key] || UI_TRANSLATIONS['en']?.[key] || key;
+
+        // Dark dim backdrop over arena
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const cx = canvas.width / 2;
+
+        const { doors } = getMontyDoorGeometry(canvas);
+
+        const step = pythagorasMontyStepRef.current;
+        const prizeDoor = pythagorasMontyPrizeDoorRef.current;
+        const playerPick = pythagorasMontyPlayerPickRef.current;
+        const revealedEmpty = pythagorasMontyRevealedEmptyDoorRef.current;
+        const finalPick = pythagorasMontyFinalPickRef.current;
+
+        // Top Header Banner
+        const bannerW = Math.min(680, canvas.width - 40);
+        const bannerH = 95;
+        const bannerX = cx - bannerW / 2;
+        const bannerY = Math.max(16, doors[0].y - bannerH - 24);
+
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#8b5cf6';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 16);
+        ctx.fill();
+        ctx.stroke();
+
+        // Header Top Accent
+        ctx.fillStyle = '#2e1065';
+        ctx.beginPath();
+        ctx.roundRect(bannerX, bannerY, bannerW, 36, [16, 16, 0, 0]);
+        ctx.fill();
+
+        // Title
+        ctx.font = 'bold 18px monospace';
+        ctx.fillStyle = '#fde047';
+        ctx.textAlign = 'center';
+        ctx.fillText(t('monty_hall_title'), cx, bannerY + 24);
+
+        // Instruction / Subtitle
+        ctx.font = 'bold 12px monospace';
+        ctx.fillStyle = '#e2e8f0';
+
+        if (step === 'PICK') {
+          ctx.fillText(t('monty_pick_instruction'), cx, bannerY + 65);
+        } else if (step === 'REVEAL_ANIM') {
+          ctx.fillStyle = '#c084fc';
+          ctx.fillText(t('monty_revealing'), cx, bannerY + 65);
+        } else if (step === 'CHOICE') {
+          const otherDoor = [0, 1, 2].find((d) => d !== playerPick && d !== revealedEmpty) ?? 0;
+          const choicePrompt = t('monty_choice_instruction')
+            .replace('{door}', String(revealedEmpty + 1));
+          ctx.fillStyle = '#facc15';
+          ctx.fillText(choicePrompt, cx, bannerY + 60);
+
+          ctx.font = '11px monospace';
+          ctx.fillStyle = '#94a3b8';
+          const subText = lang === 'pt-BR'
+            ? `Porta ${playerPick + 1} (Sua escolha atual) vs Porta ${otherDoor + 1} (Alternativa)`
+            : `Door ${playerPick + 1} (Current pick) vs Door ${otherDoor + 1} (Alternative)`;
+          ctx.fillText(subText, cx, bannerY + 80);
+        } else if (step === 'RESULT') {
+          if (pythagorasMontyResultTypeRef.current === 'WIN') {
+            ctx.fillStyle = '#4ade80';
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText(t('monty_win_msg'), cx, bannerY + 68);
+          } else {
+            ctx.fillStyle = '#f87171';
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText(t('monty_lose_msg'), cx, bannerY + 68);
+          }
+        }
+
+        // Mouse coordinates on canvas
+        const mx = mouseScreenRef.current.x;
+        const my = mouseScreenRef.current.y;
+
+        // Render each of the 3 Doors
+        doors.forEach((d) => {
+          const i = d.index;
+          const isOpen = (step === 'REVEAL_ANIM' || step === 'CHOICE')
+            ? (i === revealedEmpty)
+            : (step === 'RESULT'); // all doors revealed on RESULT
+
+          const isPrize = (i === prizeDoor);
+          const isPlayerInitialPick = (i === playerPick);
+
+          const isHovered = (
+            (mx >= d.x && mx <= d.x + d.w && my >= d.y && my <= d.y + d.h) ||
+            (mx >= d.buttonX && mx <= d.buttonX + d.buttonW && my >= d.buttonY && my <= d.buttonY + d.buttonH)
+          );
+
+          // Door Outer Arch Frame
+          ctx.fillStyle = '#1e1b4b';
+          ctx.strokeStyle = '#4338ca';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.roundRect(d.x - 4, d.y - 4, d.w + 8, d.h + 8, [18, 18, 4, 4]);
+          ctx.fill();
+          ctx.stroke();
+
+          if (isOpen) {
+            // Door Interior Chamber
+            ctx.save();
+            ctx.beginPath();
+            ctx.roundRect(d.x, d.y, d.w, d.h, [14, 14, 0, 0]);
+            ctx.clip();
+
+            if (isPrize) {
+              // Radiant Golden Chamber
+              const grad = ctx.createRadialGradient(d.cx, d.y + d.h * 0.45, 10, d.cx, d.y + d.h * 0.45, d.w);
+              grad.addColorStop(0, '#fef08a');
+              grad.addColorStop(0.4, '#eab308');
+              grad.addColorStop(1, '#713f12');
+              ctx.fillStyle = grad;
+              ctx.fillRect(d.x, d.y, d.w, d.h);
+
+              // Golden Rays
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+              ctx.lineWidth = 2;
+              for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 6) {
+                ctx.beginPath();
+                ctx.moveTo(d.cx, d.y + d.h * 0.45);
+                ctx.lineTo(d.cx + Math.cos(angle) * d.w, d.y + d.h * 0.45 + Math.sin(angle) * d.h);
+                ctx.stroke();
+              }
+
+              // Prize Emblem (Geometric Star / Gem)
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath();
+              ctx.arc(d.cx, d.y + d.h * 0.45, 22, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = '#ca8a04';
+              ctx.lineWidth = 3;
+              ctx.stroke();
+
+              ctx.font = 'bold 20px monospace';
+              ctx.fillStyle = '#ca8a04';
+              ctx.textAlign = 'center';
+              ctx.fillText('★', d.cx, d.y + d.h * 0.45 + 7);
+
+              // Prize Text
+              ctx.font = 'bold 14px monospace';
+              ctx.fillStyle = '#1e1b4b';
+              ctx.fillText(t('monty_prize_label'), d.cx, d.y + d.h * 0.75);
+
+              ctx.font = 'bold 11px monospace';
+              ctx.fillStyle = '#0f172a';
+              ctx.fillText('-20% BOSS HP', d.cx, d.y + d.h * 0.88);
+            } else {
+              // Dark Empty Chamber
+              const grad = ctx.createLinearGradient(d.cx, d.y, d.cx, d.y + d.h);
+              grad.addColorStop(0, '#090d16');
+              grad.addColorStop(1, '#1e293b');
+              ctx.fillStyle = grad;
+              ctx.fillRect(d.x, d.y, d.w, d.h);
+
+              // Dust / Cobweb detail
+              ctx.strokeStyle = '#334155';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.moveTo(d.x + 10, d.y + 10);
+              ctx.lineTo(d.x + 35, d.y + 35);
+              ctx.moveTo(d.x + 10, d.y + 25);
+              ctx.lineTo(d.x + 25, d.y + 10);
+              ctx.stroke();
+
+              // Empty Symbol (Ghostly Zero / Cross)
+              ctx.font = 'bold 26px monospace';
+              ctx.fillStyle = '#64748b';
+              ctx.textAlign = 'center';
+              ctx.fillText('Ø', d.cx, d.y + d.h * 0.45);
+
+              ctx.font = 'bold 13px monospace';
+              ctx.fillStyle = '#94a3b8';
+              ctx.fillText(t('monty_empty_label'), d.cx, d.y + d.h * 0.72);
+
+              ctx.font = 'bold 10px monospace';
+              ctx.fillStyle = '#ef4444';
+              ctx.fillText('-20% YOUR HP', d.cx, d.y + d.h * 0.86);
+            }
+            ctx.restore();
+
+            // Swung open door panel on the left
+            ctx.fillStyle = '#311042';
+            ctx.strokeStyle = '#581c87';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(d.x, d.y);
+            ctx.lineTo(d.x - 22, d.y + 8);
+            ctx.lineTo(d.x - 22, d.y + d.h - 8);
+            ctx.lineTo(d.x, d.y + d.h);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          } else {
+            // CLOSED DOOR
+            // Stately wooden / mathematical panel
+            const grad = ctx.createLinearGradient(d.x, d.y, d.x + d.w, d.y + d.h);
+            grad.addColorStop(0, '#3b0764');
+            grad.addColorStop(0.5, '#4c1d95');
+            grad.addColorStop(1, '#2e1065');
+            ctx.fillStyle = grad;
+
+            const isDoorSelected = (isPlayerInitialPick && (step === 'CHOICE' || step === 'REVEAL_ANIM'));
+            ctx.strokeStyle = isDoorSelected ? '#facc15' : (isHovered && step === 'PICK' ? '#a78bfa' : '#6d28d9');
+            ctx.lineWidth = isDoorSelected ? 4 : (isHovered ? 3 : 2);
+
+            ctx.beginPath();
+            ctx.roundRect(d.x, d.y, d.w, d.h, [14, 14, 0, 0]);
+            ctx.fill();
+            ctx.stroke();
+
+            // Decorative Panels
+            const pw = d.w - 24;
+            const ph = (d.h - 50) / 2;
+            ctx.strokeStyle = isDoorSelected ? 'rgba(250, 204, 21, 0.4)' : 'rgba(139, 92, 246, 0.3)';
+            ctx.lineWidth = 2;
+
+            // Top Panel
+            ctx.strokeRect(d.x + 12, d.y + 16, pw, ph);
+            // Bottom Panel
+            ctx.strokeRect(d.x + 12, d.y + 28 + ph, pw, ph);
+
+            // Door Roman Numeral on Top Panel
+            const numerals = ['I', 'II', 'III'];
+            ctx.font = 'bold 24px monospace';
+            ctx.fillStyle = isDoorSelected ? '#fef08a' : '#ddd6fe';
+            ctx.textAlign = 'center';
+            ctx.fillText(numerals[i] || String(i + 1), d.cx, d.y + 16 + ph / 2 + 8);
+
+            // Brass Door Knob
+            ctx.fillStyle = '#fbbf24';
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(d.x + d.w - 18, d.y + d.h / 2 + 6, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // "YOUR PICK" Badge on Door if Selected
+            if (isDoorSelected) {
+              ctx.fillStyle = 'rgba(250, 204, 21, 0.9)';
+              ctx.beginPath();
+              ctx.roundRect(d.cx - 46, d.y + d.h - 32, 92, 22, 6);
+              ctx.fill();
+
+              ctx.font = 'bold 9px monospace';
+              ctx.fillStyle = '#0f172a';
+              ctx.textAlign = 'center';
+              ctx.fillText(lang === 'pt-BR' ? 'SUA ESCOLHA' : 'YOUR PICK', d.cx, d.y + d.h - 18);
+            }
+          }
+
+          // BUTTON BENEATH THE DOOR
+          let btnText = '';
+          let btnBg = '#1e1b4b';
+          let btnBorder = '#6d28d9';
+          let btnTextColor = '#ffffff';
+          let btnDisabled = false;
+
+          if (step === 'PICK') {
+            btnText = t('monty_door_label').replace('{door}', String(i + 1));
+            if (isHovered) {
+              btnBg = '#4338ca';
+              btnBorder = '#facc15';
+            }
+          } else if (step === 'REVEAL_ANIM' || step === 'CHOICE') {
+            if (i === revealedEmpty) {
+              btnText = t('monty_empty_label');
+              btnBg = '#1e293b';
+              btnBorder = '#334155';
+              btnTextColor = '#64748b';
+              btnDisabled = true;
+            } else if (i === playerPick) {
+              btnText = t('monty_stay_btn').replace('{door}', String(i + 1));
+              btnBg = isHovered ? '#047857' : '#065f46';
+              btnBorder = '#34d399';
+              btnTextColor = '#ecfdf5';
+            } else {
+              btnText = t('monty_switch_btn').replace('{door}', String(i + 1));
+              btnBg = isHovered ? '#86198f' : '#701a75';
+              btnBorder = '#f472b6';
+              btnTextColor = '#fdf2f8';
+            }
+          } else if (step === 'RESULT') {
+            if (i === finalPick) {
+              if (i === prizeDoor) {
+                btnText = lang === 'pt-BR' ? '✓ VENCEU (-20% HP)' : '✓ WIN (-20% HP)';
+                btnBg = '#15803d';
+                btnBorder = '#4ade80';
+              } else {
+                btnText = lang === 'pt-BR' ? '✖ VAZIA (-20% HP)' : '✖ EMPTY (-20% HP)';
+                btnBg = '#991b1b';
+                btnBorder = '#f87171';
+              }
+            } else {
+              btnText = (i === prizeDoor)
+                ? (lang === 'pt-BR' ? 'ERA O PRÊMIO' : 'WAS PRIZE')
+                : (lang === 'pt-BR' ? 'PORTA VAZIA' : 'EMPTY DOOR');
+              btnBg = '#1e293b';
+              btnBorder = '#334155';
+              btnTextColor = '#94a3b8';
+              btnDisabled = true;
+            }
+          }
+
+          ctx.fillStyle = btnBg;
+          ctx.strokeStyle = btnBorder;
+          ctx.lineWidth = (isHovered && !btnDisabled) ? 2.5 : 1.5;
+          ctx.beginPath();
+          ctx.roundRect(d.buttonX, d.buttonY, d.buttonW, d.buttonH, 8);
+          ctx.fill();
+          ctx.stroke();
+
+          // Button Text
+          ctx.font = 'bold 11px monospace';
+          ctx.fillStyle = btnTextColor;
+          ctx.textAlign = 'center';
+          ctx.fillText(btnText, d.buttonX + d.buttonW / 2, d.buttonY + d.buttonH / 2 + 4);
+        });
+
+        ctx.restore();
+      }
+
+      // --- DRAW PYTHAGORAS "GEOMENTO MORI" EQUATIONS HUD (TOP-LEFT) ---
+      if (pythagorasGeoMoriActiveRef.current && pythagorasGeoMoriEquationsRef.current.length > 0) {
+        ctx.save();
+        const state = pythagorasGeoMoriStateRef.current;
+        const timer = pythagorasGeoMoriTimerRef.current;
+        const lang = getLanguage();
+        const t = (key: string) => UI_TRANSLATIONS[lang]?.[key] || UI_TRANSLATIONS['en']?.[key] || key;
+
+        // Position on top-left of canvas screen, below player portrait & HP/EXP bars
+        const cardX = mobileModeRef.current ? 12 : 18;
+        const cardY = mobileModeRef.current ? 74 : 84;
+        const cardW = mobileModeRef.current ? 250 : 275;
+        const cardH = 300;
+
+        // Card backdrop with dark mathematical parchment aesthetic
+        const bgGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
+        bgGrad.addColorStop(0, 'rgba(15, 23, 42, 0.95)');
+        bgGrad.addColorStop(1, 'rgba(30, 27, 75, 0.95)');
+        ctx.fillStyle = bgGrad;
+        ctx.strokeStyle = state === 'ACTIVE' ? '#c084fc' : '#8b5cf6';
+        ctx.lineWidth = 2.0;
+
+        if (state === 'ACTIVE') {
+          ctx.shadowColor = '#c084fc';
+          ctx.shadowBlur = 10;
+        }
+
+        ctx.beginPath();
+        ctx.roundRect(cardX, cardY, cardW, cardH, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Header Title: GeoMento Mori
+        ctx.font = 'bold 13px monospace';
+        ctx.fillStyle = '#fde047';
+        ctx.textAlign = 'left';
+        ctx.fillText('📐 ' + t('geomento_mori_title'), cardX + 14, cardY + 22);
+
+        // Status Badge / Countdown
+        const timeLeft = Math.max(0, 2.2 - timer).toFixed(1);
+        const badgeText = state === 'TELEGRAPH'
+          ? t('geomento_graphing_in').replace('{sec}', timeLeft)
+          : t('geomento_curves_active');
+        ctx.font = 'bold 10px monospace';
+        ctx.fillStyle = state === 'TELEGRAPH' ? '#facc15' : '#f87171';
+        ctx.textAlign = 'right';
+        ctx.fillText(badgeText, cardX + cardW - 14, cardY + 22);
+
+        // Subtitle / Instruction: Origin (0,0) at screen center
+        ctx.font = '9.5px monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'left';
+        ctx.fillText(t('geomento_center_origin'), cardX + 14, cardY + 38);
+
+        // Thin separator rule
+        ctx.strokeStyle = 'rgba(139, 92, 246, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cardX + 12, cardY + 44);
+        ctx.lineTo(cardX + cardW - 12, cardY + 44);
+        ctx.stroke();
+
+        // The 10 equations displayed in top-left
+        const eqStartY = cardY + 54;
+        pythagorasGeoMoriEquationsRef.current.forEach((eq, idx) => {
+          const itemY = eqStartY + idx * 22;
+
+          // Equation row pill matching equation color
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+          ctx.strokeStyle = eq.color;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.roundRect(cardX + 12, itemY - 9, cardW - 24, 18, 4);
+          ctx.fill();
+          ctx.stroke();
+
+          // Index tag: (1) to (10) with matching equation color
+          ctx.font = 'bold 9.5px monospace';
+          ctx.fillStyle = eq.color;
+          ctx.textAlign = 'left';
+          ctx.fillText(`(${idx + 1})`, cardX + 16, itemY + 3);
+
+          // Formula text: e.g. y = 1 / x, y = x², y = 2·sin(x), etc.
+          ctx.font = 'bold 11.5px monospace';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(eq.formula, cardX + 44, itemY + 2);
+
+          // Matching color dot indicator
+          ctx.fillStyle = eq.color;
+          ctx.beginPath();
+          ctx.arc(cardX + cardW - 22, itemY - 3, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.restore();
+      }
     };
 
     animId = requestAnimationFrame(loop);
@@ -8893,3 +13652,5 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     />
   );
 };
+
+export const GameCanvas = React.memo(GameCanvasComponent);

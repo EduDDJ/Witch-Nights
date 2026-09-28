@@ -21,7 +21,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
   onMove,
 }) => {
   const baseRef = useRef<HTMLDivElement | null>(null);
-  const [knobPos, setKnobPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const knobRef = useRef<HTMLDivElement | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const activePointerIdRef = useRef<number | null>(null);
 
@@ -49,7 +49,9 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
         clampedY = (dy / dist) * maxRadius;
       }
 
-      setKnobPos({ x: clampedX, y: clampedY });
+      if (knobRef.current) {
+        knobRef.current.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+      }
 
       // Normalized direction vector (-1 to 1)
       const normX = clampedX / maxRadius;
@@ -95,7 +97,9 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
     }
     activePointerIdRef.current = null;
     setIsDragging(false);
-    setKnobPos({ x: 0, y: 0 });
+    if (knobRef.current) {
+      knobRef.current.style.transform = 'translate(-50%, -50%)';
+    }
 
     const zeroVector = { x: 0, y: 0, active: false };
     if (onMove) {
@@ -164,6 +168,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
 
         {/* Draggable Knob (Thumbstick) */}
         <div
+          ref={knobRef}
           id={`${resolvedIdPrefix}-knob`}
           className={`absolute top-1/2 left-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full pointer-events-none flex items-center justify-center ${
             isCursor
@@ -171,7 +176,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
               : 'bg-gradient-to-tr from-purple-700 via-indigo-600 to-cyan-400 border border-cyan-300/70 shadow-[0_2px_12px_rgba(56,189,248,0.45)]'
           }`}
           style={{
-            transform: `translate(calc(-50% + ${knobPos.x}px), calc(-50% + ${knobPos.y}px))`,
+            transform: 'translate(-50%, -50%)',
             transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1)',
           }}
         >

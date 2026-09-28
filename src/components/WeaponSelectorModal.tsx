@@ -27,7 +27,7 @@ import {
   FlaskConical,
 } from 'lucide-react';
 import { VampireFangsIcon } from './VampireFangsIcon';
-import { PentagramIcon } from './PentagramIcon';
+import { WEAPON_ICONS } from './WeaponIcons';
 import { BroomIcon } from './BroomIcon';
 
 interface WeaponSelectorModalProps {
@@ -42,19 +42,7 @@ interface WeaponSelectorModalProps {
   onClose: () => void;
 }
 
-const WEAPON_ICONS: Record<string, React.ElementType> = {
-  Sparkles,
-  Flame,
-  Skull,
-  BookOpen,
-  Crosshair,
-  Zap,
-  Radio,
-  Pentagram: PentagramIcon,
-  Sword,
-  Sprout,
-  FlaskConical,
-};
+
 
 const STAT_ICONS: Record<string, React.ElementType> = {
   Fangs: VampireFangsIcon,
@@ -241,6 +229,15 @@ export const WeaponSelectorModal: React.FC<WeaponSelectorModalProps> = ({
                 <div className="flex-1 text-center sm:text-left min-w-0">
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
                     <h3 className="text-lg font-bold text-slate-100 font-serif">{selectedItem.name}</h3>
+                    {(selectedItem as any).shootingType && (
+                      <span className="text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                        {(selectedItem as any).shootingType === 'MOUSE_DIRECTION'
+                          ? 'Cursor Aim'
+                          : (selectedItem as any).shootingType === 'NEAREST_ENEMY'
+                          ? 'Nearest Enemy'
+                          : 'Area of Effect'}
+                      </span>
+                    )}
                     {isOwned && (
                       <span className="text-[10px] font-black bg-amber-600 text-white px-2 py-0.5 rounded-full border border-amber-400 uppercase tracking-tighter">
                         {currentLevel >= 7 ? 'MEGA EVOLVED' : `RANK ${currentLevel}`}

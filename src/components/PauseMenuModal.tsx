@@ -3,7 +3,7 @@ import { Play, Settings, BookOpen, LogOut, Pause, RotateCcw, Wrench } from 'luci
 import { OwnedWeapon, OwnedStatItem } from '../types/game';
 import { ALL_WEAPONS, ALL_STAT_ITEMS } from '../data/gameData';
 import { useLanguage, t } from '../utils/i18n';
-import { PentagramIcon } from './PentagramIcon';
+import { WEAPON_ICONS } from './WeaponIcons';
 import { VampireFangsIcon } from './VampireFangsIcon';
 import { BroomIcon } from './BroomIcon';
 import {
@@ -26,18 +26,7 @@ import {
   Sprout,
 } from 'lucide-react';
 
-const WEAPON_ICONS: Record<string, React.ElementType> = {
-  Sparkles,
-  Flame,
-  Skull,
-  BookOpen,
-  Crosshair,
-  Zap,
-  Radio,
-  Pentagram: PentagramIcon,
-  Sword,
-  Sprout,
-};
+
 
 const STAT_ICONS: Record<string, React.ElementType> = {
   Fangs: VampireFangsIcon,
@@ -224,7 +213,7 @@ export const PauseMenuModal: React.FC<PauseMenuModalProps> = ({
                         className="w-full aspect-square rounded-xl flex items-center justify-center border-2 transition-all duration-150 hover:scale-110 shadow-sm"
                         style={{
                           backgroundColor: `${itemColor}22`,
-                          borderColor: itemColor,
+                          borderColor: def.iconColor ? '#64748b' : itemColor,
                         }}
                       >
                         <IconComp className="w-4 h-4" style={{ color: itemColor }} />

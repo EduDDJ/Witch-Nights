@@ -28,9 +28,11 @@ import {
   CheckCircle,
   Eye,
   FlaskConical,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { VampireFangsIcon } from './VampireFangsIcon';
-import { PentagramIcon } from './PentagramIcon';
+import { WEAPON_ICONS, SpectralArrowIcon, AstralBladeIcon, GrimoireIcon } from './WeaponIcons';
 import { BroomIcon } from './BroomIcon';
 import {
   getLanguage,
@@ -47,6 +49,7 @@ import {
   translateCurseSubtitle,
   translateCurseDescription,
   translateBossName,
+  translateMapName,
   translateEnemyName,
   translateEnemyDescription,
   translateAttackName,
@@ -64,19 +67,7 @@ interface CollectionModalProps {
   onClose: () => void;
 }
 
-const WEAPON_ICONS: Record<string, React.ElementType> = {
-  Sparkles,
-  Flame,
-  Skull,
-  BookOpen,
-  Crosshair,
-  Zap,
-  Radio,
-  Pentagram: PentagramIcon,
-  Sword,
-  Sprout,
-  FlaskConical,
-};
+
 
 const STAT_ICONS: Record<string, React.ElementType> = {
   Fangs: VampireFangsIcon,
@@ -130,6 +121,50 @@ const VillageKnightIcon: React.FC<any> = (props) => (
     fallbackSrc="assets/village_knight.png"
     alternateFallbacks={['https://i.imgur.com/iHevmHN.png']}
     alt="Village Knight"
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
+
+const ObMooseIcon: React.FC<any> = (props) => (
+  <GameImage
+    src="assets/aistudio/obmoose.png"
+    fallbackSrc="assets/obmoose.png"
+    alternateFallbacks={['https://i.imgur.com/AbmtRP2.png']}
+    alt="ObMoose"
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
+
+const UnocondaIcon: React.FC<any> = (props) => (
+  <GameImage
+    src="assets/aistudio/unoconda.png"
+    fallbackSrc="assets/unoconda.png"
+    alternateFallbacks={['https://i.imgur.com/KncCJpG.png']}
+    alt="Unoconda"
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
+
+const VIIIperIcon: React.FC<any> = (props) => (
+  <GameImage
+    src="assets/aistudio/viiiper.png"
+    fallbackSrc="assets/viiiper.png"
+    alternateFallbacks={['https://i.imgur.com/eKjiE6b.png']}
+    alt="VIIIper"
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
+
+const BunnaryIcon: React.FC<any> = (props) => (
+  <GameImage
+    src="assets/aistudio/bunnary_0.png"
+    fallbackSrc="assets/bunnary_0.png"
+    alternateFallbacks={['https://i.imgur.com/90lSZbP.png']}
+    alt="Bunnary"
     className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
     {...props}
   />
@@ -201,6 +236,39 @@ const ArchmagesIcon: React.FC<any> = (props) => (
   />
 );
 
+const GoogolbraIcon: React.FC<any> = (props) => (
+  <GameImage
+    src="assets/aistudio/googolbra_head.png"
+    fallbackSrc="assets/googolbra_head.png"
+    alternateFallbacks={['https://i.imgur.com/HJ9tJm7.png']}
+    alt="Googolbra"
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
+
+const PhiboccionIcon: React.FC<any> = (props) => (
+  <GameImage
+    src="assets/aistudio/phiboccion.png"
+    fallbackSrc="assets/phiboccion.png"
+    alternateFallbacks={['https://i.imgur.com/g0AgJ3Y.png']}
+    alt="Phiboccion"
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
+
+const PythagorasIcon: React.FC<any> = (props) => (
+  <GameImage
+    src="assets/aistudio/pythagoras.png"
+    fallbackSrc="assets/pythagoras.png"
+    alternateFallbacks={['https://i.imgur.com/APbtbDS.png']}
+    alt="Pythagoras The MatheMagician"
+    className={props.className || "w-full h-full object-contain [image-rendering:pixelated] drop-shadow-md"}
+    {...props}
+  />
+);
+
 const RockThrowerIcon: React.FC<any> = (props) => (
   <GameImage
     src="assets/aistudio/rock_thrower.png"
@@ -214,13 +282,16 @@ const RockThrowerIcon: React.FC<any> = (props) => (
 
 interface EnemyCollectionData {
   id: string;
+  baseEnemyId?: string;
   name: string;
   color: string;
   damage: number;
   maxHp: number;
   speed: string;
+  cooldown?: string;
   isBoss: boolean;
   isRed?: boolean;
+  mapId?: string;
   description: string;
   attacks?: {
     name: string;
@@ -234,39 +305,44 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
   {
     id: 'wraith',
     name: 'Torch Peasant',
+    mapId: 'village_outskirts',
     color: '#38bdf8',
     damage: 10,
     maxHp: 20,
-    speed: '1.0x',
+    speed: '1.15x',
     isBoss: false,
-    description: 'A peasant carrying a flickering torch through the shadows. The baseline villager moving at standard speed.'
+    description: 'A peasant carrying a flickering torch through the shadows. Swifter and more aggressive, rushing forward with fire.'
   },
   {
     id: 'bat',
     name: 'Pitchfork Peasant',
+    mapId: 'village_outskirts',
     color: '#a855f7',
     damage: 12,
     maxHp: 20,
-    speed: '1.15x',
+    speed: '1.0x',
     isBoss: false,
-    description: 'A maddened villager wielding an iron pitchfork. Hardier, swifter, and more aggressive than torch-bearing peasants.'
+    description: 'A maddened villager wielding an iron pitchfork. Hardier, moving at standard speed.'
   },
   {
     id: 'rock_thrower',
     name: 'Rock Thrower',
+    mapId: 'village_outskirts',
     color: '#d97706',
     damage: 20,
     maxHp: 25,
     speed: '0.85x',
+    cooldown: '4.5s - 6.0s',
     isBoss: false,
-    description: 'A cunning villager who maintains a safe distance from the Witch, telegraphing and hurling heavy rocks every few seconds.'
+    description: 'A cunning villager who maintains a safe distance from the Witch, telegraphing and hurling heavy rocks at her.'
   },
   {
     id: 'ghoul',
     name: 'Village Knight',
+    mapId: 'village_outskirts',
     color: '#ef4444',
     damage: 25,
-    maxHp: 30,
+    maxHp: 60,
     speed: '0.75x',
     isBoss: false,
     isRed: true,
@@ -275,6 +351,7 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
   {
     id: 'carnivore_plant',
     name: 'Carnivore Plant',
+    mapId: 'village_outskirts',
     color: '#22c55e',
     damage: 20,
     maxHp: 1200,
@@ -289,6 +366,7 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
   {
     id: 'mini_eye',
     name: 'Mini Eye',
+    mapId: 'village_outskirts',
     color: '#dc2626',
     damage: 15,
     maxHp: 1,
@@ -299,6 +377,7 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
   {
     id: 'haunted_eye',
     name: 'Haunted Eye',
+    mapId: 'village_outskirts',
     color: '#dc2626',
     damage: 20,
     maxHp: 800,
@@ -313,6 +392,7 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
   {
     id: 'night_bear',
     name: 'NightBear',
+    mapId: 'village_outskirts',
     color: '#3b2f2f',
     damage: 25,
     maxHp: 1200,
@@ -327,9 +407,235 @@ export const ENEMIES_DATA: EnemyCollectionData[] = [
   {
     id: 'archmages',
     name: 'The 3 Archmages',
+    mapId: 'village_outskirts',
     color: '#a855f7',
     damage: 20,
     maxHp: 3000,
+    speed: '1.0x',
+    isBoss: true,
+    description: 'A trinity of wise Archmages, testing Ruby. Each has their own attack, but, after defeating all 3, something is waiting for you...',
+    attacks: [
+      { name: "It's Raining Fire!", damage: '20', telegraph: '1.0s', description: 'Geraldo The Red casts 4 pairs of homing fireballs from screen sides.' },
+      { name: 'Vine Box', damage: '25', telegraph: '1.0s', description: 'Geraldo The Green traps you in a 3x3 box with red vine tiles, striking with 3x1 bursts.' },
+      { name: 'Thunder Beams', damage: '20', telegraph: '1.5s', description: 'Geraldo The Blue fires 4 electric beams that spin clockwise for 10s.' },
+      { name: 'Cloning Spell', damage: '25', telegraph: '1.2s', description: 'Geraldo The RGB duplicates you into separate 3x3 boxes with shared movement.' },
+      { name: 'RGBeam', damage: '20', telegraph: '1.5s', description: '8 spinning rainbow beams rotate clockwise around Geraldo The RGB.' },
+      { name: 'Rainbow Rain', damage: '20', telegraph: '1.0s', description: 'Rainbow fireballs launch from 2 screen sides while lightning strikes telegraphed circles.' }
+    ]
+  },
+  {
+    id: 'unoconda',
+    name: 'Unoconda',
+    mapId: 'mathematical_realm',
+    color: '#10b981',
+    damage: 10,
+    maxHp: 20,
+    speed: '1.15x',
+    isBoss: false,
+    description: "A snake in the shape of the number one. Or is it THE number one? No one really knows, but there IS a rumor that its Ancestor can be found."
+  },
+  {
+    id: 'viiiper',
+    name: 'VIIIper',
+    mapId: 'mathematical_realm',
+    color: '#a855f7',
+    damage: 12,
+    maxHp: 20,
+    speed: '1.0x',
+    isBoss: false,
+    description: "A slithery figure eight, or VIII, as the romans would've said."
+  },
+  {
+    id: 'bunnary',
+    name: 'Bunnary',
+    mapId: 'mathematical_realm',
+    color: '#06b6d4',
+    damage: 20,
+    maxHp: 25,
+    speed: '0.85x',
+    cooldown: '4.5s - 6.0s',
+    isBoss: false,
+    description: 'A bunny made up entirely of ones and zeros. Legends say misterious messages can be captured by those with keen eyes.'
+  },
+  {
+    id: 'obmoose',
+    name: 'ObMoose',
+    mapId: 'mathematical_realm',
+    color: '#ef4444',
+    damage: 25,
+    maxHp: 60,
+    speed: '0.75x',
+    isBoss: false,
+    isRed: true,
+    description: 'A formidable moose entity roaming the Math Realm that drops high-value Red EXP Orbs.'
+  },
+  {
+    id: 'googolbra',
+    name: 'Googolbra',
+    mapId: 'mathematical_realm',
+    color: '#06b6d4',
+    damage: 28,
+    maxHp: 2000,
+    speed: '2.0x',
+    isBoss: true,
+    description: 'The number Googol, brought to life by the magic of this Universe the Archmages call "Math Realm".',
+    attacks: [
+      { name: 'Snake cONEstriction', damage: '28', telegraph: 'Spiral Inward', description: 'Googolbra starts at the very top right, moving top-left, bottom-left, bottom-right, repeating inward to wrap around the player. Attack its head for 1/5 Max HP to force it backwards off screen!' },
+      { name: 'Zebra Pattern Strike', damage: '35', telegraph: '1.2s (x2)', description: 'Googolbra sweeps across the map twice in rapid zebra patterns with all lanes fully occupied simultaneously by one long continuous snake!' },
+      { name: 'Sssneak Attack', damage: '10 DPS (After 5s)', telegraph: 'Sudden Ambush', description: 'Googolbra appears instantly from off-screen and coils tightly around the player. Deals no damage for 5 seconds, then deals 10 DPS; spam the spacebar 30 times or tap Struggle to break free!' }
+    ]
+  },
+  {
+    id: 'phiboccion',
+    name: 'Phiboccion',
+    mapId: 'mathematical_realm',
+    color: '#eab308',
+    damage: 25,
+    maxHp: 1600,
+    speed: '1.5x',
+    isBoss: true,
+    description: 'Phiboccion is the personification of the Golden Ratio, Phi, and everything related. Due to his supernatural existence, he has no weight and floats around.',
+    attacks: [
+      { name: 'x to the Power of THIS KICK', damage: '25/30', telegraph: '0.5s', description: 'Phiboccion rapidly kicks 5 times across the screen, leaving Land Phi-nes behind. Touching him while kicking deals 25 damage.' },
+      { name: 'Phi-X-Plosion', damage: '30/50', telegraph: '2.0s', description: 'Phiboccion flies to a corner and fires rapid lasers from his feet at the player, dropping 5 Land Phi-nes across the map, and finishes with a cataclysmic 2s charged explosion.' },
+      { name: 'The Root of Strenght', damage: '0 (1/5 Boss HP to him on success)', telegraph: '10.0s/problem', description: 'Phiboccion floats to top-center and gains invulnerability. Solve 3 square root problems on the keypad within 10s each to deal 1/5 of his Max HP!' },
+      { name: 'SAY. SOME. FIBONACCI!!!', damage: '0 (Fibonacci Challenge on Defeat)', telegraph: '5.0s → 1.0s', description: 'When defeated, Phiboccion demands the Fibonacci sequence (up to the 50th number) with decreasing timers (5s down to 1s) to earn bonus EXP orbs!' }
+    ]
+  },
+  {
+    id: 'pythagoras',
+    name: 'Pythagoras The MatheMagician',
+    mapId: 'mathematical_realm',
+    color: '#8b5cf6',
+    damage: 20,
+    maxHp: 2200,
+    speed: '1.2x',
+    isBoss: true,
+    description: 'A legendary master of geometric spells in the Math Realm who divides the arena and unleashes mathematical tools upon his foes.',
+    attacks: [
+      { name: 'Geometry? Dash!', damage: '20', telegraph: '0.5s', description: 'Pythagoras starts constantly throwing rulers underneath him, functionally dividing the arena in two. Then, Pythagoras throws one Protractor to the left and one to the right, moving in a circular motion inside and around both areas, one each. He\'ll throw Protractors three times before the attack ends. Finally, Pythagoras throws a spinning Set-Square every 1.5s, aimed at the player.' },
+      { name: '(Mont)YOUR (hall) Problem', damage: '20% Current HP (or -20% Max HP to Boss)', telegraph: 'Choice', description: 'When it starts, the player is shown 3 doors, with a button beneath each one. Once they pick one, another door is opened, which will be empty. Then they are given the choice to change their door to the other unopened one. Two of the doors will damage the player for 20% of their CURRENT health (empty door), if the player ends with them. However, the other door will damage Pythagoras for 20% of his Max HP.' },
+      { name: 'GeoMento Mori', damage: '20', telegraph: '2.0s', description: '5 mathematical equations appear on the top-left of the screen (e.g. y=1/x, y=x², y=x/2, waves, etc.). Shortly after, they are graphed onto the screen with the middle of the screen being (0;0). Avoid the lethal plotted curves!' }
+    ]
+  },
+  {
+    id: 'wraith_black_honey',
+    baseEnemyId: 'wraith',
+    name: 'Torch Peasant (Black Honey)',
+    mapId: 'black_honey_forest',
+    color: '#38bdf8',
+    damage: 10,
+    maxHp: 24,
+    speed: '1.15x',
+    isBoss: false,
+    description: 'A peasant carrying a flickering torch through the shadows. Swifter and more aggressive, rushing forward with fire.'
+  },
+  {
+    id: 'bat_black_honey',
+    baseEnemyId: 'bat',
+    name: 'Pitchfork Peasant (Black Honey)',
+    mapId: 'black_honey_forest',
+    color: '#a855f7',
+    damage: 12,
+    maxHp: 24,
+    speed: '1.0x',
+    isBoss: false,
+    description: 'A maddened villager wielding an iron pitchfork. Hardier, moving at standard speed.'
+  },
+  {
+    id: 'rock_thrower_black_honey',
+    baseEnemyId: 'rock_thrower',
+    name: 'Rock Thrower (Black Honey)',
+    mapId: 'black_honey_forest',
+    color: '#d97706',
+    damage: 20,
+    maxHp: 30,
+    speed: '0.85x',
+    cooldown: '4.5s - 6.0s',
+    isBoss: false,
+    description: 'A cunning villager who maintains a safe distance from the Witch, telegraphing and hurling heavy rocks at her.'
+  },
+  {
+    id: 'ghoul_black_honey',
+    baseEnemyId: 'ghoul',
+    name: 'Village Knight (Black Honey)',
+    mapId: 'black_honey_forest',
+    color: '#ef4444',
+    damage: 25,
+    maxHp: 72,
+    speed: '0.75x',
+    isBoss: false,
+    isRed: true,
+    description: 'A resilient elite knight of the village that drops high-value Red EXP Orbs.'
+  },
+  {
+    id: 'carnivore_plant_black_honey',
+    baseEnemyId: 'carnivore_plant',
+    name: 'Carnivore Plant (Black Honey)',
+    mapId: 'black_honey_forest',
+    color: '#22c55e',
+    damage: 20,
+    maxHp: 1440,
+    speed: '0.0x',
+    isBoss: true,
+    description: 'A stationary botanical nightmare with vicious roots and an insatiable appetite.',
+    attacks: [
+      { name: 'Vine Snare', damage: '10', telegraph: '1.5s', description: 'Spawns roots near the player. Emits a smaller warning circle before striking.' },
+      { name: 'Chomp Attack', damage: '25', telegraph: '0.85s', description: 'Massive area-of-effect bite centered on the player. Dash is required to escape.' }
+    ]
+  },
+  {
+    id: 'mini_eye_black_honey',
+    baseEnemyId: 'mini_eye',
+    name: 'Mini Eye (Black Honey)',
+    mapId: 'black_honey_forest',
+    color: '#dc2626',
+    damage: 15,
+    maxHp: 2,
+    speed: '2.0x',
+    isBoss: false,
+    description: 'A tiny, swift ocular minion spawned when the Haunted Eye reveals its true gaze. They relentlessly pursue the witch and self-destruct upon contact.'
+  },
+  {
+    id: 'haunted_eye_black_honey',
+    baseEnemyId: 'haunted_eye',
+    name: 'Haunted Eye (Black Honey)',
+    mapId: 'black_honey_forest',
+    color: '#dc2626',
+    damage: 20,
+    maxHp: 960,
+    speed: '0.0x',
+    isBoss: true,
+    description: 'A colossal panoramic ocular terror that stays open until its trio of Mini Eye minions are defeated.',
+    attacks: [
+      { name: 'Blood Tears', damage: '10', telegraph: 'Instant', description: 'Weeps magical projectiles that drift toward the player.' },
+      { name: 'Gaze Curse', damage: '20 DPS', telegraph: '1.00s', description: 'When the eye opens, player must look away (cursor below the witch) or suffer rapid damage. The eye only closes when all 3 Mini Eyes are destroyed.' }
+    ]
+  },
+  {
+    id: 'night_bear_black_honey',
+    baseEnemyId: 'night_bear',
+    name: 'NightBear (Black Honey)',
+    mapId: 'black_honey_forest',
+    color: '#3b2f2f',
+    damage: 25,
+    maxHp: 1440,
+    speed: '2.5x',
+    isBoss: true,
+    description: 'A dark, hulking beast that alternates 2 - 1 between relentless charges and a devastating arena-wide biting frenzy called "THE Bite".',
+    attacks: [
+      { name: 'Charge', damage: '25', telegraph: '0.6s', description: 'NightBear readies himself and charges at high speed until hitting a wall. Crashing 3 times causes him to become stunned and dizzy.' },
+      { name: 'THE Bite', damage: '25', telegraph: '1.0s', description: 'After recovering from dizziness twice (2 Charge Attacks), NightBear leaps to the top center (telegraphed by a red circle) and bites in circular areas, leaving an opening nearby to escape with quick thinking.' }
+    ]
+  },
+  {
+    id: 'archmages_black_honey',
+    baseEnemyId: 'archmages',
+    name: 'The 3 Archmages (Black Honey)',
+    mapId: 'black_honey_forest',
+    color: '#a855f7',
+    damage: 20,
+    maxHp: 3600,
     speed: '1.0x',
     isBoss: true,
     description: 'A trinity of wise Archmages, testing Ruby. Each has their own attack, but, after defeating all 3, something is waiting for you...',
@@ -361,6 +667,7 @@ interface HoveredItemData {
     damage: number;
     maxHp: number;
     speed: string;
+    cooldown?: string;
     attacks?: {
       name: string;
       damage: string;
@@ -384,35 +691,124 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
   const [activeTab, setActiveTab] = useState<'WEAPONS' | 'PASSIVES' | 'CURSES' | 'ENEMIES'>('WEAPONS');
   const [selectedItem, setSelectedItem] = useState<HoveredItemData | null>(null);
   const [showUpgradeInfo, setShowUpgradeInfo] = useState<boolean>(false);
+  const [minimizedMaps, setMinimizedMaps] = useState<Record<string, boolean>>({});
+  const toggleMapMinimize = (mapId: string) => {
+    setMinimizedMaps(prev => ({ ...prev, [mapId]: !prev[mapId] }));
+  };
   const currentLang = getLanguage();
 
   const discoveredEnemiesCount = ENEMIES_DATA.filter((e) => unlockedEnemies.includes(e.id)).length;
   const totalCollected = unlockedWeapons.length + unlockedItems.length + unlockedCurses.length + discoveredEnemiesCount;
   const totalAvailable = ALL_WEAPONS.length + ALL_STAT_ITEMS.length + WITCH_DEALS.length + ENEMIES_DATA.length;
 
-  const sortedWeapons = [...ALL_WEAPONS].sort((a, b) => {
-    const isALeg = Boolean(a.isLegendary);
-    const isBLeg = Boolean(b.isLegendary);
-    if (isALeg && !isBLeg) return 1;
-    if (!isALeg && isBLeg) return -1;
-    return 0;
-  });
+  const sortedWeapons = ALL_WEAPONS;
 
-  const sortedStatItems = [...ALL_STAT_ITEMS].sort((a, b) => {
-    const isALeg = Boolean(a.isLegendary);
-    const isBLeg = Boolean(b.isLegendary);
-    if (isALeg && !isBLeg) return 1;
-    if (!isALeg && isBLeg) return -1;
-    return 0;
-  });
+  const sortedStatItems = ALL_STAT_ITEMS;
 
-  const sortedCurses = [...WITCH_DEALS].sort((a, b) => {
-    const isALeg = Boolean(a.isLegendary);
-    const isBLeg = Boolean(b.isLegendary);
-    if (isALeg && !isBLeg) return 1;
-    if (!isALeg && isBLeg) return -1;
-    return 0;
-  });
+  const sortedCurses = WITCH_DEALS;
+
+  const villageEnemies = ENEMIES_DATA.filter((e) => e.mapId === 'village_outskirts' || !e.mapId);
+  const mathEnemies = ENEMIES_DATA.filter((e) => e.mapId === 'mathematical_realm');
+  const blackHoneyEnemies = ENEMIES_DATA.filter((e) => e.mapId === 'black_honey_forest');
+
+  const villageDiscoveredCount = villageEnemies.filter((e) => unlockedEnemies.includes(e.id)).length;
+  const mathDiscoveredCount = mathEnemies.filter((e) => unlockedEnemies.includes(e.id)).length;
+  const blackHoneyDiscoveredCount = blackHoneyEnemies.filter((e) => unlockedEnemies.includes(e.id)).length;
+
+  const renderEnemyCard = (e: EnemyCollectionData) => {
+    const isSelected = selectedItem?.id === e.id;
+    const isDiscovered = unlockedEnemies?.includes(e.id) || false;
+    
+    const baseId = e.baseEnemyId || e.id;
+    let EnemyIcon = createNormalEnemyIcon(e.color);
+    if (baseId === 'wraith') EnemyIcon = TorchPeasantIcon;
+    if (baseId === 'bat') EnemyIcon = PitchforkPeasantIcon;
+    if (baseId === 'rock_thrower') EnemyIcon = RockThrowerIcon;
+    if (baseId === 'ghoul') EnemyIcon = VillageKnightIcon;
+    if (baseId === 'obmoose') EnemyIcon = ObMooseIcon;
+    if (baseId === 'unoconda') EnemyIcon = UnocondaIcon;
+    if (baseId === 'viiiper') EnemyIcon = VIIIperIcon;
+    if (baseId === 'bunnary') EnemyIcon = BunnaryIcon;
+    if (baseId === 'carnivore_plant') EnemyIcon = CarnivorePlantIcon;
+    if (baseId === 'haunted_eye') EnemyIcon = HauntedEyeIcon;
+    if (baseId === 'mini_eye') EnemyIcon = MiniEyeIcon;
+    if (baseId === 'night_bear') EnemyIcon = NightBearIcon;
+    if (baseId === 'archmages') EnemyIcon = ArchmagesIcon;
+    if (baseId === 'googolbra') EnemyIcon = GoogolbraIcon;
+    if (baseId === 'phiboccion') EnemyIcon = PhiboccionIcon;
+    if (baseId === 'pythagoras') EnemyIcon = PythagorasIcon;
+
+    const DisplayIcon = isDiscovered ? EnemyIcon : HelpCircle;
+
+    const bgStyle = isDiscovered ? '#ef444422' : '#450a0a22';
+    const borderStyle = e.isBoss ? '#fbbf24' : isDiscovered ? '#ef4444aa' : '#7f1d1d66';
+
+    let enemyDisplayName = e.name;
+    if (e.mapId === 'black_honey_forest') {
+      const baseTranslated = e.isBoss
+        ? translateBossName(baseId, e.name.replace(' (Black Honey)', ''), currentLang)
+        : translateEnemyName(baseId.toUpperCase(), e.name.replace(' (Black Honey)', ''), currentLang);
+      const suffix = currentLang === 'en' ? '(Black Honey)' : '(Mel Negro)';
+      enemyDisplayName = `${baseTranslated} ${suffix}`;
+    } else {
+      enemyDisplayName = e.isBoss ? translateBossName(e.id, e.name, currentLang) : translateEnemyName(e.id.toUpperCase(), e.name, currentLang);
+    }
+
+    const itemData: HoveredItemData = {
+      id: e.id,
+      name: enemyDisplayName,
+      category: 'ENEMY',
+      isDiscovered,
+      isUnlocked: true,
+      isLegendary: e.isBoss,
+      description: translateEnemyDescription(baseId, e.description, currentLang),
+      unlockCondition: currentLang === 'en' ? 'Defeat this enemy to reveal its stats.' : 'Derrote este inimigo para revelar seus atributos.',
+      bulletColor: e.color,
+      icon: DisplayIcon,
+      enemyStats: {
+        damage: e.damage,
+        maxHp: e.maxHp,
+        speed: e.speed,
+        cooldown: e.cooldown,
+        attacks: e.attacks ? e.attacks.map(atk => ({
+          name: translateAttackName(atk.name, currentLang),
+          damage: atk.damage,
+          telegraph: currentLang === 'en' ? atk.telegraph : (
+            atk.telegraph === 'Instant' ? 'Imediato' : atk.telegraph
+          ),
+          description: translateAttackTelegraph(atk.name, atk.description, currentLang),
+        })) : undefined,
+      },
+      kills: enemyKills[e.id] || 0,
+    };
+
+    return (
+      <div
+        key={e.id}
+        id={`collection-enemy-${e.id}`}
+        onClick={() => setSelectedItem(itemData)}
+        className="relative group cursor-pointer flex flex-col items-center"
+      >
+        <div
+          className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center transition-all duration-200 border-2 ${
+            e.isBoss
+              ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/25 hover:scale-110 hover:shadow-amber-500/50 hover:ring-amber-300'
+              : 'hover:scale-110 hover:shadow-2xl shadow-slate-900 shadow-md'
+          } ${isSelected ? 'ring-4 ring-purple-500 border-purple-400 scale-105' : ''}`}
+          style={{
+            backgroundColor: bgStyle,
+            borderColor: isSelected ? '#a855f7' : borderStyle,
+          }}
+        >
+          {isDiscovered ? (
+            <EnemyIcon className="w-6 h-6 sm:w-8 sm:h-8 transition-transform group-hover:scale-110" />
+          ) : (
+            <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const getShootingTypeLabel = (type?: ShootingType) => {
     switch (type) {
@@ -474,7 +870,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
         </div>
 
         {/* Filter Tabs */}
-        <div className={`flex gap-1.5 sm:gap-2 border-b border-purple-950/60 bg-slate-950/40 text-[11px] sm:text-xs overflow-x-auto ${mobileMode ? 'px-3 py-1.5' : 'px-6 pt-3 pb-2'}`}>
+        <div className={`flex flex-shrink-0 gap-1.5 sm:gap-2 border-b border-purple-950/60 bg-slate-950/40 text-[11px] sm:text-xs overflow-x-auto ${mobileMode ? 'px-3 py-1.5' : 'px-6 pt-3 pb-2'}`}>
           {(['WEAPONS', 'PASSIVES', 'CURSES', 'ENEMIES'] as const).map((tab) => (
             <button
               key={tab}
@@ -483,7 +879,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                 setActiveTab(tab);
                 setSelectedItem(null);
               }}
-              className={`whitespace-nowrap px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${
+              className={`flex-shrink-0 whitespace-nowrap px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${
                 activeTab === tab
                   ? 'bg-purple-600 text-white shadow-md'
                   : 'bg-slate-900 text-slate-400 hover:text-slate-200'
@@ -500,11 +896,104 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
           ))}
         </div>
 
-        {/* Main Body */}
-        <div className={`flex-1 overflow-y-auto flex flex-col justify-between ${mobileMode ? 'p-3 sm:p-5' : 'p-6 sm:p-8'}`}>
-          <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-2.5 sm:gap-4 justify-items-center">
-            {/* 1. Weapons */}
-            {activeTab === 'WEAPONS' &&
+        {/* Main Body (Scrollable) */}
+        <div className={`flex-1 overflow-y-auto ${mobileMode ? 'p-3 sm:p-5' : 'p-6 sm:p-8'}`}>
+          {activeTab === 'ENEMIES' ? (
+            <div className="flex flex-col gap-6 w-full">
+              {/* 1. Village Outskirts Subsection */}
+              <div className="flex flex-col gap-3">
+                <div 
+                  onClick={() => toggleMapMinimize('village_outskirts')}
+                  className="flex items-center justify-between border-b border-purple-900/40 pb-2 px-1 cursor-pointer hover:bg-purple-950/20 rounded transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <button className="text-amber-300">
+                      {minimizedMaps['village_outskirts'] ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                    </button>
+                    <span className="text-xs sm:text-sm font-bold text-amber-300 uppercase tracking-wider font-serif">
+                      {translateMapName('village_outskirts', currentLang)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] sm:text-xs text-slate-400 font-medium">
+                      {villageDiscoveredCount}/{villageEnemies.length}
+                    </span>
+                    <span className="text-[10px] text-purple-400 italic">
+                      {minimizedMaps['village_outskirts'] ? (currentLang === 'en' ? '(Minimized)' : '(Minimizado)') : ''}
+                    </span>
+                  </div>
+                </div>
+                {!minimizedMaps['village_outskirts'] && (
+                  <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-2.5 sm:gap-4 justify-items-center">
+                    {villageEnemies.map(renderEnemyCard)}
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Black Honey Forest Subsection */}
+              <div className="flex flex-col gap-3">
+                <div 
+                  onClick={() => toggleMapMinimize('black_honey_forest')}
+                  className="flex items-center justify-between border-b border-purple-900/40 pb-2 px-1 cursor-pointer hover:bg-purple-950/20 rounded transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <button className="text-amber-400">
+                      {minimizedMaps['black_honey_forest'] ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                    </button>
+                    <span className="text-xs sm:text-sm font-bold text-amber-400 uppercase tracking-wider font-serif">
+                      {currentLang === 'en' ? 'Black Honey Forest' : 'Floresta do Mel Negro'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] sm:text-xs text-slate-400 font-medium">
+                      {blackHoneyDiscoveredCount}/{blackHoneyEnemies.length}
+                    </span>
+                    <span className="text-[10px] text-purple-400 italic">
+                      {minimizedMaps['black_honey_forest'] ? (currentLang === 'en' ? '(Minimized)' : '(Minimizado)') : ''}
+                    </span>
+                  </div>
+                </div>
+                {!minimizedMaps['black_honey_forest'] && (
+                  <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-2.5 sm:gap-4 justify-items-center">
+                    {blackHoneyEnemies.map(renderEnemyCard)}
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Math Realm Subsection */}
+              <div className="flex flex-col gap-3">
+                <div 
+                  onClick={() => toggleMapMinimize('mathematical_realm')}
+                  className="flex items-center justify-between border-b border-purple-900/40 pb-2 px-1 cursor-pointer hover:bg-purple-950/20 rounded transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <button className="text-yellow-300">
+                      {minimizedMaps['mathematical_realm'] ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                    </button>
+                    <span className="text-xs sm:text-sm font-bold text-yellow-300 uppercase tracking-wider font-serif">
+                      {currentLang === 'en' ? 'Math Realm' : 'Reino Matemático'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] sm:text-xs text-slate-400 font-medium">
+                      {mathDiscoveredCount}/{mathEnemies.length}
+                    </span>
+                    <span className="text-[10px] text-purple-400 italic">
+                      {minimizedMaps['mathematical_realm'] ? (currentLang === 'en' ? '(Minimized)' : '(Minimizado)') : ''}
+                    </span>
+                  </div>
+                </div>
+                {!minimizedMaps['mathematical_realm'] && (
+                  <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-2.5 sm:gap-4 justify-items-center">
+                    {mathEnemies.map(renderEnemyCard)}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-2.5 sm:gap-4 justify-items-center">
+              {/* 1. Weapons */}
+              {activeTab === 'WEAPONS' &&
               sortedWeapons.map((w) => {
                 const isDiscovered = unlockedWeapons.includes(w.id);
                 const isUnlocked = unlockedItemIds.includes(w.id);
@@ -775,241 +1264,169 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
 
-            {/* 4. Enemies */}
-            {activeTab === 'ENEMIES' &&
-              ENEMIES_DATA.map((e) => {
-                const isSelected = selectedItem?.id === e.id;
-                const isDiscovered = unlockedEnemies?.includes(e.id) || false;
-                
-                let EnemyIcon = createNormalEnemyIcon(e.color);
-                if (e.id === 'wraith') EnemyIcon = TorchPeasantIcon;
-                if (e.id === 'bat') EnemyIcon = PitchforkPeasantIcon;
-                if (e.id === 'rock_thrower') EnemyIcon = RockThrowerIcon;
-                if (e.id === 'ghoul') EnemyIcon = VillageKnightIcon;
-                if (e.id === 'carnivore_plant') EnemyIcon = CarnivorePlantIcon;
-                if (e.id === 'haunted_eye') EnemyIcon = HauntedEyeIcon;
-                if (e.id === 'mini_eye') EnemyIcon = MiniEyeIcon;
-                if (e.id === 'night_bear') EnemyIcon = NightBearIcon;
-                if (e.id === 'archmages') EnemyIcon = ArchmagesIcon;
+        {/* DYNAMIC DESCRIPTION PANEL (Always at the bottom of the screen) */}
+        <div className={`flex-shrink-0 ${mobileMode ? 'p-3' : 'p-4 sm:p-6'} bg-slate-950/95 border-t border-purple-900/60 shadow-2xl flex items-center justify-center transition-all`}>
+          {selectedItem ? (
+            <div className="w-full flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 animate-in fade-in duration-150">
+              {/* Large Icon Box */}
+              <div
+                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center flex-shrink-0 border-2 ${
+                  selectedItem.isLegendary ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-md shadow-amber-500/25' : ''
+                }`}
+                style={{
+                  backgroundColor: selectedItem.category === 'ENEMY'
+                    ? (selectedItem.isDiscovered ? '#ef444422' : '#450a0a22')
+                    : selectedItem.isLegendary
+                    ? '#78350f25'
+                    : selectedItem.isDiscovered
+                    ? `${selectedItem.bulletColor || '#a855f7'}22`
+                    : selectedItem.isUnlocked
+                    ? '#1e1b4b33'
+                    : '#1e293b25',
+                  borderColor: selectedItem.isLegendary
+                    ? '#fbbf24'
+                    : selectedItem.category === 'ENEMY'
+                    ? (selectedItem.isDiscovered ? '#ef4444aa' : '#7f1d1d66')
+                    : selectedItem.isDiscovered
+                    ? `${selectedItem.bulletColor || '#a855f7'}aa`
+                    : selectedItem.isUnlocked
+                    ? '#3730a344'
+                    : '#475569',
+                }}
+              >
+                <selectedItem.icon
+                  className="w-6 h-6 sm:w-7 sm:h-7"
+                  style={{
+                    color: selectedItem.isDiscovered
+                      ? selectedItem.bulletColor || '#c084fc'
+                      : selectedItem.isLegendary
+                      ? '#fbbf24'
+                      : selectedItem.isUnlocked
+                      ? '#94a3b8'
+                      : '#fbbf24',
+                  }}
+                />
+              </div>
 
-                const DisplayIcon = isDiscovered ? EnemyIcon : HelpCircle;
+              {/* Description Text */}
+              <div className="flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <h4 className="text-sm sm:text-lg font-bold text-slate-100 font-serif">
+                    {selectedItem.isDiscovered
+                      ? selectedItem.name
+                      : selectedItem.isUnlocked
+                      ? (selectedItem.category === 'WEAPON'
+                          ? (currentLang === 'en' ? 'Undiscovered Weapon' : 'Arma Não Descoberta')
+                          : selectedItem.category === 'PASSIVE'
+                          ? (currentLang === 'en' ? 'Undiscovered Artifact' : 'Artefato Não Descoberto')
+                          : selectedItem.category === 'CURSE'
+                          ? (currentLang === 'en' ? "Undiscovered Witch's Deal" : "Acordo da Bruxa Não Descoberto")
+                          : selectedItem.isLegendary
+                          ? (currentLang === 'en' ? 'Undiscovered Boss' : 'Chefe Não Descoberto')
+                          : (currentLang === 'en' ? 'Undiscovered Enemy' : 'Inimigo Não Descoberto'))
+                      : `${currentLang === 'en' ? 'Locked' : 'Bloqueado'}: ${selectedItem.name}`}
+                  </h4>
 
-                const bgStyle = isDiscovered ? '#ef444422' : '#450a0a22';
-                const borderStyle = e.isBoss ? '#fbbf24' : isDiscovered ? '#ef4444aa' : '#7f1d1d66';
+                  {selectedItem.isLegendary && (
+                    <span className="text-[10px] sm:text-[11px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-sm shadow-amber-500/30">
+                      <Sparkles className="w-3 h-3 text-amber-400" /> {selectedItem.category === 'ENEMY' ? (currentLang === 'en' ? 'Boss Enemy' : 'Inimigo Chefe') : (currentLang === 'en' ? 'Legendary Item' : 'Item Lendário')}
+                    </span>
+                  )}
 
-                const itemData: HoveredItemData = {
-                  id: e.id,
-                  name: e.isBoss ? translateBossName(e.id, e.name, currentLang) : translateEnemyName(e.id.toUpperCase(), e.name, currentLang),
-                  category: 'ENEMY',
-                  isDiscovered,
-                  isUnlocked: true,
-                  isLegendary: e.isBoss,
-                  description: translateEnemyDescription(e.id, e.description, currentLang),
-                  unlockCondition: currentLang === 'en' ? 'Defeat this enemy to reveal its stats.' : 'Derrote este inimigo para revelar seus atributos.',
-                  bulletColor: e.color,
-                  icon: DisplayIcon,
-                  enemyStats: {
-                    damage: e.damage,
-                    maxHp: e.maxHp,
-                    speed: e.speed,
-                    attacks: e.attacks ? e.attacks.map(atk => ({
-                      name: translateAttackName(atk.name, currentLang),
-                      damage: atk.damage,
-                      telegraph: currentLang === 'en' ? atk.telegraph : (
-                        atk.telegraph === 'Instant' ? 'Imediato' : atk.telegraph
-                      ),
-                      description: translateAttackTelegraph(atk.name, atk.description, currentLang),
-                    })) : undefined,
-                  },
-                  kills: enemyKills[e.id] || 0,
-                };
+                  {selectedItem.isDiscovered ? (
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> {currentLang === 'en' ? 'Discovered' : 'Descoberto'}
+                    </span>
+                  ) : selectedItem.isUnlocked ? (
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 bg-stone-900 border border-stone-800 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <HelpCircle className="w-3 h-3" /> {currentLang === 'en' ? 'Undiscovered' : 'Não Descoberto'}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-amber-300 bg-amber-950/80 border border-amber-600/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <Lock className="w-3 h-3" /> {currentLang === 'en' ? 'Locked' : 'Bloqueado'}
+                    </span>
+                  )}
 
-                return (
-                  <div
-                    key={e.id}
-                    onClick={() => setSelectedItem(itemData)}
-                    className="relative group cursor-pointer flex flex-col items-center"
-                  >
-                    <div
-                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center transition-all duration-200 border-2 ${
-                        e.isBoss
-                          ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/25 hover:scale-110 hover:shadow-amber-500/50 hover:ring-amber-300'
-                          : 'hover:scale-110 hover:shadow-2xl shadow-slate-900 shadow-md'
-                      } ${isSelected ? 'ring-4 ring-purple-500 border-purple-400 scale-105' : ''}`}
-                      style={{
-                        backgroundColor: bgStyle,
-                        borderColor: isSelected ? '#a855f7' : borderStyle,
-                      }}
+                  {selectedItem.isDiscovered && selectedItem.shootingType && (
+                    <span
+                      className={`text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
+                        getShootingTypeLabel(selectedItem.shootingType).color
+                      }`}
                     >
-                      {isDiscovered ? (
-                        <EnemyIcon className="w-6 h-6 sm:w-8 sm:h-8 transition-transform group-hover:scale-110" />
-                      ) : (
-                        <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+                      {getShootingTypeLabel(selectedItem.shootingType).label}
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-xs sm:text-sm text-stone-300 leading-relaxed bg-black/40 p-2 sm:p-2.5 rounded-xl border border-stone-800 text-left">
+                  <p>
+                    {selectedItem.isDiscovered
+                      ? selectedItem.description
+                      : selectedItem.isUnlocked
+                      ? (selectedItem.category === 'ENEMY'
+                          ? (currentLang === 'en' ? 'Defeat this enemy in a run to unlock its details in the Collection!' : 'Derrote este inimigo em uma partida para desbloquear seus detalhes na Coleção!')
+                          : (currentLang === 'en' ? 'Collect this item in a run when leveling up to unlock it in the Collection!' : 'Colete este item em uma partida ao subir de nível para desbloqueá-lo na Coleção!'))
+                      : selectedItem.unlockCondition || (currentLang === 'en' ? 'Defeat the Carnivore Plant Boss to unlock.' : 'Derrote o chefe Planta Carnívora para desbloquear.')}
+                  </p>
+                  {selectedItem.category === 'ENEMY' && (
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-stone-400">
+                      <span className="text-amber-400 font-bold flex items-center gap-1">
+                        {currentLang === 'en' ? 'Killed:' : 'Derrotados:'} <span className="text-slate-100 font-mono font-bold">{selectedItem.kills ?? (enemyKills[selectedItem.id] || 0)}</span>
+                      </span>
+                      {selectedItem.isDiscovered && selectedItem.enemyStats && (
+                        <>
+                          <span>{currentLang === 'en' ? 'Damage:' : 'Dano:'} <span className="text-rose-400">{selectedItem.enemyStats.damage}</span></span>
+                          <span>{currentLang === 'en' ? 'Speed:' : 'Velocidade:'} <span className="text-sky-400">{selectedItem.enemyStats.speed}</span></span>
+                          <span>{currentLang === 'en' ? 'Base Max HP:' : 'Vida Máxima Base:'} <span className="text-emerald-400">{selectedItem.enemyStats.maxHp}</span></span>
+                          {selectedItem.enemyStats.cooldown && (
+                            <span>{currentLang === 'en' ? 'Shot Cooldown:' : 'Intervalo de Disparo:'} <span className="text-amber-300 font-mono font-bold">{selectedItem.enemyStats.cooldown}</span></span>
+                          )}
+                        </>
                       )}
                     </div>
-                  </div>
-                );
-              })}
-          </div>
-
-          {/* DYNAMIC DESCRIPTION PANEL */}
-          <div className={`${mobileMode ? 'mt-4 min-h-[90px] p-3' : 'mt-8 min-h-[120px] p-4'} rounded-2xl bg-slate-950/90 border border-purple-900/60 shadow-2xl flex items-center justify-center transition-all`}>
-            {selectedItem ? (
-              <div className="w-full flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 animate-in fade-in duration-150">
-                {/* Large Icon Box */}
-                <div
-                  className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center flex-shrink-0 border-2 ${
-                    selectedItem.isLegendary ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-md shadow-amber-500/25' : ''
-                  }`}
-                  style={{
-                    backgroundColor: selectedItem.category === 'ENEMY'
-                      ? (selectedItem.isDiscovered ? '#ef444422' : '#450a0a22')
-                      : selectedItem.isLegendary
-                      ? '#78350f25'
-                      : selectedItem.isDiscovered
-                      ? `${selectedItem.bulletColor || '#a855f7'}22`
-                      : selectedItem.isUnlocked
-                      ? '#1e1b4b33'
-                      : '#1e293b25',
-                    borderColor: selectedItem.isLegendary
-                      ? '#fbbf24'
-                      : selectedItem.category === 'ENEMY'
-                      ? (selectedItem.isDiscovered ? '#ef4444aa' : '#7f1d1d66')
-                      : selectedItem.isDiscovered
-                      ? `${selectedItem.bulletColor || '#a855f7'}aa`
-                      : selectedItem.isUnlocked
-                      ? '#3730a344'
-                      : '#475569',
-                  }}
-                >
-                  <selectedItem.icon
-                    className="w-6 h-6 sm:w-7 sm:h-7"
-                    style={{
-                      color: selectedItem.isDiscovered
-                        ? selectedItem.bulletColor || '#c084fc'
-                        : selectedItem.isLegendary
-                        ? '#fbbf24'
-                        : selectedItem.isUnlocked
-                        ? '#94a3b8'
-                        : '#fbbf24',
-                    }}
-                  />
+                  )}
                 </div>
+              </div>
 
-                {/* Description Text */}
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h4 className="text-sm sm:text-lg font-bold text-slate-100 font-serif">
-                      {selectedItem.isDiscovered
-                        ? selectedItem.name
-                        : selectedItem.isUnlocked
-                        ? (selectedItem.category === 'WEAPON'
-                            ? (currentLang === 'en' ? 'Undiscovered Weapon' : 'Arma Não Descoberta')
-                            : selectedItem.category === 'PASSIVE'
-                            ? (currentLang === 'en' ? 'Undiscovered Artifact' : 'Artefato Não Descoberto')
-                            : selectedItem.category === 'CURSE'
-                            ? (currentLang === 'en' ? "Undiscovered Witch's Deal" : "Acordo da Bruxa Não Descoberto")
-                            : selectedItem.isLegendary
-                            ? (currentLang === 'en' ? 'Undiscovered Boss' : 'Chefe Não Descoberto')
-                            : (currentLang === 'en' ? 'Undiscovered Enemy' : 'Inimigo Não Descoberto'))
-                        : `${currentLang === 'en' ? 'Locked' : 'Bloqueado'}: ${selectedItem.name}`}
-                    </h4>
-
-                    {selectedItem.isLegendary && (
-                      <span className="text-[10px] sm:text-[11px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-sm shadow-amber-500/30">
-                        <Sparkles className="w-3 h-3 text-amber-400" /> {selectedItem.category === 'ENEMY' ? (currentLang === 'en' ? 'Boss Enemy' : 'Inimigo Chefe') : (currentLang === 'en' ? 'Legendary Item' : 'Item Lendário')}
-                      </span>
-                    )}
-
-                    {selectedItem.isDiscovered ? (
-                      <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" /> {currentLang === 'en' ? 'Discovered' : 'Descoberto'}
-                      </span>
-                    ) : selectedItem.isUnlocked ? (
-                      <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 bg-stone-900 border border-stone-800 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                        <HelpCircle className="w-3 h-3" /> {currentLang === 'en' ? 'Undiscovered' : 'Não Descoberto'}
-                      </span>
+              {/* Info Button ("i") */}
+              {((selectedItem.category !== 'ENEMY' && selectedItem.category !== 'CURSE') || selectedItem.isLegendary) && (() => {
+                const isBossLocked = selectedItem.category === 'ENEMY' && selectedItem.isLegendary && !selectedItem.isDiscovered;
+                return (
+                  <button
+                    disabled={isBossLocked}
+                    onClick={() => setShowUpgradeInfo(true)}
+                    className={`flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl border flex items-center justify-center transition-all shadow-md self-center ${
+                      isBossLocked
+                        ? 'bg-slate-950/40 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
+                        : 'bg-purple-900/40 hover:bg-purple-800/60 border-purple-500/50 hover:border-purple-400 font-serif text-base sm:text-lg font-black text-amber-400 hover:text-amber-300 cursor-pointer'
+                    }`}
+                    title={
+                      isBossLocked
+                        ? (currentLang === 'en' ? "Defeat this Boss to unlock its information" : "Derrote este Chefe para desbloquear suas informações")
+                        : selectedItem.category === 'ENEMY'
+                        ? (currentLang === 'en' ? "View Boss Attacks" : "Ver Ataques do Chefe")
+                        : (currentLang === 'en' ? "View Upgrade Details & Stats" : "Ver Detalhes de Melhorias e Atributos")
+                    }
+                  >
+                    {isBossLocked ? (
+                      <Lock className="w-4 h-4 text-slate-500" />
                     ) : (
-                      <span className="text-[10px] sm:text-[11px] font-semibold text-amber-300 bg-amber-950/80 border border-amber-600/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                        <Lock className="w-3 h-3" /> {currentLang === 'en' ? 'Locked' : 'Bloqueado'}
-                      </span>
+                      'i'
                     )}
-
-                    {selectedItem.isDiscovered && selectedItem.shootingType && (
-                      <span
-                        className={`text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
-                          getShootingTypeLabel(selectedItem.shootingType).color
-                        }`}
-                      >
-                        {getShootingTypeLabel(selectedItem.shootingType).label}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="text-xs sm:text-sm text-stone-300 leading-relaxed bg-black/40 p-2 sm:p-2.5 rounded-xl border border-stone-800 text-left">
-                    <p>
-                      {selectedItem.isDiscovered
-                        ? selectedItem.description
-                        : selectedItem.isUnlocked
-                        ? (selectedItem.category === 'ENEMY'
-                            ? (currentLang === 'en' ? 'Defeat this enemy in a run to unlock its details in the Collection!' : 'Derrote este inimigo em uma partida para desbloquear seus detalhes na Coleção!')
-                            : (currentLang === 'en' ? 'Collect this item in a run when leveling up to unlock it in the Collection!' : 'Colete este item em uma partida ao subir de nível para desbloqueá-lo na Coleção!'))
-                        : selectedItem.unlockCondition || (currentLang === 'en' ? 'Defeat the Carnivore Plant Boss to unlock.' : 'Derrote o chefe Planta Carnívora para desbloquear.')}
-                    </p>
-                    {selectedItem.category === 'ENEMY' && (
-                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-stone-400">
-                        <span className="text-amber-400 font-bold flex items-center gap-1">
-                          {currentLang === 'en' ? 'Killed:' : 'Derrotados:'} <span className="text-slate-100 font-mono font-bold">{selectedItem.kills ?? (enemyKills[selectedItem.id] || 0)}</span>
-                        </span>
-                        {selectedItem.isDiscovered && selectedItem.enemyStats && (
-                          <>
-                            <span>{currentLang === 'en' ? 'Damage:' : 'Dano:'} <span className="text-rose-400">{selectedItem.enemyStats.damage}</span></span>
-                            <span>{currentLang === 'en' ? 'Speed:' : 'Velocidade:'} <span className="text-sky-400">{selectedItem.enemyStats.speed}</span></span>
-                            <span>{currentLang === 'en' ? 'Base Max HP:' : 'Vida Máxima Base:'} <span className="text-emerald-400">{selectedItem.enemyStats.maxHp}</span></span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Info Button ("i") */}
-                {((selectedItem.category !== 'ENEMY' && selectedItem.category !== 'CURSE') || selectedItem.isLegendary) && (() => {
-                  const isBossLocked = selectedItem.category === 'ENEMY' && selectedItem.isLegendary && !selectedItem.isDiscovered;
-                  return (
-                    <button
-                      disabled={isBossLocked}
-                      onClick={() => setShowUpgradeInfo(true)}
-                      className={`flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl border flex items-center justify-center transition-all shadow-md self-center ${
-                        isBossLocked
-                          ? 'bg-slate-950/40 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
-                          : 'bg-purple-900/40 hover:bg-purple-800/60 border-purple-500/50 hover:border-purple-400 font-serif text-base sm:text-lg font-black text-amber-400 hover:text-amber-300 cursor-pointer'
-                      }`}
-                      title={
-                        isBossLocked
-                          ? (currentLang === 'en' ? "Defeat this Boss to unlock its information" : "Derrote este Chefe para desbloquear suas informações")
-                          : selectedItem.category === 'ENEMY'
-                          ? (currentLang === 'en' ? "View Boss Attacks" : "Ver Ataques do Chefe")
-                          : (currentLang === 'en' ? "View Upgrade Details & Stats" : "Ver Detalhes de Melhorias e Atributos")
-                      }
-                    >
-                      {isBossLocked ? (
-                        <Lock className="w-4 h-4 text-slate-500" />
-                      ) : (
-                        'i'
-                      )}
-                    </button>
-                  );
-                })()}
-              </div>
-            ) : (
-              <div className="text-center text-stone-500 text-xs sm:text-sm italic flex items-center justify-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-500/50" />
-                {currentLang === 'en' ? 'Click any item image above to select it and view its description' : 'Clique em qualquer imagem de item acima para selecioná-lo e ver sua descrição'}
-              </div>
-            )}
-          </div>
+                  </button>
+                );
+              })()}
+            </div>
+          ) : (
+            <div className="text-center text-stone-500 text-xs sm:text-sm italic flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-500/50" />
+              {currentLang === 'en' ? 'Click any item image above to select it and view its description' : 'Clique em qualquer imagem de item acima para selecioná-lo e ver sua descrição'}
+            </div>
+          )}
         </div>
 
         {/* UPGRADE DETAILS SUB-MODAL */}

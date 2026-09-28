@@ -130,25 +130,40 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2.5 sm:gap-3">
               {nonGeraldoChars.map((char) => {
                 const isSelected = selectedCharacter.id === char.id;
+                const isCharUnlocked = char.id === 'geraldo' ? isGeraldoUnlocked : true;
                 return (
                   <div
                     key={char.id}
                     id={`char-card-${char.id}`}
-                    onClick={() => setSelectedCharacter(char)}
-                    className={`group relative flex flex-col items-center gap-1.5 p-1.5 sm:p-2 rounded-2xl cursor-pointer transition-all duration-200 ${
-                      isSelected
-                        ? 'bg-purple-950/70 border-2 border-purple-400 ring-4 ring-purple-500/40 shadow-xl shadow-purple-950/60 scale-105'
-                        : 'bg-slate-950/60 border border-purple-900/40 hover:border-purple-500/60 hover:bg-purple-950/40 hover:scale-105 shadow-md'
+                    onClick={() => {
+                      if (isCharUnlocked) {
+                        setSelectedCharacter(char);
+                      }
+                    }}
+                    className={`group relative flex flex-col items-center gap-1.5 p-1.5 sm:p-2 rounded-2xl transition-all duration-200 ${
+                      !isCharUnlocked
+                        ? 'bg-stone-950/60 border border-stone-800/80 opacity-75 cursor-not-allowed'
+                        : isSelected
+                        ? 'bg-purple-950/70 border-2 border-purple-400 ring-4 ring-purple-500/40 shadow-xl shadow-purple-950/60 scale-105 cursor-pointer'
+                        : 'bg-slate-950/60 border border-purple-900/40 hover:border-purple-500/60 hover:bg-purple-950/40 hover:scale-105 shadow-md cursor-pointer'
                     }`}
                   >
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-b from-indigo-950/60 to-purple-950/80 border border-purple-500/30 flex items-center justify-center p-1 overflow-hidden transition-transform group-hover:scale-105">
-                      <GameImage
-                        src={char.spriteUrl}
-                        fallbackSrc={char.id === 'ruby' ? 'assets/witch.png' : char.id === 'glowob' ? 'assets/glowob.png' : 'assets/odalia.png'}
-                        alternateFallbacks={[char.fallbackSpriteUrl || 'assets/aistudio/witch.png']}
-                        alt={char.name}
-                        className="w-full h-full object-contain [image-rendering:pixelated] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]"
-                      />
+                    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl border flex items-center justify-center p-1 overflow-hidden transition-transform ${
+                      !isCharUnlocked
+                        ? 'bg-stone-900/90 border-stone-700/60 shadow-inner'
+                        : 'bg-gradient-to-b from-indigo-950/60 to-purple-950/80 border-purple-500/30 group-hover:scale-105'
+                    }`}>
+                      {!isCharUnlocked ? (
+                        <Lock className="w-6 h-6 text-amber-400 drop-shadow-md" />
+                      ) : (
+                        <GameImage
+                          src={char.spriteUrl}
+                          fallbackSrc={char.id === 'ruby' ? 'assets/witch.png' : char.id === 'glowob' ? 'assets/glowob.png' : 'assets/odalia.png'}
+                          alternateFallbacks={[char.fallbackSpriteUrl || 'assets/aistudio/witch.png']}
+                          alt={char.name}
+                          className="w-full h-full object-contain [image-rendering:pixelated] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]"
+                        />
+                      )}
                     </div>
                     <span className={`w-full text-center text-[11px] sm:text-xs font-bold font-serif leading-tight transition-colors break-words px-0.5 ${
                       isSelected ? 'text-purple-200' : 'text-stone-300 group-hover:text-purple-200'
@@ -199,28 +214,25 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                   </div>
                 )}
                 <div className="relative">
-                  <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-b from-indigo-950/60 to-purple-950/80 border flex items-center justify-center p-1 overflow-hidden transition-transform ${
-                    !isGeraldoUnlocked ? 'border-stone-700/60' : 'border-purple-500/30 group-hover:scale-105'
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl border flex items-center justify-center p-1 overflow-hidden transition-transform ${
+                    !isGeraldoUnlocked
+                      ? 'bg-stone-900/90 border-stone-700/60 shadow-inner'
+                      : 'bg-gradient-to-b from-indigo-950/60 to-purple-950/80 border-purple-500/30 group-hover:scale-105'
                   }`}>
-                    <GameImage
-                      src="assets/aistudio/geraldo_rgb.png"
-                      fallbackSrc="assets/geraldo_rgb.png"
-                      alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
-                      alt="Geraldo"
-                      className={`w-full h-full object-contain [image-rendering:pixelated] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] ${
-                        !isGeraldoUnlocked ? 'grayscale brightness-50 contrast-75' : ''
-                      }`}
-                    />
+                    {!isGeraldoUnlocked ? (
+                      <Lock className="w-6 h-6 text-amber-400 drop-shadow-md" />
+                    ) : (
+                      <GameImage
+                        src="assets/aistudio/geraldo_rgb.png"
+                        fallbackSrc="assets/geraldo_rgb.png"
+                        alternateFallbacks={['https://i.imgur.com/w8qU2F1.png', 'assets/geraldo.png']}
+                        alt="Geraldo"
+                        className="w-full h-full object-contain [image-rendering:pixelated] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]"
+                      />
+                    )}
                   </div>
-                  {/* Badge: Lock icon if locked, Shirt icon if unlocked */}
-                  {!isGeraldoUnlocked ? (
-                    <div 
-                      className="absolute -top-1.5 -right-1.5 bg-stone-900 text-amber-400 p-1 rounded-full shadow-lg border border-amber-500/40 flex items-center justify-center z-10 pointer-events-none"
-                      title={currentLang === 'en' ? 'Locked' : 'Bloqueado'}
-                    >
-                      <Lock className="w-3 h-3" />
-                    </div>
-                  ) : (
+                  {/* Badge: Shirt icon if unlocked */}
+                  {isGeraldoUnlocked && (
                     <div 
                       className="absolute -top-1.5 -right-1.5 bg-purple-600 text-white p-1 rounded-full shadow-lg border border-purple-300 flex items-center justify-center z-10 pointer-events-none"
                       title={currentLang === 'en' ? 'Select Skin' : 'Selecionar Skin'}
@@ -230,7 +242,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                   )}
                 </div>
                 <span className={`w-full text-center text-[11px] sm:text-xs font-bold font-serif leading-tight transition-colors break-words px-0.5 ${
-                  !isGeraldoUnlocked ? 'text-stone-500' : isGeraldoSelected ? 'text-purple-200' : 'text-stone-300 group-hover:text-purple-200'
+                  isGeraldoSelected ? 'text-purple-200' : 'text-stone-300 group-hover:text-purple-200'
                 }`}>
                   Geraldo
                 </span>
@@ -287,28 +299,25 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                       <div className="flex items-center gap-3">
                         <div className={`relative w-14 h-14 rounded-xl border flex items-center justify-center p-1.5 flex-shrink-0 ${
                           !isSkinUnlocked
-                            ? 'bg-stone-900/80 border-stone-700/60'
+                            ? 'bg-stone-900/90 border-stone-700/60 shadow-inner'
                             : 'bg-gradient-to-b from-indigo-950/80 to-purple-950/90 border-purple-500/40'
                         }`}>
-                          <GameImage
-                            src={skin.spriteUrl}
-                            fallbackSrc={`assets/${skin.id === 'geraldo' ? 'geraldo.png' : skin.id === 'geraldo_green' ? 'geraldo_green.png' : 'geraldo_blue.png'}`}
-                            alternateFallbacks={[skin.fallbackSpriteUrl || 'https://i.imgur.com/v80iCki.png']}
-                            alt={skinName}
-                            className={`w-full h-full object-contain [image-rendering:pixelated] ${
-                              !isSkinUnlocked ? 'grayscale brightness-50 contrast-75' : ''
-                            }`}
-                          />
-                          {!isSkinUnlocked && (
-                            <div className="absolute -top-1.5 -right-1.5 bg-stone-900 text-amber-400 p-1 rounded-full shadow border border-amber-500/40 flex items-center justify-center">
-                              <Lock className="w-3 h-3" />
-                            </div>
+                          {!isSkinUnlocked ? (
+                            <Lock className="w-7 h-7 text-amber-400 drop-shadow-md" />
+                          ) : (
+                            <GameImage
+                              src={skin.spriteUrl}
+                              fallbackSrc={`assets/${skin.id === 'geraldo' ? 'geraldo.png' : skin.id === 'geraldo_green' ? 'geraldo_green.png' : 'geraldo_blue.png'}`}
+                              alternateFallbacks={[skin.fallbackSpriteUrl || 'https://i.imgur.com/v80iCki.png']}
+                              alt={skinName}
+                              className="w-full h-full object-contain [image-rendering:pixelated]"
+                            />
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0 text-left">
                           <div className={`text-sm font-bold font-serif ${
-                            !isSkinUnlocked ? 'text-stone-400' : 'text-slate-100 group-hover:text-purple-200'
+                            !isSkinUnlocked ? 'text-stone-200' : 'text-slate-100 group-hover:text-purple-200'
                           }`}>
                             {skinName}
                           </div>

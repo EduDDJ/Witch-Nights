@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wrench, ArrowUpCircle, Skull, Clock, X, Sparkles, Zap, Plus, Swords } from 'lucide-react';
+import { Wrench, ArrowUpCircle, Skull, Clock, X, Sparkles, Zap, Plus, Swords, Shield } from 'lucide-react';
 import { getLanguage, t } from '../utils/i18n';
 
 interface DevToolsModalProps {
@@ -7,9 +7,11 @@ interface DevToolsModalProps {
   survivalTime: number;
   mobileMode?: boolean;
   instaKill: boolean;
+  invincibility: boolean;
   onInstantLevelUp: () => void;
   onSkipToMinute730: () => void;
   onToggleInstaKill: () => void;
+  onToggleInvincibility: () => void;
   onOpenWeaponSelector: () => void;
   onFightBoss: () => void;
   onClose: () => void;
@@ -20,9 +22,11 @@ export const DevToolsModal: React.FC<DevToolsModalProps> = ({
   survivalTime,
   mobileMode = false,
   instaKill,
+  invincibility,
   onInstantLevelUp,
   onSkipToMinute730,
   onToggleInstaKill,
+  onToggleInvincibility,
   onOpenWeaponSelector,
   onFightBoss,
   onClose,
@@ -123,6 +127,43 @@ export const DevToolsModal: React.FC<DevToolsModalProps> = ({
               instaKill ? 'bg-rose-500 border-rose-300 text-white font-bold text-xs' : 'border-slate-700 bg-slate-900'
             }`}>
               {instaKill && '✓'}
+            </div>
+          </button>
+
+          {/* Action 0.5: Invincibility Toggle */}
+          <button
+            id="dev-action-invincibility"
+            onClick={onToggleInvincibility}
+            className={`group flex items-center justify-between p-3 rounded-2xl border-2 transition-all cursor-pointer hover:-translate-y-0.5 shadow-md ${
+              invincibility
+                ? 'bg-emerald-950/90 border-emerald-500 shadow-emerald-950/60'
+                : 'bg-slate-900/90 hover:bg-emerald-950/50 border-emerald-900/50 hover:border-emerald-700 shadow-emerald-950/20'
+            }`}
+          >
+            <div className="flex items-center gap-3 text-left">
+              <div className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-transform group-hover:scale-105 ${
+                invincibility ? 'bg-emerald-600 border-emerald-300 text-white' : 'bg-emerald-900/60 border-emerald-500/50 text-emerald-300'
+              }`}>
+                <Shield className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="font-bold text-sm text-slate-100 flex items-center gap-2">
+                  <span>{currentLang === 'en' ? 'Invincibility' : 'Invencibilidade'}</span>
+                  <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded ${
+                    invincibility ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    {invincibility ? (currentLang === 'en' ? 'ACTIVE' : 'ATIVO') : (currentLang === 'en' ? 'OFF' : 'DESLIGADO')}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-400">
+                  {currentLang === 'en' ? 'Take no damage from enemies' : 'Não receba dano de inimigos'}
+                </div>
+              </div>
+            </div>
+            <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+              invincibility ? 'bg-emerald-500 border-emerald-300 text-white font-bold text-xs' : 'border-slate-700 bg-slate-900'
+            }`}>
+              {invincibility && '✓'}
             </div>
           </button>
 

@@ -52,6 +52,12 @@ export const BossRushModal: React.FC<BossRushModalProps> = ({
         return 'assets/aistudio/night_bear.png';
       case 'archmages':
         return 'assets/aistudio/geraldo_rgb.png';
+      case 'googolbra':
+        return 'assets/aistudio/googolbra_head.png';
+      case 'phiboccion':
+        return 'assets/aistudio/phiboccion.png';
+      case 'pythagoras':
+        return 'assets/aistudio/pythagoras.png';
       default:
         return 'assets/aistudio/carnivore_plant.png';
     }
@@ -217,7 +223,7 @@ export const BossRushModal: React.FC<BossRushModalProps> = ({
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-stone-950/80 border border-purple-800/40 flex items-center justify-center overflow-hidden p-1 shrink-0">
                       <GameImage
                         src={b.spriteUrl || getBossAsset(b.id)}
-                        fallbackSrc={`assets/${b.id === 'carnivore_plant' ? 'carnivore_plant.png' : b.id === 'haunted_eye' ? 'haunted_eye_open.png' : b.id === 'night_bear' ? 'night_bear.png' : 'geraldo_rgb.png'}`}
+                        fallbackSrc={b.spriteUrl || `assets/${b.id === 'carnivore_plant' ? 'carnivore_plant.png' : b.id === 'haunted_eye' ? 'haunted_eye_open.png' : b.id === 'night_bear' ? 'night_bear.png' : b.id === 'googolbra' ? 'googolbra_head.png' : b.id === 'phiboccion' ? 'phiboccion.png' : b.id === 'pythagoras' ? 'pythagoras.png' : 'geraldo_rgb.png'}`}
                         alternateFallbacks={[
                           b.fallbackSpriteUrl || (
                             b.id === 'carnivore_plant'
@@ -226,6 +232,10 @@ export const BossRushModal: React.FC<BossRushModalProps> = ({
                               ? 'https://i.imgur.com/caqAbHC.png'
                               : b.id === 'night_bear'
                               ? 'https://i.imgur.com/Pjkp2on.png'
+                              : b.id === 'googolbra'
+                              ? 'https://i.imgur.com/HJ9tJm7.png'
+                              : b.id === 'phiboccion'
+                              ? 'https://i.imgur.com/g0AgJ3Y.png'
                               : 'https://i.imgur.com/w8qU2F1.png'
                           )
                         ]}

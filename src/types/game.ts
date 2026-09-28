@@ -11,7 +11,14 @@ export interface BossAttack {
     | 'ARCHMAGES_RAINBOW_FIREBALL'
     | 'ARCHMAGES_VINE_TILE_ATTACK'
     | 'ARCHMAGES_THUNDER_STRIKE'
-    | 'ARCHMAGES_SPINNING_BEAM';
+    | 'ARCHMAGES_SPINNING_BEAM'
+    | 'PHIBOCCION_LAND_PHINE'
+    | 'PHIBOCCION_BEAM'
+    | 'PHIBOCCION_EXPLOSION'
+    | 'PYTHAGORAS_RULER'
+    | 'PYTHAGORAS_PROTRACTOR'
+    | 'PYTHAGORAS_SETSQUARE'
+    | 'PYTHAGORAS_GEOMENTO_MORI';
   x: number;
   y: number;
   vx?: number;
@@ -39,6 +46,21 @@ export interface BossAttack {
     radius: number;
   }[];
   hasHit?: boolean;
+  width?: number;
+  height?: number;
+  blinkTimer?: number;
+  angle?: number;
+  rotAngle?: number;
+  rotSpeed?: number;
+  orbitCenterX?: number;
+  orbitCenterY?: number;
+  orbitRadius?: number;
+  orbitAngle?: number;
+  orbitSpeed?: number;
+  spawnOriginX?: number;
+  spawnOriginY?: number;
+  launchTimer?: number;
+  launchDuration?: number;
 }
 
 export interface BossDefinition {
@@ -52,6 +74,7 @@ export interface BossDefinition {
   color: string;
   spriteUrl?: string;
   fallbackSpriteUrl?: string;
+  mapId?: string;
 }
 
 export interface ArchmageState {
@@ -94,6 +117,22 @@ export interface BossInstance {
   archmagesPhase?: 'PHASE1' | 'MERGING' | 'PHASE2';
   activeArchmageId?: 'geraldo_red' | 'geraldo_green' | 'geraldo_blue' | 'geraldo_rgb' | null;
   archmagesList?: ArchmageState[];
+  isInvincible?: boolean;
+  phiboccionState?: 'FLOATING' | 'KICKING' | 'PHI_X_PLOSION' | 'ROOT_OF_STRENGTH' | 'FIBONACCI_INTRO' | 'FIBONACCI_CHALLENGE';
+  phiboccionAngle?: number;
+  isKicking?: boolean;
+  googolbraState?: 'IDLE' | 'CONSTRICTION' | 'RETREATING' | 'ZEBRA_TELEGRAPH' | 'ZEBRA_ATTACK' | 'SNEAK_APPROACH' | 'SNEAK_GRASP' | 'COOLDOWN';
+  googolbraSegments?: { x: number; y: number; dirX: number; dirY: number }[];
+  googolbraConstrictionDamageTaken?: number;
+  googolbraPathProgress?: number;
+  googolbraZebra?: {
+    isVertical: boolean;
+    stripes: number[];
+    telegraphTimer: number;
+    attackProgress: number;
+    totalDistance: number;
+    path: { x: number; y: number; dirX: number; dirY: number }[];
+  };
 }
 
 export interface WeaponTier {
@@ -185,7 +224,7 @@ export interface Enemy {
   exp: number;
   color: string;
   name: string;
-  type: 'BAT' | 'GHOUL' | 'WRAITH' | 'MINI_EYE' | 'ROCK_THROWER';
+  type: 'BAT' | 'GHOUL' | 'OBMOOSE' | 'UNOCONDA' | 'VIIIPER' | 'BUNNARY' | 'WRAITH' | 'MINI_EYE' | 'ROCK_THROWER';
   vx: number;
   vy: number;
   hitFlashTimer: number;
@@ -205,11 +244,16 @@ export interface Enemy {
   rockTelegraphTimer?: number;
   targetAngle?: number;
   targetDistance?: number;
+  bunnaryMsgIndex?: number;
+  bunnaryCharIndex?: number;
+  bunnarySymbolTimer?: number;
+  bunnaryInGap?: boolean;
 }
 
 export interface Projectile {
   id: number;
   weaponId: string;
+  weaponLevel?: number;
   x: number;
   y: number;
   vx: number;
@@ -227,6 +271,22 @@ export interface Projectile {
   orbitRadius?: number;
   isAoE?: boolean;
   isBoomerang?: boolean;
+  startX?: number;
+  startY?: number;
+  maxDistance?: number;
+  isReturning?: boolean;
+  returnThrowTriggered?: boolean;
+  isCircularLoop?: boolean;
+  loopAngle?: number;
+  loopRadius?: number;
+  loopCenterOffsetX?: number;
+  loopCenterOffsetY?: number;
+  loopDirection?: number;
+  forwardX?: number;
+  forwardY?: number;
+  perpX?: number;
+  perpY?: number;
+  rotationAngle?: number;
   homingTargetId?: number | null;
   vineRootDuration?: number;
   burnDuration?: number;
@@ -239,6 +299,7 @@ export interface Projectile {
   isLaser?: boolean;
   freezeDuration?: number;
   chainMax?: number;
+  hitCount?: number;
   chainFreeze?: number;
   hasChained?: boolean;
   hitEnemyIds?: Set<number>;

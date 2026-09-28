@@ -11,7 +11,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: 'plants_vs_witches',
     title: 'Plants Vs. Witches',
-    description: 'Defeat the Carnivore Plant Boss in a run.',
+    description: "Defeat the Carnivore Plant Boss (Witchs' Swamp) in a run.",
     unlockText: 'Vine Attack',
     unlockedItemId: 'vine_snare',
     bossId: 'carnivore_plant',
@@ -19,7 +19,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: 'eye_see_you',
     title: 'EYE See You',
-    description: 'Defeat the Haunted Eye Boss in a run.',
+    description: "Defeat the Haunted Eye Boss (Witchs' Swamp) in a run.",
     unlockText: "Medusa's Eye",
     unlockedItemId: 'medusas_eye',
     bossId: 'haunted_eye',
@@ -27,7 +27,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: 'bearely_any_trouble',
     title: 'BEARely Any Trouble',
-    description: 'Defeat the NightBear Boss in a run.',
+    description: "Defeat the NightBear Boss (Witchs' Swamp) in a run.",
     unlockText: "NightBear's Claws Artifact",
     unlockedItemId: 'nightbears_claws',
     bossId: 'night_bear',
@@ -35,7 +35,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: 'color_me_impressed',
     title: 'Color Me Impressed',
-    description: 'Defeat the 3 Archmages in a run.',
+    description: "Defeat the 3 Archmages Boss (Witchs' Swamp) in a run.",
     unlockText: 'Geraldo The Red',
     bossId: 'archmages',
   },
@@ -62,5 +62,13 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     title: "I AM a freaking Witch!",
     description: 'Win Boss Rush in True Witch Mode.',
     unlockText: 'Diamond Trophy',
+  },
+  {
+    id: 'making_donuts',
+    title: 'Making Donuts',
+    description: 'Defeat Pythagoras The MatheMagician in a normal run.',
+    unlockText: 'Protractor',
+    unlockedItemId: 'protractor',
+    bossId: 'pythagoras',
   },
 ];

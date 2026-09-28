@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { BossDefinition } from '../types/game';
-import { Eye, Swords, Sparkles, AlertTriangle, Wrench, X } from 'lucide-react';
+import { Eye, Swords, Sparkles, AlertTriangle, Wrench, X, MapPin } from 'lucide-react';
 import { resolveAssetPath } from '../utils/assets';
 import { GameImage } from './GameImage';
-import { getLanguage, t, translateBossName } from '../utils/i18n';
+import { getLanguage, t, translateBossName, translateMapName } from '../utils/i18n';
 
 interface BossSelectModalProps {
   bosses: BossDefinition[];
+  currentMap?: string;
   mobileMode?: boolean;
   isDevChoice?: boolean;
   onSelectBoss: (bossId: string) => void;
@@ -15,6 +16,7 @@ interface BossSelectModalProps {
 
 export const BossSelectModal: React.FC<BossSelectModalProps> = ({
   bosses,
+  currentMap,
   mobileMode = false,
   isDevChoice = false,
   onSelectBoss,
@@ -100,6 +102,15 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
           >
             {isDevChoice ? t('dev_choose_boss_desc', getLanguage()) : t('choose_boss_desc', getLanguage())}
           </p>
+          {currentMap && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/80 border border-purple-500/40 text-[11px] text-purple-300 font-medium shadow-sm">
+              <MapPin className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+              <span>
+                {getLanguage() === 'pt-BR' ? 'Mapa Atual: ' : 'Current Map: '}
+                <strong className="text-amber-300 font-bold">{translateMapName(currentMap, getLanguage())}</strong>
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Bosses Selection Grid */}
@@ -115,6 +126,9 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
             const isEye = boss.id === 'haunted_eye';
             const isBear = boss.id === 'night_bear';
             const isArchmages = boss.id === 'archmages';
+            const isGoogolbra = boss.id === 'googolbra';
+            const isPhiboccion = boss.id === 'phiboccion';
+            const isPythagoras = boss.id === 'pythagoras';
 
             return (
               <button
@@ -128,6 +142,12 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                     ? 'bg-gradient-to-b from-rose-950/60 via-slate-900 to-rose-950/40 border-rose-500/50 hover:border-rose-400 hover:shadow-lg hover:shadow-rose-900/40'
                     : isArchmages
                     ? 'bg-gradient-to-b from-purple-950/60 via-slate-900 to-indigo-950/40 border-purple-500/50 hover:border-purple-400 hover:shadow-lg hover:shadow-purple-900/40'
+                    : isGoogolbra
+                    ? 'bg-gradient-to-b from-cyan-950/60 via-slate-900 to-teal-950/40 border-cyan-500/50 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-900/40'
+                    : isPhiboccion
+                    ? 'bg-gradient-to-b from-amber-950/60 via-slate-900 to-yellow-950/40 border-amber-500/50 hover:border-amber-400 hover:shadow-lg hover:shadow-amber-900/40'
+                    : isPythagoras
+                    ? 'bg-gradient-to-b from-violet-950/60 via-slate-900 to-purple-950/40 border-violet-500/50 hover:border-violet-400 hover:shadow-lg hover:shadow-violet-900/40'
                     : 'bg-gradient-to-b from-stone-950/60 via-slate-900 to-stone-950/40 border-stone-500/50 hover:border-stone-400 hover:shadow-lg hover:shadow-stone-900/40'
                 }`}
               >
@@ -149,6 +169,10 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                           ? 'bg-rose-950/80 border-rose-500/60 shadow-rose-900/50'
                           : isArchmages
                           ? 'bg-purple-950/80 border-purple-500/60 shadow-purple-900/50'
+                          : isGoogolbra
+                          ? 'bg-cyan-950/80 border-cyan-500/60 shadow-cyan-900/50'
+                          : isPhiboccion
+                          ? 'bg-amber-950/80 border-amber-500/60 shadow-amber-900/50'
                           : 'bg-stone-950/80 border-stone-500/60 shadow-stone-900/50'
                       }`}
                     >
@@ -191,6 +215,36 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                           className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
                         />
                       )}
+
+                      {isGoogolbra && (
+                        <GameImage
+                          src="assets/aistudio/googolbra_head.png"
+                          fallbackSrc="assets/googolbra_head.png"
+                          alternateFallbacks={['https://i.imgur.com/HJ9tJm7.png']}
+                          alt="Googolbra Visual"
+                          className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
+                        />
+                      )}
+
+                      {isPhiboccion && (
+                        <GameImage
+                          src="assets/aistudio/phiboccion.png"
+                          fallbackSrc="assets/phiboccion.png"
+                          alternateFallbacks={['https://i.imgur.com/g0AgJ3Y.png']}
+                          alt="Phiboccion Visual"
+                          className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
+                        />
+                      )}
+
+                      {isPythagoras && (
+                        <GameImage
+                          src="assets/aistudio/pythagoras.png"
+                          fallbackSrc="assets/pythagoras.png"
+                          alternateFallbacks={['https://i.imgur.com/APbtbDS.png']}
+                          alt="Pythagoras Visual"
+                          className="w-20 h-20 object-contain [image-rendering:pixelated] drop-shadow-md group-hover:scale-110 transition-transform"
+                        />
+                      )}
                     </div>
                   </div>
 
@@ -198,7 +252,7 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                   <div className="text-center mt-2">
                     <h3
                       className={`text-lg sm:text-xl font-bold font-serif ${
-                        isPlant ? 'text-emerald-200' : isEye ? 'text-rose-200' : isArchmages ? 'text-purple-200' : 'text-stone-200'
+                        isPlant ? 'text-emerald-200' : isEye ? 'text-rose-200' : isArchmages ? 'text-purple-200' : isGoogolbra ? 'text-cyan-200' : isPhiboccion ? 'text-amber-200' : 'text-stone-200'
                       }`}
                     >
                       {translateBossName(boss.id, boss.name, getLanguage())}
@@ -211,6 +265,10 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                           ? 'bg-rose-900/60 text-rose-300 border border-rose-700/50'
                           : isArchmages
                           ? 'bg-purple-900/60 text-purple-300 border border-purple-700/50'
+                          : isGoogolbra
+                          ? 'bg-cyan-900/60 text-cyan-300 border border-cyan-700/50'
+                          : isPhiboccion
+                          ? 'bg-amber-900/60 text-amber-300 border border-amber-700/50'
                           : 'bg-stone-900/60 text-stone-300 border border-stone-700/50'
                       }`}
                     >
@@ -220,6 +278,10 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                         ? (getLanguage() === 'pt-BR' ? 'Espírito Onisciente' : 'All-Seeing Spirit')
                         : isArchmages
                         ? (getLanguage() === 'pt-BR' ? 'Trindade Elemental' : 'Elemental Trinity')
+                        : isGoogolbra
+                        ? (getLanguage() === 'pt-BR' ? 'A Serpente dos 100 Zeros' : 'Serpent of 100 Zeros')
+                        : isPhiboccion
+                        ? (getLanguage() === 'pt-BR' ? 'Phi Encarnado' : 'Phi Incarnate')
                         : (getLanguage() === 'pt-BR' ? 'Besta Incontrolável' : 'Uncontrollable Beast')}
                     </div>
                   </div>
@@ -267,6 +329,75 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                           <span>{getLanguage() === 'pt-BR' ? 'Fase 2: Fundem-se com feitiços de clonagem e 8 feixes de arco-íris!' : 'Phase 2: Merge with cloning spells and 8-way spinning beams!'}</span>
                         </div>
                       </>
+                    ) : isGoogolbra ? (
+                      <>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-cyan-400 font-bold">•</span>
+                          <span>
+                            {getLanguage() === 'pt-BR'
+                              ? 'Constrição em cONE: Envolve a arena em espiral a partir do topo direito. Ataque a cabeça causando 1/5 da vida máxima para forçá-la a recuar!'
+                              : 'Snake cONEstriction: Spirals inward from top-right wrapping around the arena. Attack head for 1/5 Max HP to force it backwards off screen!'}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-cyan-400 font-bold">•</span>
+                          <span>
+                            {getLanguage() === 'pt-BR'
+                              ? 'Ataque em Padrão Zebra (x2): Ocupa todas as pistas simultaneamente com uma serpente contínua e gigante em alta velocidade!'
+                              : 'Zebra Pattern Strike (x2): Strikes twice with all lanes fully occupied simultaneously by one long continuous snake!'}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-cyan-400 font-bold">•</span>
+                          <span>
+                            {getLanguage() === 'pt-BR'
+                              ? 'Ataque Sssurpresa: Surge do nada e agarra você! Dano (10 DPS) após 5s; aperte [Espaço] 30 vezes ou toque em Resistir!'
+                              : 'Sssneak Attack: Ambushes from off-screen and coils you! Damage (10 DPS) begins after 5s; spam [Space] 30 times or tap Struggle!'}
+                          </span>
+                        </div>
+                      </>
+                    ) : isPhiboccion ? (
+                      <>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-amber-400 font-bold">•</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Chutes lentos pela tela que deixam Phi-nas!' : 'Slow dashes across the screen leaving Land Phi-nes behind!'}</span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-amber-400 font-bold">•</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'Gira nos cantos disparando feixes teleguiados antes de uma explosão sob os pés do jogador!' : 'Spins in corners firing homing laser bursts before an explosion under the player feet!'}</span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-amber-400 font-bold">•</span>
+                          <span>{getLanguage() === 'pt-BR' ? 'A Raiz da Força: Resolva raízes quadradas no teclado numérico para tirar 1/5 da vida dele!' : 'The Root of Strength: Solve square roots on the keypad to shave off 1/5 of his HP!'}</span>
+                        </div>
+                      </>
+                    ) : isPythagoras ? (
+                      <>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-purple-400 font-bold">•</span>
+                          <span>
+                            {getLanguage() === 'pt-BR'
+                              ? 'Geometry? Dash!: Lança réguas para baixo dividindo a tela, arremessa transferidores em órbita circular e esquadros giratórios!'
+                              : 'Geometry? Dash!: Throws downward rulers dividing the arena, launches orbiting protractors, and throws spinning set-squares!'}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-purple-400 font-bold">•</span>
+                          <span>
+                            {getLanguage() === 'pt-BR'
+                              ? 'Problema de (Mont)SEU (hall): Escolha 1 de 3 portas. Uma porta vazia abre e você pode trocar ou manter. Duas portas causam 20% da sua vida atual; uma causa 20% da vida máxima dele!'
+                              : '(Mont)YOUR (hall) Problem: Choose 1 of 3 doors. An empty door opens, then choose to stay or switch. Two doors deal 20% of your current HP; one deals 20% of his Max HP!'}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-slate-300">
+                          <span className="text-purple-400 font-bold">•</span>
+                          <span>
+                            {getLanguage() === 'pt-BR'
+                              ? 'GeoMento Mori: 5 equações surgem no canto superior esquerdo e são traçadas na tela com centro em (0,0). Desvie das curvas letais!'
+                              : 'GeoMento Mori: 5 equations appear in the top-left, then graph onto the screen with (0,0) at the center. Dodge the deadly plotted curves!'}
+                          </span>
+                        </div>
+                      </>
                     ) : (
                       <>
                         <div className="flex items-start gap-1.5 text-slate-300">
@@ -295,6 +426,10 @@ export const BossSelectModal: React.FC<BossSelectModalProps> = ({
                         : isEye
                         ? 'bg-rose-600 group-hover:bg-rose-500 text-white shadow-md shadow-rose-950'
                         : isArchmages
+                        ? 'bg-purple-600 group-hover:bg-purple-500 text-white shadow-md shadow-purple-950'
+                        : isPhiboccion
+                        ? 'bg-amber-600 group-hover:bg-amber-500 text-white shadow-md shadow-amber-950'
+                        : isPythagoras
                         ? 'bg-purple-600 group-hover:bg-purple-500 text-white shadow-md shadow-purple-950'
                         : 'bg-stone-600 group-hover:bg-stone-700 text-white shadow-md shadow-stone-950'
                     }`}
