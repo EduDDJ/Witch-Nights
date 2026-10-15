@@ -11,6 +11,7 @@ import {
   WorldPickup,
   FloatingText,
   Particle,
+  DustParticle,
   CurseChoice,
   DashMode,
   MobileAimMode,
@@ -40,8 +41,12 @@ import {
   GERALDO_RGB_DATA_URI,
   GOOGOLBRA_HEAD_DATA_URI,
   GOOGOLBRA_BODY_DATA_URI,
+  DUST_SMALL_DATA_URI,
+  DUST_BIG_DATA_URI,
 } from '../utils/localDataUris';
 import { getLanguage, translateBossName, translateMapName, UI_TRANSLATIONS } from '../utils/i18n';
+
+export const RED_HIT_FLASH_FILTER = 'brightness(70%) sepia(100%) saturate(1200%) hue-rotate(320deg) brightness(1.4)';
 
 export const BUNNARY_MESSAGES = [
   "01000011 01100001 01101110 01101111 01101110 01010100 00110100 01010100 01011001 01110101 01000010 01111001",
@@ -434,6 +439,9 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
   const setsquareImageRef = useRef<HTMLImageElement | null>(null);
   const protractorImageRef = useRef<HTMLImageElement | null>(null);
 
+  const dustSmallImageRef = useRef<HTMLImageElement | null>(null);
+  const dustBigImageRef = useRef<HTMLImageElement | null>(null);
+
   // Load Character Sprite dynamically based on selected character (prioritizing local bundled assets)
   useEffect(() => {
     const rawSprite = character?.spriteUrl || 'assets/aistudio/witch.png';
@@ -600,6 +608,9 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
     loadImage('https://i.imgur.com/NGSgVv0.png', 'assets/aistudio/ruler.png', rulerImageRef);
     loadImage('https://i.imgur.com/7pECiy3.png', 'assets/aistudio/setsquare.png', setsquareImageRef);
     loadImage('https://i.imgur.com/txF73Vo.png', 'assets/aistudio/protractor.png', protractorImageRef);
+
+    loadImage('https://i.imgur.com/TBaEcUE.png', 'assets/aistudio/dust_small.png', dustSmallImageRef, DUST_SMALL_DATA_URI);
+    loadImage('https://i.imgur.com/upXrDpM.png', 'assets/aistudio/dust_big.png', dustBigImageRef, DUST_BIG_DATA_URI);
   }, []);
 
   // Mutable Game State refs for high-performance 60fps loop
@@ -696,6 +707,9 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
   const pickupsRef = useRef<WorldPickup[]>([]);
   const floatingTextsRef = useRef<FloatingText[]>([]);
   const particlesRef = useRef<Particle[]>([]);
+  const dustParticlesRef = useRef<DustParticle[]>([]);
+  const playerWalkDustTimerRef = useRef<number>(0);
+  const playerDashDustTimerRef = useRef<number>(0);
   const dashGhostsRef = useRef<{ x: number; y: number; alpha: number }[]>([]);
   const dashVxRef = useRef<number>(0);
   const dashVyRef = useRef<number>(0);
@@ -908,6 +922,9 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
   const lastCursorAimAngleRef = useRef<number>(-Math.PI / 2); // Default upward aim
   const isPlayerWalkingRef = useRef<boolean>(false);
   const playerWalkAnimTimeRef = useRef<number>(0);
+  const playerFootstepTimerRef = useRef<number>(0);
+  const playerDamageFlashTimerRef = useRef<number>(0);
+  const playerPreviousHpRef = useRef<number>(player.hp);
 
   // Throttled reporting refs to eliminate React re-render lag
   const lastReportedSurvivalSecRef = useRef<number>(-1);
@@ -1203,6 +1220,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
       pickupsRef.current = [];
       floatingTextsRef.current = [];
       particlesRef.current = [];
+      dustParticlesRef.current = [];
       dashGhostsRef.current = [];
       killsCountRef.current = 0;
       bossesKilledRef.current = 0;
@@ -1481,6 +1499,10 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
 
     soundEngine.playDash();
 
+    if (screenShakeEnabledRef.current) {
+      screenShakeRef.current = Math.max(screenShakeRef.current, 5.0);
+    }
+
     // Spawn dash burst particles
     for (let i = 0; i < 18; i++) {
       const pAngle = Math.random() * Math.PI * 2;
@@ -1494,6 +1516,52 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
         color: '#c084fc',
         alpha: 1,
         decay: Math.random() * 2 + 3,
+      });
+    }
+
+    // Spawn initial burst of Big and Small Dust Balls behind dash direction
+    const dSpeed = Math.hypot(vx, vy) || 1;
+    const ndx = vx / dSpeed;
+    const ndy = vy / dSpeed;
+    const feetY = p.y + p.radius * 0.7;
+
+    // Big dust balls bursting back
+    for (let i = 0; i < 3; i++) {
+      const ang = Math.atan2(-ndy, -ndx) + (Math.random() - 0.5) * 0.9;
+      const spd = Math.random() * 90 + 40;
+      dustParticlesRef.current.push({
+        id: nextEntityId.current++,
+        x: p.x - ndx * 6 + (Math.random() - 0.5) * 8,
+        y: feetY - ndy * 6 + (Math.random() - 0.5) * 6,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 6,
+        size: Math.random() * 6 + 22, // 22 - 28px
+        alpha: 0.95,
+        decay: Math.random() * 0.4 + 1.4,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 3,
+        isBig: true,
+        scaleGrowth: Math.random() * 8 + 4,
+      });
+    }
+
+    // Small dust balls bursting back
+    for (let i = 0; i < 4; i++) {
+      const ang = Math.atan2(-ndy, -ndx) + (Math.random() - 0.5) * 1.2;
+      const spd = Math.random() * 110 + 50;
+      dustParticlesRef.current.push({
+        id: nextEntityId.current++,
+        x: p.x - ndx * 8 + (Math.random() - 0.5) * 10,
+        y: feetY - ndy * 8 + (Math.random() - 0.5) * 8,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 8,
+        size: Math.random() * 4 + 14, // 14 - 18px
+        alpha: 0.9,
+        decay: Math.random() * 0.6 + 1.8,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 3.5,
+        isBig: false,
+        scaleGrowth: Math.random() * 5 + 3,
       });
     }
 
@@ -2687,6 +2755,9 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
 
         if (bossHitFlashRef.current > 0) {
           bossHitFlashRef.current -= dt;
+        }
+        if (boss.hitFlashTimer && boss.hitFlashTimer > 0) {
+          boss.hitFlashTimer -= dt;
         }
 
         // Monitor damage taken for Googolbra Constriction Repel
@@ -5972,6 +6043,49 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
         p.dashDuration -= dt;
         // Leave visual dash ghost
         dashGhostsRef.current.push({ x: p.x, y: p.y, alpha: 0.75 });
+
+        // Continuous stream of Big and Small Dust Balls spaced out along the dash trail
+        playerDashDustTimerRef.current -= dt;
+        if (playerDashDustTimerRef.current <= 0) {
+          playerDashDustTimerRef.current = 0.048; // spaced out puffs during dash
+          const dSpd = Math.hypot(dashVxRef.current, dashVyRef.current) || 1;
+          const ndx = dashVxRef.current / dSpd;
+          const ndy = dashVyRef.current / dSpd;
+          const feetY = p.y + p.radius * 0.7;
+
+          // Big dust ball along dash trail
+          dustParticlesRef.current.push({
+            id: nextEntityId.current++,
+            x: p.x - ndx * (p.radius * 0.4) + (Math.random() - 0.5) * 8,
+            y: feetY - ndy * (p.radius * 0.4) + (Math.random() - 0.5) * 6,
+            vx: -ndx * (Math.random() * 50 + 20) + (Math.random() - 0.5) * 20,
+            vy: -ndy * (Math.random() * 50 + 20) + (Math.random() - 0.5) * 20 - 4,
+            size: Math.random() * 6 + 22,
+            alpha: 0.95,
+            decay: Math.random() * 0.4 + 1.4,
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 2.5,
+            isBig: true,
+            scaleGrowth: Math.random() * 6 + 4,
+          });
+
+          // Small dust ball along dash trail
+          dustParticlesRef.current.push({
+            id: nextEntityId.current++,
+            x: p.x - ndx * (p.radius * 0.6) + (Math.random() - 0.5) * 10,
+            y: feetY - ndy * (p.radius * 0.6) + (Math.random() - 0.5) * 8,
+            vx: -ndx * (Math.random() * 60 + 25) + (Math.random() - 0.5) * 25,
+            vy: -ndy * (Math.random() * 60 + 25) + (Math.random() - 0.5) * 25 - 6,
+            size: Math.random() * 4 + 14,
+            alpha: 0.9,
+            decay: Math.random() * 0.6 + 1.8,
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 3,
+            isBig: false,
+            scaleGrowth: Math.random() * 5 + 3,
+          });
+        }
+
         if (p.dashDuration <= 0) {
           triggerDashEndAoE();
           p.isDashing = false;
@@ -6055,8 +6169,44 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
       isPlayerWalkingRef.current = Boolean(isWalkingNow);
       if (isWalkingNow) {
         playerWalkAnimTimeRef.current += dt * 7;
+
+        // Spawn dust trail behind player while walking (cleanly spaced out per step)
+        if (!p.isDashing) {
+          playerWalkDustTimerRef.current -= dt;
+          if (playerWalkDustTimerRef.current <= 0) {
+            playerWalkDustTimerRef.current = 0.16; // puff every ~160ms (spaced out footsteps)
+            const feetY = p.y + p.radius * 0.75;
+            const moveDir = lastMoveDirRef.current;
+
+            dustParticlesRef.current.push({
+              id: nextEntityId.current++,
+              x: p.x - moveDir.dx * (p.radius * 0.4) + (Math.random() - 0.5) * 6,
+              y: feetY - moveDir.dy * (p.radius * 0.4) + (Math.random() - 0.5) * 4,
+              vx: -moveDir.dx * (Math.random() * 18 + 8) + (Math.random() - 0.5) * 10,
+              vy: -moveDir.dy * (Math.random() * 18 + 8) + (Math.random() - 0.5) * 10 - 3,
+              size: Math.random() * 4 + 12, // 12 - 16px
+              alpha: 0.82,
+              decay: Math.random() * 0.5 + 1.8,
+              rotation: Math.random() * Math.PI * 2,
+              rotSpeed: (Math.random() - 0.5) * 2.5,
+              isBig: false,
+              scaleGrowth: Math.random() * 4 + 2,
+            });
+          }
+
+          // Subtle quiet walking on leaves footsteps on Witchs' Swamp & Black Honey Forest
+          const isFoliageMap = !selectedMapRef.current || selectedMapRef.current === 'village_outskirts' || selectedMapRef.current === 'black_honey_forest';
+          if (isFoliageMap) {
+            playerFootstepTimerRef.current -= dt;
+            if (playerFootstepTimerRef.current <= 0) {
+              playerFootstepTimerRef.current = 0.28; // Step every ~280ms
+              soundEngine.playFootstepLeaves();
+            }
+          }
+        }
       } else {
         playerWalkAnimTimeRef.current = 0;
+        playerFootstepTimerRef.current = 0.05;
       }
 
       // Helper function for Vampire's Bite +2 HP on hit
@@ -6230,6 +6380,15 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
           }
         }
       }
+
+      // Monitor Player HP decrease to trigger red screen flash & screen shake
+      if (p.hp < playerPreviousHpRef.current - 0.01) {
+        playerDamageFlashTimerRef.current = 0.25;
+        if (screenShakeEnabledRef.current) {
+          screenShakeRef.current = Math.min(screenShakeRef.current + 8, 14);
+        }
+      }
+      playerPreviousHpRef.current = p.hp;
 
       // Keep HUD HP bar in sync if health drifted due to regen or vampirism
       if (Math.abs(p.hp - lastReportedHpRef.current) >= 0.5) {
@@ -8652,18 +8811,22 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             );
           }
 
-          // Death burst particles (suppressed for Astral Blade)
+          // Non-boss enemy defeat: 8-10 small red squares flung upwards with longer duration
           if (enemy.lastHitBy !== 'astral_sword') {
-            for (let k = 0; k < 8; k++) {
+            const redSquaresCount = Math.floor(Math.random() * 3) + 8; // 8 to 10 red squares
+            const redTones = ['#ef4444', '#dc2626', '#f87171', '#b91c1c', '#fca5a5'];
+            for (let k = 0; k < redSquaresCount; k++) {
               particlesRef.current.push({
-                x: enemy.x,
-                y: enemy.y,
-                vx: (Math.random() - 0.5) * 120,
-                vy: (Math.random() - 0.5) * 120,
-                size: Math.random() * 4 + 2,
-                color: enemy.color,
+                x: enemy.x + (Math.random() - 0.5) * (enemy.radius * 0.8),
+                y: enemy.y + (Math.random() - 0.5) * (enemy.radius * 0.8),
+                vx: (Math.random() - 0.5) * 90,
+                vy: -(Math.random() * 120 + 90), // flung upwards
+                gravity: 280,
+                size: Math.random() * 2 + 2.5, // 2.5 - 4.5px small red squares
+                color: redTones[Math.floor(Math.random() * redTones.length)],
                 alpha: 1,
-                decay: 3.5,
+                decay: Math.random() * 0.3 + 0.95, // ~1 second duration
+                isSquare: true,
               });
             }
           }
@@ -8946,14 +9109,37 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
         }
       }
 
+      // Update Player Damage Flash Timer
+      if (playerDamageFlashTimerRef.current > 0) {
+        playerDamageFlashTimerRef.current = Math.max(0, playerDamageFlashTimerRef.current - dt);
+      }
+
       // Update Particles
       for (let i = particlesRef.current.length - 1; i >= 0; i--) {
         const pt = particlesRef.current[i];
         pt.x += pt.vx * dt;
         pt.y += pt.vy * dt;
+        if (pt.gravity) {
+          pt.vy += pt.gravity * dt;
+        }
         pt.alpha -= pt.decay * dt;
         if (pt.alpha <= 0) {
           particlesRef.current.splice(i, 1);
+        }
+      }
+
+      // Update Dust Particles
+      for (let i = dustParticlesRef.current.length - 1; i >= 0; i--) {
+        const dust = dustParticlesRef.current[i];
+        dust.x += dust.vx * dt;
+        dust.y += dust.vy * dt;
+        dust.vx *= Math.pow(0.2, dt);
+        dust.vy *= Math.pow(0.2, dt);
+        dust.size += dust.scaleGrowth * dt;
+        dust.rotation += dust.rotSpeed * dt;
+        dust.alpha -= dust.decay * dt;
+        if (dust.alpha <= 0) {
+          dustParticlesRef.current.splice(i, 1);
         }
       }
 
@@ -11234,6 +11420,32 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
         }
       }
 
+      // 5.9 Render Dust Particles (Small & Big Dust Balls trail)
+      const dustSmallImg = dustSmallImageRef.current;
+      const dustBigImg = dustBigImageRef.current;
+      dustParticlesRef.current.forEach((dust) => {
+        const sx = dust.x - cameraX;
+        const sy = dust.y - cameraY;
+        const img = dust.isBig ? dustBigImg : dustSmallImg;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, dust.alpha));
+        ctx.translate(sx, sy);
+        ctx.rotate(dust.rotation);
+        ctx.imageSmoothingEnabled = false;
+
+        const currentSize = dust.size;
+        if (img && img.complete && img.naturalWidth > 0) {
+          ctx.drawImage(img, -currentSize / 2, -currentSize / 2, currentSize, currentSize);
+        } else {
+          ctx.fillStyle = dust.isBig ? 'rgba(214, 211, 209, 0.85)' : 'rgba(231, 229, 228, 0.75)';
+          ctx.beginPath();
+          ctx.arc(0, 0, currentSize / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
       // 6. Render Dash Ghosts
       dashGhostsRef.current.forEach((ghost) => {
         const sx = ghost.x - cameraX;
@@ -11322,9 +11534,9 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
           }
 
           ctx.imageSmoothingEnabled = false;
-          // If flashing from hit
+          // If flashing from hit (intense red flash)
           if (enemy.hitFlashTimer > 0) {
-            ctx.filter = 'brightness(300%)';
+            ctx.filter = RED_HIT_FLASH_FILTER;
           }
           ctx.drawImage(img, -width / 2, -height / 2, width, height);
           ctx.restore();
@@ -11337,16 +11549,16 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.translate(sx, sy);
             ctx.imageSmoothingEnabled = false;
             if (enemy.hitFlashTimer > 0) {
-              ctx.filter = 'brightness(300%)';
+              ctx.filter = RED_HIT_FLASH_FILTER;
             }
             ctx.drawImage(miniEyeImg, -eyeSize / 2, -eyeSize / 2, eyeSize, eyeSize);
           } else {
             if (enemy.hitFlashTimer > 0) {
-              ctx.fillStyle = '#ffffff';
+              ctx.fillStyle = '#ef4444';
             } else {
               ctx.fillStyle = '#2b0606';
             }
-            ctx.strokeStyle = '#991b1b';
+            ctx.strokeStyle = enemy.hitFlashTimer > 0 ? '#ff2222' : '#991b1b';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(sx, sy, enemy.radius, 0, Math.PI * 2);
@@ -11354,7 +11566,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.stroke();
 
             // Pupil
-            ctx.fillStyle = enemy.color;
+            ctx.fillStyle = enemy.hitFlashTimer > 0 ? '#b91c1c' : enemy.color;
             ctx.beginPath();
             ctx.arc(sx, sy, enemy.radius * 0.5, 0, Math.PI * 2);
             ctx.fill();
@@ -11411,7 +11623,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             }
 
             if (enemy.hitFlashTimer > 0) {
-              ctx.filter = 'brightness(300%)';
+              ctx.filter = RED_HIT_FLASH_FILTER;
             } else if (isTelegraphing) {
               ctx.filter = 'drop-shadow(0 0 6px #f59e0b)';
             }
@@ -11420,12 +11632,12 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.restore();
           } else {
             if (enemy.hitFlashTimer > 0) {
-              ctx.fillStyle = '#ffffff';
+              ctx.fillStyle = '#ef4444';
             } else {
               ctx.fillStyle = '#d97706';
             }
 
-            ctx.shadowColor = '#d97706';
+            ctx.shadowColor = enemy.hitFlashTimer > 0 ? '#ef4444' : '#d97706';
             ctx.shadowBlur = 6;
 
             ctx.beginPath();
@@ -11527,7 +11739,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.imageSmoothingEnabled = false;
 
             if (enemy.hitFlashTimer > 0) {
-              ctx.filter = 'brightness(300%)';
+              ctx.filter = RED_HIT_FLASH_FILTER;
             } else if (isTelegraphing) {
               ctx.filter = 'drop-shadow(0 0 8px #06b6d4)';
             }
@@ -11536,12 +11748,12 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.restore();
           } else {
             if (enemy.hitFlashTimer > 0) {
-              ctx.fillStyle = '#ffffff';
+              ctx.fillStyle = '#ef4444';
             } else {
               ctx.fillStyle = '#06b6d4';
             }
 
-            ctx.shadowColor = '#06b6d4';
+            ctx.shadowColor = enemy.hitFlashTimer > 0 ? '#ef4444' : '#06b6d4';
             ctx.shadowBlur = 6;
 
             ctx.beginPath();
@@ -11558,14 +11770,14 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
 
           ctx.restore();
         } else {
-          // Hit flash white
+          // Hit flash red
           if (enemy.hitFlashTimer > 0) {
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#ef4444';
           } else {
             ctx.fillStyle = enemy.color;
           }
 
-          ctx.shadowColor = enemy.color;
+          ctx.shadowColor = enemy.hitFlashTimer > 0 ? '#ef4444' : enemy.color;
           ctx.shadowBlur = 6;
 
           ctx.beginPath();
@@ -11683,7 +11895,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
         const by = boss.y - cameraY;
 
         ctx.save();
-        const isFlashing = bossHitFlashRef.current > 0;
+        const isFlashing = bossHitFlashRef.current > 0 || Boolean(boss.hitFlashTimer && boss.hitFlashTimer > 0);
 
         if (boss.id === 'carnivore_plant') {
           const r = boss.radius;
@@ -11709,7 +11921,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
           const plantSize = r * 2.5 * breath;
 
           // Boss Outer Bio-Aura (GPU accelerated halo)
-          ctx.fillStyle = isFlashing ? 'rgba(255, 255, 255, 0.35)' : 'rgba(16, 185, 129, 0.22)';
+          ctx.fillStyle = isFlashing ? 'rgba(239, 68, 68, 0.45)' : 'rgba(16, 185, 129, 0.22)';
           ctx.beginPath();
           ctx.arc(bx, by, plantSize * 0.52, 0, Math.PI * 2);
           ctx.fill();
@@ -11724,7 +11936,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.rotate(sway);
 
             if (isFlashing) {
-              ctx.filter = 'brightness(300%)';
+              ctx.filter = RED_HIT_FLASH_FILTER;
             }
 
             ctx.drawImage(plantImg, -plantSize / 2, -plantSize / 2, plantSize, plantSize);
@@ -11734,7 +11946,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             const fallbackR = r * breath;
 
             // Thorny Vine Collar
-            ctx.fillStyle = isFlashing ? '#ffffff' : '#064e3b';
+            ctx.fillStyle = isFlashing ? '#ef4444' : '#064e3b';
             ctx.beginPath();
             ctx.arc(bx, by, fallbackR * 1.25, 0, Math.PI * 2);
             ctx.fill();
@@ -11746,30 +11958,30 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
               const px = bx + Math.cos(pAng) * (fallbackR * 1.4);
               const py = by + Math.sin(pAng) * (fallbackR * 1.4);
 
-              ctx.fillStyle = isFlashing ? '#ffffff' : '#047857';
+              ctx.fillStyle = isFlashing ? '#ef4444' : '#047857';
               ctx.beginPath();
               ctx.ellipse(px, py, 22, 12, pAng, 0, Math.PI * 2);
               ctx.fill();
             }
 
             // Main Carnivorous Monster Bulb / Head
-            ctx.fillStyle = isFlashing ? '#ffffff' : '#15803d';
+            ctx.fillStyle = isFlashing ? '#dc2626' : '#15803d';
             ctx.beginPath();
             ctx.arc(bx, by, fallbackR, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = isFlashing ? '#ffffff' : '#86efac';
+            ctx.strokeStyle = isFlashing ? '#ef4444' : '#86efac';
             ctx.lineWidth = 3;
             ctx.stroke();
 
             // Snapping Jaws (upper & lower mandibles)
             const jawOpen = 14 + 8 * Math.sin(survivalTimeRef.current * 5);
-            ctx.fillStyle = isFlashing ? '#ffffff' : '#450a0a';
+            ctx.fillStyle = isFlashing ? '#991b1b' : '#450a0a';
             ctx.beginPath();
             ctx.ellipse(bx, by - 4, fallbackR * 0.7, jawOpen, 0, 0, Math.PI * 2);
             ctx.fill();
 
             // Sharp Spiky Teeth in Mouth
-            ctx.fillStyle = isFlashing ? '#ffffff' : '#fef08a';
+            ctx.fillStyle = isFlashing ? '#ef4444' : '#fef08a';
             const teethCount = 7;
             for (let t = 0; t < teethCount; t++) {
               const tx = bx - fallbackR * 0.55 + (t / (teethCount - 1)) * (fallbackR * 1.1);
@@ -11810,7 +12022,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
 
           // Outer Boss Aura (GPU accelerated soft halo)
           const bearAuraColor = isFlashing
-            ? 'rgba(255, 255, 255, 0.45)'
+            ? 'rgba(239, 68, 68, 0.5)'
             : isCharging || isBiteAttack
             ? 'rgba(239, 68, 68, 0.32)'
             : isDizzy
@@ -11837,7 +12049,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             }
 
             if (isFlashing) {
-              ctx.filter = 'brightness(300%)';
+              ctx.filter = RED_HIT_FLASH_FILTER;
             }
 
             ctx.drawImage(bearImg, -bearSize / 2, -bearSize / 2, bearSize, bearSize);
@@ -11861,13 +12073,13 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             }
           } else {
             // Main body (Hulking Beast fallback)
-            ctx.fillStyle = isFlashing ? '#ffffff' : '#1c1917';
+            ctx.fillStyle = isFlashing ? '#ef4444' : '#1c1917';
             ctx.beginPath();
             ctx.arc(bx + offsetX, by + offsetY, r * 1.2, 0, Math.PI * 2);
             ctx.fill();
 
             // Ears
-            ctx.fillStyle = isFlashing ? '#ffffff' : '#1c1917';
+            ctx.fillStyle = isFlashing ? '#ef4444' : '#1c1917';
             ctx.beginPath();
             ctx.arc(bx + offsetX - r * 0.7, by + offsetY - r * 0.8, r * 0.4, 0, Math.PI * 2);
             ctx.arc(bx + offsetX + r * 0.7, by + offsetY - r * 0.8, r * 0.4, 0, Math.PI * 2);
@@ -11909,7 +12121,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             }
 
             // Snout
-            ctx.fillStyle = isFlashing ? '#ffffff' : '#292524';
+            ctx.fillStyle = isFlashing ? '#dc2626' : '#292524';
             ctx.beginPath();
             ctx.ellipse(bx + offsetX, by + offsetY + r * 0.3, r * 0.5, r * 0.35, 0, 0, Math.PI * 2);
             ctx.fill();
@@ -11934,7 +12146,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
 
           // Outer Occult Eye Aura (GPU accelerated halo)
           const eyeAura = isFlashing
-            ? 'rgba(255, 255, 255, 0.45)'
+            ? 'rgba(239, 68, 68, 0.5)'
             : eyePhase === 'OPEN'
             ? 'rgba(239, 68, 68, 0.35)'
             : 'rgba(153, 27, 27, 0.22)';
@@ -11959,18 +12171,18 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.imageSmoothingEnabled = false;
 
             if (isFlashing) {
-              ctx.filter = 'brightness(300%)';
+              ctx.filter = RED_HIT_FLASH_FILTER;
             }
 
             ctx.drawImage(eyeImg, -eyeWidth / 2, -eyeHeight / 2, eyeWidth, eyeHeight);
             ctx.restore();
           } else {
             // Fallback rendering
-            ctx.fillStyle = isFlashing ? '#ffffff' : '#2b0606';
+            ctx.fillStyle = isFlashing ? '#ef4444' : '#2b0606';
             ctx.beginPath();
             ctx.ellipse(bx, eyeY, rx * 1.15, ry * 1.25, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = isFlashing ? '#ffffff' : (eyePhase === 'OPEN' ? '#ef4444' : '#991b1b');
+            ctx.strokeStyle = isFlashing ? '#ef4444' : (eyePhase === 'OPEN' ? '#ef4444' : '#991b1b');
             ctx.lineWidth = 3.5;
             ctx.stroke();
           }
@@ -11991,7 +12203,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
               ctx.translate(irisX, irisY);
               ctx.imageSmoothingEnabled = false;
               if (isFlashing) {
-                ctx.filter = 'brightness(300%)';
+                ctx.filter = RED_HIT_FLASH_FILTER;
               }
               ctx.drawImage(miniEyeImg, -pupilSize / 2, -pupilSize / 2, pupilSize, pupilSize);
               ctx.restore();
@@ -12211,12 +12423,12 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
                 ctx.translate(ax, wizY);
                 ctx.imageSmoothingEnabled = false;
                 if (isFlashing) {
-                  ctx.filter = 'brightness(300%)';
+                  ctx.filter = RED_HIT_FLASH_FILTER;
                 }
                 ctx.drawImage(wImg, -wSize / 2, -wSize / 2, wSize, wSize);
                 ctx.restore();
               } else {
-                ctx.fillStyle = isFlashing ? '#ffffff' : activeWiz.color;
+                ctx.fillStyle = isFlashing ? '#ef4444' : activeWiz.color;
                 ctx.beginPath();
                 ctx.arc(ax, wizY, 26, 0, Math.PI * 2);
                 ctx.fill();
@@ -12311,13 +12523,13 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
               ctx.imageSmoothingEnabled = false;
 
               if (isFlashing) {
-                ctx.filter = 'brightness(300%)';
+                ctx.filter = RED_HIT_FLASH_FILTER;
               }
 
               ctx.drawImage(activeSprite, -rSize / 2, -rSize / 2, rSize, rSize);
               ctx.restore();
             } else {
-              ctx.fillStyle = isFlashing ? '#ffffff' : '#38bdf8';
+              ctx.fillStyle = isFlashing ? '#ef4444' : '#38bdf8';
               ctx.beginPath();
               ctx.arc(bx, rgbY, 32, 0, Math.PI * 2);
               ctx.fill();
@@ -12510,7 +12722,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
           ctx.translate(hx, hy);
 
           if (isFlashing) {
-            ctx.filter = 'brightness(300%)';
+            ctx.filter = RED_HIT_FLASH_FILTER;
           }
 
           if (hasHeadSprite) {
@@ -12521,8 +12733,8 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
           } else {
             ctx.rotate(googolbraHeadAngleRef.current);
             // High-tech Mathematical Realm Serpent Head Fallback
-            ctx.fillStyle = '#0e7490';
-            ctx.strokeStyle = '#67e8f9';
+            ctx.fillStyle = isFlashing ? '#ef4444' : '#0e7490';
+            ctx.strokeStyle = isFlashing ? '#ef4444' : '#67e8f9';
             ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.arc(0, 0, 38, 0, Math.PI * 2);
@@ -12530,7 +12742,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.stroke();
 
             // Glowing Eyes
-            ctx.fillStyle = '#fef08a';
+            ctx.fillStyle = isFlashing ? '#b91c1c' : '#fef08a';
             ctx.beginPath();
             ctx.arc(14, -12, 6, 0, Math.PI * 2);
             ctx.arc(14, 12, 6, 0, Math.PI * 2);
@@ -12647,7 +12859,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             }
 
             if (isFlashing) {
-              ctx.filter = 'brightness(300%)';
+              ctx.filter = RED_HIT_FLASH_FILTER;
             }
 
             ctx.drawImage(spriteImg, -size / 2, -size / 2, size, size);
@@ -12658,7 +12870,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.translate(px, py);
 
             if (isFlashing) {
-              ctx.fillStyle = '#ffffff';
+              ctx.fillStyle = '#ef4444';
             } else {
               ctx.fillStyle = '#eab308';
             }
@@ -12667,14 +12879,14 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.arc(0, 0, r * 0.8, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.strokeStyle = isFlashing ? '#ffffff' : '#fef08a';
+            ctx.strokeStyle = isFlashing ? '#ef4444' : '#fef08a';
             ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.moveTo(0, -r * 1.2);
             ctx.lineTo(0, r * 1.2);
             ctx.stroke();
 
-            ctx.fillStyle = isFlashing ? '#ffffff' : '#78350f';
+            ctx.fillStyle = isFlashing ? '#b91c1c' : '#78350f';
             ctx.beginPath();
             ctx.arc(0, 0, r * 0.45, 0, Math.PI * 2);
             ctx.fill();
@@ -12718,7 +12930,7 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             }
 
             if (isFlashing) {
-              ctx.filter = 'brightness(300%)';
+              ctx.filter = RED_HIT_FLASH_FILTER;
             }
 
             ctx.drawImage(spriteImg, -size / 2, -size / 2, size, size);
@@ -12728,12 +12940,12 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
             ctx.save();
             ctx.translate(px, py);
 
-            ctx.fillStyle = isFlashing ? '#ffffff' : '#8b5cf6';
+            ctx.fillStyle = isFlashing ? '#ef4444' : '#8b5cf6';
             ctx.beginPath();
             ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.strokeStyle = isFlashing ? '#ffffff' : '#c084fc';
+            ctx.strokeStyle = isFlashing ? '#ef4444' : '#c084fc';
             ctx.lineWidth = 3.5;
             ctx.stroke();
 
@@ -12933,9 +13145,13 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
         ctx.save();
         ctx.globalAlpha = Math.max(0, pt.alpha);
         ctx.fillStyle = pt.color;
-        ctx.beginPath();
-        ctx.arc(sx, sy, pt.size, 0, Math.PI * 2);
-        ctx.fill();
+        if (pt.isSquare) {
+          ctx.fillRect(sx - pt.size / 2, sy - pt.size / 2, pt.size, pt.size);
+        } else {
+          ctx.beginPath();
+          ctx.arc(sx, sy, pt.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
         ctx.restore();
       });
 
@@ -13624,6 +13840,32 @@ export const GameCanvasComponent: React.FC<GameCanvasProps> = ({
           ctx.arc(cardX + cardW - 22, itemY - 3, 3.5, 0, Math.PI * 2);
           ctx.fill();
         });
+
+        ctx.restore();
+      }
+
+      // --- PLAYER DAMAGE SCREEN FLASH (Red vignette / tint when player takes damage) ---
+      if (playerDamageFlashTimerRef.current > 0) {
+        const flashProgress = Math.min(1, playerDamageFlashTimerRef.current / 0.25);
+        ctx.save();
+
+        // Screen red flash
+        ctx.fillStyle = `rgba(239, 68, 68, ${flashProgress * 0.22})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Radial damage vignette around edges
+        const grad = ctx.createRadialGradient(
+          canvas.width / 2,
+          canvas.height / 2,
+          Math.min(canvas.width, canvas.height) * 0.35,
+          canvas.width / 2,
+          canvas.height / 2,
+          Math.max(canvas.width, canvas.height) * 0.72
+        );
+        grad.addColorStop(0, 'rgba(239, 68, 68, 0)');
+        grad.addColorStop(1, `rgba(220, 38, 38, ${flashProgress * 0.45})`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.restore();
       }

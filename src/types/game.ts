@@ -375,6 +375,23 @@ export interface Particle {
   color: string;
   alpha: number;
   decay: number;
+  isSquare?: boolean;
+  gravity?: number;
+}
+
+export interface DustParticle {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  alpha: number;
+  decay: number;
+  rotation: number;
+  rotSpeed: number;
+  isBig: boolean;
+  scaleGrowth: number;
 }
 
 export interface PlayerStats {

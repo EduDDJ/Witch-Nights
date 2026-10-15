@@ -71,80 +71,8 @@ class SoundEngine {
     }
   }
 
-  public playShoot(type: 'wand' | 'shotgun' | 'wisp' | 'lightning' | 'nova' | 'cauldron' | 'sword' | 'fireball' | 'plant') {
-    if (!this.enabled || this.volume <= 0.01) return;
-    try {
-      this.init();
-      if (!this.ctx) return;
-      const t = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-
-      osc.connect(gain);
-      this.connectOut(gain);
-
-      if (type === 'sword') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(620, t);
-        osc.frequency.exponentialRampToValueAtTime(120, t + 0.16);
-        gain.gain.setValueAtTime(0.14, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
-        osc.start(t);
-        osc.stop(t + 0.16);
-      } else if (type === 'wand') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(580, t);
-        osc.frequency.exponentialRampToValueAtTime(140, t + 0.12);
-        gain.gain.setValueAtTime(0.08, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-        osc.start(t);
-        osc.stop(t + 0.12);
-      } else if (type === 'shotgun') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, t);
-        osc.frequency.exponentialRampToValueAtTime(45, t + 0.18);
-        gain.gain.setValueAtTime(0.12, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-        osc.start(t);
-        osc.stop(t + 0.18);
-      } else if (type === 'wisp') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, t);
-        osc.frequency.exponentialRampToValueAtTime(880, t + 0.15);
-        gain.gain.setValueAtTime(0.06, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-        osc.start(t);
-        osc.stop(t + 0.15);
-      } else if (type === 'lightning') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(120, t);
-        osc.frequency.exponentialRampToValueAtTime(800, t + 0.05);
-        osc.frequency.exponentialRampToValueAtTime(50, t + 0.2);
-        gain.gain.setValueAtTime(0.12, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-        osc.start(t);
-        osc.stop(t + 0.2);
-      } else if (type === 'nova') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(180, t);
-        osc.frequency.exponentialRampToValueAtTime(60, t + 0.3);
-        gain.gain.setValueAtTime(0.14, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-        osc.start(t);
-        osc.stop(t + 0.3);
-      } else {
-        // cauldron splash
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(320, t);
-        osc.frequency.linearRampToValueAtTime(180, t + 0.2);
-        gain.gain.setValueAtTime(0.09, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-        osc.start(t);
-        osc.stop(t + 0.2);
-      }
-    } catch {
-      // safe ignore
-    }
+  public playShoot(_type?: 'wand' | 'shotgun' | 'wisp' | 'lightning' | 'nova' | 'cauldron' | 'sword' | 'fireball' | 'plant') {
+    // Weapon shooting sounds disabled to prevent auditory fatigue from continuous auto-fire
   }
 
   public playHit() {
@@ -221,15 +149,70 @@ class SoundEngine {
       const t = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(140, t);
-      osc.frequency.exponentialRampToValueAtTime(25, t + 0.16);
-      gain.gain.setValueAtTime(0.08, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+
+      // Instantaneous crisp bubble / wood pop (zero attack lag)
+      const peakFreq = 1080 + (Math.random() - 0.5) * 160;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(peakFreq, t);
+      osc.frequency.exponentialRampToValueAtTime(140, t + 0.04);
+
+      gain.gain.setValueAtTime(0.16, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+
       osc.connect(gain);
       this.connectOut(gain);
       osc.start(t);
-      osc.stop(t + 0.16);
+      osc.stop(t + 0.04);
+    } catch {
+      // safe ignore
+    }
+  }
+
+  public playFootstepLeaves() {
+    if (!this.enabled || this.volume <= 0.01) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      const duration = 0.065; // Short, subtle leaf crunch
+
+      // Filtered noise buffer for dry leaves / foliage rustle
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const noiseSource = this.ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+
+      // Bandpass centered on foliage rustle frequencies (1.4kHz - 3.2kHz)
+      const bandpass = this.ctx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.Q.setValueAtTime(2.0, t);
+      const centerFreq = 1800 + (Math.random() - 0.5) * 400;
+      bandpass.frequency.setValueAtTime(centerFreq, t);
+      bandpass.frequency.exponentialRampToValueAtTime(centerFreq * 0.55, t + duration);
+
+      // Lowpass to keep it soft and organic
+      const lowpass = this.ctx.createBiquadFilter();
+      lowpass.type = 'lowpass';
+      lowpass.frequency.setValueAtTime(3600, t);
+
+      // Quiet footstep volume
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.exponentialRampToValueAtTime(0.028, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+
+      noiseSource.connect(bandpass);
+      bandpass.connect(lowpass);
+      lowpass.connect(gain);
+      this.connectOut(gain);
+
+      noiseSource.start(t);
+      noiseSource.stop(t + duration);
     } catch {
       // safe ignore
     }
@@ -241,18 +224,61 @@ class SoundEngine {
       this.init();
       if (!this.ctx) return;
       const t = this.ctx.currentTime;
+      const duration = 0.22;
+
+      // 1. Aerodynamic modulated filtered noise for an authentic, airy "swoosh"
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const whiteNoise = this.ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+
+      // Sweeping bandpass filter (whoosh curve)
+      const bandpass = this.ctx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.Q.setValueAtTime(1.8, t);
+      bandpass.frequency.setValueAtTime(320, t);
+      bandpass.frequency.exponentialRampToValueAtTime(1600, t + 0.07);
+      bandpass.frequency.exponentialRampToValueAtTime(220, t + duration);
+
+      // Lowpass smoothing filter
+      const lowpass = this.ctx.createBiquadFilter();
+      lowpass.type = 'lowpass';
+      lowpass.frequency.setValueAtTime(2400, t);
+      lowpass.frequency.exponentialRampToValueAtTime(800, t + duration);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.001, t);
+      noiseGain.gain.exponentialRampToValueAtTime(0.22, t + 0.05);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+
+      whiteNoise.connect(bandpass);
+      bandpass.connect(lowpass);
+      lowpass.connect(noiseGain);
+      this.connectOut(noiseGain);
+      whiteNoise.start(t);
+      whiteNoise.stop(t + duration);
+
+      // 2. Soft sub-harmonic air displacement layer
       const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const oscGain = this.ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(300, t);
-      osc.frequency.exponentialRampToValueAtTime(950, t + 0.08);
-      osc.frequency.exponentialRampToValueAtTime(150, t + 0.22);
-      gain.gain.setValueAtTime(0.12, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-      osc.connect(gain);
-      this.connectOut(gain);
+      osc.frequency.setValueAtTime(180, t);
+      osc.frequency.exponentialRampToValueAtTime(420, t + 0.06);
+      osc.frequency.exponentialRampToValueAtTime(90, t + duration);
+
+      oscGain.gain.setValueAtTime(0.001, t);
+      oscGain.gain.exponentialRampToValueAtTime(0.08, t + 0.05);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+
+      osc.connect(oscGain);
+      this.connectOut(oscGain);
       osc.start(t);
-      osc.stop(t + 0.22);
+      osc.stop(t + duration);
     } catch {
       // safe ignore
     }
